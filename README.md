@@ -254,34 +254,38 @@ xiaji-home/
 
 ## 部署
 
-> 这个仓库是**私有**的，所以主线托管走 **Cloudflare Pages**：它的免费版支持私有仓库，
-> 构建在 Cloudflare 那边跑，推上来就自动发布（不需要任何 GitHub Actions 工作流）。
+> 仓库是**私有**的，主线托管走 **Cloudflare Workers（静态资源）**：免费版支持私有仓库，
+> 构建跑在 Cloudflare 侧，推 `main` 就自动发布。
 > GitHub Pages 只在公开仓库、或 Pro/Team/Enterprise 的私有仓库上可用 —— 公开仓库转私有时
 > GitHub 会**自动下线**已发布的 Pages 站点，所以 `.github/workflows/deploy-pages.yml`
-> 已经改名成 `.yml.disabled`（留着备查，以后要是升了 Pro 想切回去，改回 `.yml` 即可）。
+> 已改名成 `.yml.disabled`（留着备查，升了 Pro 想切回来，把后缀改回 `.yml` 即可）。
 
-### Cloudflare Pages（当前使用）
+**当前线上地址**：<https://xiaji-home.variant305.workers.dev>
 
-1. Cloudflare 控制台 → **Workers & Pages → Create → Pages → Connect to Git**，
-   授权 Cloudflare 的 GitHub App 访问这个私有仓库
-2. 构建设置填：
+### Cloudflare Workers（当前使用）
 
-   | 项                     | 值                                                                     |
-   | ---------------------- | ---------------------------------------------------------------------- |
-   | Production branch      | `main`                                                                 |
-   | Build command          | `npm run build`                                                        |
-   | Build output directory | `dist`                                                                 |
-   | 环境变量               | `NODE_VERSION` = `22`（仓库 `.nvmrc` 是 22；Vite 8 要求 Node ≥ 20.19） |
+在 Cloudflare 控制台 **Workers & Pages → Create → Connect to Git** 连上这个仓库，
+它会自己识别出这是 Vite 项目并配好：
 
-3. 之后每次推 `main` 都会自动构建发布；地址形如 `https://<项目名>.pages.dev`
-4. 想用自己的域名：**Custom domains → Add**，按提示加 CNAME
+| 项       | 值                                                |
+| -------- | ------------------------------------------------- |
+| 构建命令 | `npm run build`                                   |
+| 输出目录 | `dist`                                            |
+| Node     | 22（仓库 `.nvmrc`；Vite 8 要求 Node ≥ 20.19）     |
+| 部署     | `npx wrangler deploy`（把 `dist` 当静态资源发布） |
 
-不需要 `BASE_PATH`：站点在根路径上（`vite.config.js` 里默认就是 `/`）。
+它在构建沙箱里会补一份 `wrangler.jsonc`（`assets.not_found_handling = "single-page-application"`）
+和 `deploy` / `preview` 两个脚本 —— 这些**只存在于 Cloudflare 侧，没有提交进仓库**。
+想让配置显式、可复现（比如以后在自己机器或别的 CI 上 `npx wrangler deploy`），
+把那份 `wrangler.jsonc` 提交进来即可。
 
-### Vercel / Netlify
+自定义域名：Cloudflare 控制台里给这个 Worker 加 **Custom domain** 就行。
 
-同样是「导入仓库 + 填构建配置」，表格同上（Node 22、`npm run build`、输出 `dist`），
-两家的免费版也都支持私有仓库，且不需要 `BASE_PATH`。
+### Cloudflare Pages / Vercel / Netlify（备选托管）
+
+想要 `*.pages.dev` 之类的地址，或者换个平台：新建一个 Pages 项目（或直接把这个仓库导入
+Vercel / Netlify），构建设置同样是「`npm run build` / 输出 `dist` / Node 22」，
+都不需要 `BASE_PATH`（站点在根路径上，`vite.config.js` 默认就是 `/`）。
 
 ### GitHub Pages（需要公开仓库或 Pro 以上）
 
