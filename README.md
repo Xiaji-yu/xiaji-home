@@ -53,6 +53,14 @@
 2. **山会碎成粒子**。同一份墨量数据被采样成约 5000 个独立小方块（`src/lib/particles.js`）。往下滚动时，位图从画面中线柔化裂开并淡出，粒子同时向左右两侧飞散、变小、淡出；滚回顶部会完全复原（进度直接由滚动位置驱动，所以是可逆的）。静止时每帧零开销 —— 那时看到的仍是一张静态位图。
 3. **不引动画库**。所有动效都是 `IntersectionObserver` + CSS 过渡/rAF 手写的，生产包 gzip 后约 **78 kB**（含 React 本体）。
 
+<div align="center">
+
+<img src="./docs/preview-particles.png" alt="下滑过程中山体碎成粒子、向两侧散开的六个阶段" width="100%">
+
+<sub>▲ 下滑时山体碎成粒子的六个阶段（进度 0 → 1）。这张图同样由项目自身的代码离线渲染导出，不是截图。</sub>
+
+</div>
+
 ## 特性
 
 - 🏔 **程序化点阵山景** —— Canvas + 噪声 + 有序抖动，零图片素材
@@ -111,6 +119,7 @@ xiaji-home/
 │  ├─ ISSUE_TEMPLATE/          问题模板（bug / 功能建议）
 │  └─ PULL_REQUEST_TEMPLATE.md
 ├─ docs/preview-mountain.png   README 顶部那张山景图
+├─ docs/preview-particles.png  README 里那张散开序列图
 └─ src/
    ├─ main.jsx                 入口
    ├─ App.jsx                  板块顺序，想调整页面结构就改这里
