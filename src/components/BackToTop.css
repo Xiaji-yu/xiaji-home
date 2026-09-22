@@ -1,0 +1,74 @@
+/* ==========================================================================
+   回到顶部：右下角一颗圆形的向上箭头
+   和按钮（.btn）一样的语法：细描边、纸色底、悬停时整块翻成墨色
+   ========================================================================== */
+
+.to-top {
+  position: fixed;
+  right: clamp(16px, 2.6vw, 34px);
+  bottom: calc(clamp(16px, 2.6vw, 34px) + env(safe-area-inset-bottom, 0px));
+  z-index: 800; /* 浮在内容之上、导航(900)之下、开场遮罩(9989)之下 */
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  /* 藏起来时不只是透明：连鼠标和 Tab 都不该碰到它 */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  transition:
+    opacity 0.35s var(--ease),
+    transform 0.35s var(--ease),
+    visibility 0.35s var(--ease),
+    background-color 0.3s var(--ease),
+    color 0.3s var(--ease);
+}
+
+.to-top.is-on {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+
+.to-top svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+
+/* 悬停 / 键盘聚焦：整块翻墨 */
+.to-top:hover,
+.to-top:focus-visible {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.to-top:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+@media (max-width: 720px) {
+  .to-top {
+    width: 42px;
+    height: 42px;
+  }
+}
+
+/* 触屏设备的悬停状态会"粘住"，这里不让它变色 */
+@media (hover: none) {
+  .to-top:hover {
+    background: var(--paper);
+    color: var(--ink);
+  }
+}

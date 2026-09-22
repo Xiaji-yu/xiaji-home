@@ -1,5 +1,6 @@
 import Preloader from './components/Preloader.jsx'
 import Cursor from './components/Cursor.jsx'
+import BackToTop from './components/BackToTop.jsx'
 import Nav from './components/Nav.jsx'
 import Hero from './components/Hero.jsx'
 import About from './components/About.jsx'
@@ -17,9 +18,10 @@ import Footer from './components/Footer.jsx'
 export default function App() {
   return (
     <>
-      {/* 两个浮在最上层的东西：开场遮罩 + 自定义光标 */}
+      {/* 三个浮在最上层的东西：开场遮罩、自定义光标、右下角的回到顶部 */}
       <Preloader />
       <Cursor />
+      <BackToTop />
 
       <Nav />
 

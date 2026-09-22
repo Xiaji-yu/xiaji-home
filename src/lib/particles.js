@@ -3,59 +3,85 @@
    --------------------------------------------------------------------------
    这个文件不碰 DOM，也不碰 canvas，只做几件事：
 
-     buildParticles()     把山体按疏密采样成一批圆形粒子
-     setupIntro()         安排"开场无序云"：每个粒子散在画面里的某个随机位置
+     pickCell()           按容器大小挑一个格子边长（从而决定粒子数量）
+     buildParticles()     把山按疏密采样成一批**大小完全相同**的圆点
+     setupIntro()         安排"开场无序云"：每个点撒进开场那条带子里的随机位置
      stepIntro()          推进一帧无序漂浮（缓慢摇摆，看起来是活的）
      beginSettle()        把此刻的位置记为起点，从这一刻开始归位
-     stepSettle()         推进一帧归位插值（带一点过冲，1.5 秒内全部落定）
-     stepParticles()      推进一帧常态：鼠标吹散 + 弹簧归位
+     stepSettle()         推进一帧归位插值（1.5 秒内全部落到山的轮廓上）
+     stepParticles()      推进一帧常态：光标底下按出一个小坑 + 点慢慢流回原位
      particleTransform()  算出某个粒子此刻最终画在哪、多大、多透明
+
+   两条关键约定：
+
+   1. **所有点一样大、一样黑**。山的明暗完全由"哪里有格子被点亮"决定
+      （见 dither.js 的 isLit），也就是靠稀疏表达轮廓，不靠点的大小或深浅。
+      所以"开场那团乱点"和"归位后的山"是同一批点，只是位置不同。
+
+   2. **归位就是"把偏移收回 0"**。粒子的出生位置 (x, y) 永远不动，
+      每一帧只算一个偏移 (ox, oy)。无序云、归位、鼠标按坑全都是在改这个偏移，
+      于是三种状态之间可以随时无缝切换。
 
    之所以把纯计算单独拎出来，一是组件里清爽，二是这些函数能在 Node 里直接跑 ——
    开发时就是把任意时刻渲染成图片来对着调的。
    ========================================================================== */
 
-import { hash2, isLit } from './dither.js'
+import { DOT_FACTOR, hash2, isLit } from './dither.js'
 
-/* ---------------- 目标与外观 ---------------- */
+/* ---------------- 密度 ---------------- */
 
-/** 目标粒子数：桌面端取区间上限，手机上少一半左右 */
-export const TARGET_DESKTOP = 6000
-export const TARGET_SMALL = 2600
+/**
+ * 一格大约占多少平方像素。格子边长由屏幕面积算出来，于是无论多大的屏幕，
+ * 点的**密度**都一致；再配合下面的上下限，桌面端稳定在 3~4px 一格
+ * （也就是 1.5 万颗上下的点），手机上大约 3px 一格。
+ */
+const AREA_PER_CELL = 55000
 
-/** 粒子直径 = 格子边长 × 这个系数（和换成圆点之前完全一致，所以"大小不变"） */
-export const SIZE_FACTOR = 1.9
+/** 格子边长的上下限（CSS 像素）：越小越细腻，也越吃性能 */
+const CELL_MIN = 3
+const CELL_MAX = 4
 
-/** 每个粒子的直径再乘上一个 0.6~1.6 的随机系数 —— 有大有小，疏密层次才自然 */
-const SIZE_SPREAD_MIN = 0.6
-const SIZE_SPREAD_MAX = 1.6
+/**
+ * 挑一个格子边长。它同时决定了三件事：
+ * 点阵的疏密、每颗点的直径（= cell × DOT_FACTOR）、以及计算量。
+ */
+export function pickCell(width, height) {
+  const raw = Math.sqrt((width * height) / AREA_PER_CELL)
+  return Math.min(CELL_MAX, Math.max(CELL_MIN, Math.round(raw)))
+}
 
 /* ---------------- 鼠标 ---------------- */
 
-/** 鼠标能影响到多远、最多推开多少像素 */
-export const MOUSE_RADIUS = 120
-export const MOUSE_PUSH = 58
+/**
+ * 鼠标驱散只做一件事：在光标底下按出一个小坑。
+ * 半径 38px（坑的直径 76px）、最深 26px —— 就一小圈，山的其余部分完全不参与。
+ */
+export const MOUSE_RADIUS = 38
+export const MOUSE_PUSH = 26
 
-/** 切向分量：让粒子像被风卷着转一点，而不是纯径向弹开 */
-const MOUSE_CURL = 0.34
+/** 切向分量：让粒子稍微旋着让开，而不是纯径向弹开；坑很小，给一点就够 */
+const MOUSE_CURL = 0.15
 
-/** 推力跟随速度（越大越"跟手"，也越容易被推飞） */
-const MOUSE_FOLLOW = 0.2
+/** 跟随光标的速度：越大坑的边缘越利落（0.5 大约两帧到位） */
+const MOUSE_FOLLOW = 0.5
 
-/* ---------------- 弹簧 ---------------- */
-
-/** 弹簧刚度。配合下面的阻尼，回弹会明显过冲一次 —— 那种弹性手感 */
-export const SPRING = 0.055
-/** 每帧阻尼（越接近 1 越弹）。0.92 大约相当于阻尼比 0.36 */
-export const DAMPING = 0.92
+/**
+ * 回位速度：光标离开后，点按每秒 94% 的比例**慢慢**流回原位。
+ *
+ * 这里刻意不用弹簧：位移直接朝目标做指数收敛（一阶滞后），数学上永远不过冲，
+ * 所以点是"被推走后停在原地、再缓缓流回去"，不会有来回晃动的余振。
+ */
+const RETURN_RATE = 0.045
 
 /* ---------------- 开场：无序云 → 归位 ---------------- */
 
-/** 无序漂浮持续多久。必须和开场遮罩时长一致（components/Preloader.jsx 的 DURATION） */
-export const INTRO_CLOUD_MS = 1500
-/** 归位总时长：错峰 + 单个粒子的飞行时间，加起来正好 1.5 秒 */
-export const SETTLE_DURATION_MS = 1150
-export const SETTLE_STAGGER_MS = 350
+/** 点的无序状态持续多久。必须和开场遮罩时长一致（components/Preloader.jsx） */
+export const INTRO_MS = 2000
+
+/** 归位总时长：错峰 + 单个点的飞行时间，加起来正好 1.5 秒 */
+export const SETTLE_MS = 1500
+export const SETTLE_STAGGER_MS = 420
+export const SETTLE_DURATION_MS = SETTLE_MS - SETTLE_STAGGER_MS
 
 /* ---------------- 曲线 ---------------- */
 
@@ -64,9 +90,13 @@ export function ease(t) {
   return t * t * (3 - 2 * t)
 }
 
-/** 结尾带一点过冲的缓出曲线：粒子会"冲过头再收回"，所以看起来像有惯性 */
+/**
+ * 结尾带一点点过冲的缓出曲线：点会"冲过头再收回"，落定时有一点惯性。
+ * 系数比标准值（1.70158，过冲约 10%）小很多 —— 这里的位移是从屏幕各处飞向
+ * 山体，过冲太大会显得像炸开而不是凝聚，所以只留一点点。
+ */
 function easeOutBack(t) {
-  const c1 = 1.70158
+  const c1 = 0.6
   const c3 = c1 + 1
   const p = t - 1
   return 1 + c3 * p * p * p + c1 * p * p
@@ -75,17 +105,22 @@ function easeOutBack(t) {
 /* ---------------- 构建 ---------------- */
 
 /**
- * 把山体采样成一批粒子。
- * 采样规则和以前一样（按有序抖动挑出"点亮的格子"，再等间隔抽样压到目标数量），
- * 所以山的明暗层次仍然由粒子的疏密表现 —— 靠疏密认轮廓，而不是靠实心色块。
+ * 把山采样成一批粒子。
+ *
+ * 采样规则很简单：把点阵里"被点亮"的格子逐个变成一颗点，位置就用格子中心，
+ * 不加抖动、不抽样。于是点到点的间距是均匀的，而**哪里有格子被点亮**
+ * 由墨量决定 —— 山的明暗、轮廓，全都体现为点的稀疏与密集。
  *
  * @param cols,rows  点阵网格的尺寸
  * @param shade      computeShade() 的结果
  * @param cell       一个格子在屏幕上的边长（CSS 像素）
- * @param target     目标粒子数
  */
-export function buildParticles({ cols, rows, shade, cell, target = TARGET_DESKTOP }) {
-  // ① 先按位图版完全相同的规则，找出所有"点亮的格子"
+export function buildParticles({ cols, rows, shade, cell }) {
+  const items = []
+  const size = cell * DOT_FACTOR // 统一大小：全篇只有这一个尺寸
+
+  // 按墨色从深到浅排序：绘制时按透明度分桶批量画（静止时它们都在同一个桶里，
+  // 也就是一次 fill 画完整座山）
   const lit = []
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
@@ -94,58 +129,35 @@ export function buildParticles({ cols, rows, shade, cell, target = TARGET_DESKTO
       if (s > 0 && isLit(s, c, r)) lit.push(idx)
     }
   }
-
-  // ② 抽样：做"哈希随机抽取"，而不是等间隔抽样。
-  //    等间隔抽样会和 Bayer 矩阵的 8×8 周期谐振，归位后整片山会浮出一层
-  //    规则的蜂窝状网纹；随机抽取的密度期望值完全一样，但不会出现周期结构。
-  const keepRatio = target / lit.length
-  const items = []
+  lit.sort((a, b) => shade[b] - shade[a])
 
   for (let i = 0; i < lit.length; i++) {
     const idx = lit[i]
-    if (hash2(idx, 97) > keepRatio) continue
-
-    const c = idx % cols
-    const r = (idx - c) / cols
-    const s = shade[idx]
-
-    const spread = SIZE_SPREAD_MIN + (SIZE_SPREAD_MAX - SIZE_SPREAD_MIN) * hash2(idx, 3)
-    // 越大的粒子越"重"，被鼠标推开得越少
-    const weight =
-      1.35 - 0.6 * ((spread - SIZE_SPREAD_MIN) / (SIZE_SPREAD_MAX - SIZE_SPREAD_MIN))
-
-    // 位置再加一点点抖动（±0.35 格），彻底打散残余的网格感，更像沙
-    const jitterX = (hash2(idx, 71) - 0.5) * 0.7 * cell
-    const jitterY = (hash2(idx, 73) - 0.5) * 0.7 * cell
 
     items.push({
       // 出生位置（归位结束后它就落在这里）
-      x: (c + 0.5) * cell + jitterX,
-      y: (r + 0.5) * cell + jitterY,
+      x: ((idx % cols) + 0.5) * cell,
+      y: (Math.floor(idx / cols) + 0.5) * cell,
 
-      // 墨量大的（近处的黑山）= 更实
-      alpha: 0.55 + 0.45 * s,
+      // ↓ 外观：所有点完全一致
+      size,
+      alpha: 1,
 
-      // 直径：和换成圆点之前的大小一致
-      size: cell * SIZE_FACTOR * spread,
-      weight,
-
+      // ↓ 以下的数值只影响"怎么动"，不影响"长什么样"
+      // 被鼠标推开时的响应（略有差异，散开的样子才自然）
+      weight: 0.85 + 0.3 * hash2(idx, 3),
       // 横向飞散速度：0.55~1.45 倍，快慢不一 → 滚动散开时有层次
       speed: 0.55 + 0.9 * hash2(idx, 7),
-
       // 纵向的随机漂移（-0.75 ~ 0.75）
       drift: (hash2(idx, 11) - 0.5) * 1.5,
-
       // 被风吹时往哪边旋（左旋 / 右旋）
       curl: hash2(idx, 13) > 0.5 ? 1 : -1,
 
       // ↓ 以下是每帧变化的动态状态
       ox: 0, // 相对出生位置的偏移
       oy: 0,
-      vx: 0, // 偏移的速度（弹簧用）
-      vy: 0,
 
-      cloudX: 0, // 无序云里它散在哪儿
+      cloudX: 0, // 无序云里它散在哪儿（同样是"偏移"）
       cloudY: 0,
       wobbleSpeed: 0, // 摇摆频率（rad/ms）
       wobblePhase: 0,
@@ -159,39 +171,41 @@ export function buildParticles({ cols, rows, shade, cell, target = TARGET_DESKTO
     })
   }
 
-  // ③ 按墨色从深到浅排序：绘制时按透明度分桶批量画，一桶只需一次 fill
-  items.sort((a, b) => b.alpha - a.alpha)
-
   return items
 }
 
 /* ---------------- 开场：无序云 ---------------- */
 
 /**
- * 把粒子打散成"无序云"：每个粒子被随机丢在画面里的某个位置，
+ * 把粒子打散成"无序云"：每个点被随机丢进 box 这个矩形里的某个位置，
  * 并给一段缓慢摇摆的参数，让它看起来是漂着的而不是钉死的。
- * 注意：只改视觉偏移，不动出生位置 —— 归位就是把这些偏移收回 0。
+ *
+ * 只改视觉偏移，不动出生位置 —— 归位就是把这些偏移收回 0。
+ *
+ * @param box      撒点区域（视口坐标 { x, y, w, h }）。开场用的是一条
+ *                 "和加载进度条一样宽、半屏高、垂直居中"的带子，见 ParticleMountain.jsx
+ * @param originX,originY  画布左上角相对视口的偏移：开场时画布铺满视口，
+ *                 而出生位置是相对山景容器算的，需要这个换算才能"在视口里撒点"
  */
-export function setupIntro(items, width, height) {
+export function setupIntro(items, box, originX = 0, originY = 0) {
   for (let i = 0; i < items.length; i++) {
     const it = items[i]
 
-    // 在椭圆里均匀撒点（sqrt 让面积分布均匀，不然会全挤在中心）
-    const angle = hash2(i, 41) * Math.PI * 2
-    const radius = Math.sqrt(hash2(i, 43))
-    it.cloudX = Math.cos(angle) * radius * width * 0.52
-    it.cloudY = Math.sin(angle) * radius * height * 0.46
+    // 目标是视口里的一个随机点；而当前点（偏移为 0 时）在视口里的位置是
+    // (x + originX, y + originY)，所以偏移就是两者之差。
+    const targetX = box.x + hash2(i, 41) * box.w
+    const targetY = box.y + hash2(i, 43) * box.h
+    it.cloudX = targetX - it.x - originX
+    it.cloudY = targetY - it.y - originY
 
-    // 缓慢摇摆：周期 3~8 秒，幅度 8~22px
+    // 缓慢摇摆：周期 3~8 秒，幅度 4~12px（带子比整屏小，晃动也收小一点）
     it.wobbleSpeed = 0.0008 + 0.0012 * hash2(i, 47)
     it.wobblePhase = hash2(i, 53) * Math.PI * 2
-    it.wobbleAmpX = 8 + 14 * hash2(i, 59)
-    it.wobbleAmpY = 6 + 12 * hash2(i, 61)
+    it.wobbleAmpX = 4 + 8 * hash2(i, 59)
+    it.wobbleAmpY = 3 + 7 * hash2(i, 61)
 
     it.ox = it.cloudX
     it.oy = it.cloudY
-    it.vx = 0
-    it.vy = 0
     it.t = 0
   }
 }
@@ -213,8 +227,6 @@ export function beginSettle(items) {
     const it = items[i]
     it.startX = it.ox
     it.startY = it.oy
-    it.vx = 0
-    it.vy = 0
     it.delay = hash2(i, 31) * SETTLE_STAGGER_MS
     it.t = 0
   }
@@ -253,17 +265,19 @@ export function resetToHome(items) {
   for (const it of items) {
     it.ox = 0
     it.oy = 0
-    it.vx = 0
-    it.vy = 0
     it.delay = 0
     it.t = 1
   }
 }
 
-/* ---------------- 常态：鼠标吹散 + 弹簧归位 ---------------- */
+/* ---------------- 常态：鼠标按坑 + 慢慢流回 ---------------- */
 
 /**
  * 推进一帧常态物理。
+ *
+ * 这是一个一阶滞后模型：每个点的偏移朝"目标偏移"按固定比例收敛。
+ * 目标是"被光标推开的位置"（光标够得着的时候）或 0（够不着的时候），
+ * 因为永远只是朝目标逼近、不会越过它，所以既没有余振，也不需要阻尼参数。
  *
  * @param items          粒子数组
  * @param opts.dt        距上一帧的倍数（1 = 正好 60fps 一帧）
@@ -274,14 +288,18 @@ export function resetToHome(items) {
 export function stepParticles(items, opts) {
   const { dt, progress = 0, mouse = null } = opts
   const step = Math.min(2, Math.max(0.5, dt))
-  const dampStep = Math.pow(DAMPING, step)
-  const springStep = SPRING * step
+  const follow = 1 - Math.pow(1 - MOUSE_FOLLOW, step)
+  const back = 1 - Math.pow(1 - RETURN_RATE, step)
   const R2 = MOUSE_RADIUS * MOUSE_RADIUS
   const pushScale = mouse ? mouse.strength * Math.max(0, 1 - progress) : 0
   let maxMotion = 0
 
   for (const it of items) {
-    // ① 鼠标推力：把偏移"软性"地拉向被推开的位置
+    let targetX = 0
+    let targetY = 0
+    let rate = back
+
+    // 光标够得着：目标就是被它推开的位置，跟得快
     if (pushScale > 0.01) {
       const px = it.x + it.ox
       const py = it.y + it.oy
@@ -295,20 +313,15 @@ export function stepParticles(items, opts) {
         const falloff = 1 - d / MOUSE_RADIUS
         const power = falloff * MOUSE_PUSH * it.weight * pushScale
         // 径向 + 一点切向旋转
-        const tx = (nx - ny * MOUSE_CURL * it.curl) * power
-        const ty = (ny + nx * MOUSE_CURL * it.curl) * power
-        it.vx += (tx - it.ox) * MOUSE_FOLLOW * step
-        it.vy += (ty - it.oy) * MOUSE_FOLLOW * step
+        targetX = (nx - ny * MOUSE_CURL * it.curl) * power
+        targetY = (ny + nx * MOUSE_CURL * it.curl) * power
+        rate = follow
       }
     }
 
-    // ② 弹簧 + 阻尼：偏移被拉回 0，回弹时会过冲一下
-    it.vx += -springStep * it.ox
-    it.vy += -springStep * it.oy
-    it.vx *= dampStep
-    it.vy *= dampStep
-    it.ox += it.vx * step
-    it.oy += it.vy * step
+    // 朝目标收敛：推走时快，回来时慢，且永远不会冲过头
+    it.ox += (targetX - it.ox) * rate
+    it.oy += (targetY - it.oy) * rate
 
     const d = it.ox * it.ox + it.oy * it.oy
     if (d > maxMotion) maxMotion = d

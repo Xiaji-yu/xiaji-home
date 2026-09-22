@@ -293,8 +293,12 @@ ol {
   *::before,
   *::after {
     animation-duration: 0.001ms !important;
+    /* 延时也要一起清掉：首屏文字是"等开场遮罩走完再推入"的（延时 2s 起），
+       不清掉的话，开了减少动态效果反而要干等两秒才出现 */
+    animation-delay: 0s !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+    transition-delay: 0s !important;
   }
 
   .reveal {

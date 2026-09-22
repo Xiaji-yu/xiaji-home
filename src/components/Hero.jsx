@@ -30,7 +30,10 @@ export default function Hero() {
       cur.y += (target.y - cur.y) * 0.07
 
       if (mountRef.current) {
-        mountRef.current.style.transform = `translate3d(${(-cur.x * 16).toFixed(2)}px, ${(-cur.y * 10).toFixed(2)}px, 0)`
+        // 位移交给 CSS 变量，真正的 transform 写在 .mountain 上 ——
+        // 父层不能有 transform，否则开场那块铺满视口的 fixed 画布会失去参照
+        mountRef.current.style.setProperty('--px', `${(-cur.x * 16).toFixed(2)}px`)
+        mountRef.current.style.setProperty('--py', `${(-cur.y * 10).toFixed(2)}px`)
       }
       if (titleRef.current) {
         titleRef.current.style.transform = `translate3d(${(cur.x * 7).toFixed(2)}px, ${(cur.y * 5).toFixed(2)}px, 0)`

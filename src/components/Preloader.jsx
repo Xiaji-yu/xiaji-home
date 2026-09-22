@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { INTRO_CLOUD_MS } from '../lib/particles.js'
+import { INTRO_MS } from '../lib/particles.js'
 import { prefersReducedMotion } from '../hooks/useCountUp.js'
 import './Preloader.css'
 
-/* 入场遮罩的时长 = 粒子无序漂浮的时长（同一份时间约定，避免两边对不上） */
-const DURATION = INTRO_CLOUD_MS
+/* 入场遮罩的时长 = 粒子"满屏无序"的时长（同一份时间约定，避免两边对不上）。
+   到 100% 的那一刻，粒子开始归位、1.5 秒内凝聚成山的轮廓。 */
+const DURATION = INTRO_MS
 const EXIT_DELAY = 900 // 滑走动画结束后，再过多久把它从页面上彻底移除
 
 export default function Preloader() {
@@ -49,7 +50,7 @@ export default function Preloader() {
 
   /* 拆成两层，是为了让粒子云能夹在中间：
        9989  背景层（纯纸色）
-       9995  山景粒子的无序云（见 Hero.css 的 .hero--intro）
+       9995  山景粒子的满屏无序云（见 Hero.css 的 .hero--intro / .mountain--full）
        9999  这一层：标志 + 进度数字 —— 永远浮在粒子之上，不会被点挡住
      两层一起上滑离场。 */
   return (

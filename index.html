@@ -24,6 +24,30 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
+    <!--
+      刷新时浏览器会恢复上次的滚动位置。如果刷新时人停在页面中间，开场那团点
+      会被"滚动进度"整片淡掉 —— 加载界面上就一颗点都看不见。
+      所以刷新一律从顶部开始。（只认刷新：前进 / 后退仍然保留浏览器的位置恢复，
+      用带 #锚点 的地址打开也照常跳到锚点。）
+    -->
+    <script>
+      ;(function () {
+        var type = 'reload'
+        try {
+          var nav = performance.getEntriesByType('navigation')
+          if (nav && nav[0] && nav[0].type) type = nav[0].type
+        } catch (e) {
+          /* 取不到就按刷新处理 */
+        }
+        if (type !== 'reload') return
+        try {
+          if ('scrollRestoration' in history) history.scrollRestoration = 'manual'
+          window.scrollTo(0, 0)
+        } catch (e) {
+          /* 不支持也没关系，ParticleMountain.jsx 里还有一道兜底 */
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

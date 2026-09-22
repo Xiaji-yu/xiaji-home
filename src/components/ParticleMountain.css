@@ -5,19 +5,30 @@
 .mountain {
   position: absolute;
   inset: 0;
+  /* 鼠标视差：位移写在 --px / --py 上（见 Hero.jsx）。
+     注意必须作用在这一层自己身上，不能作用在父层 —— 父层一旦有 transform，
+     下面开场时 position: fixed 的画布就会以父层为参照，铺不满视口了。 */
+  transform: translate3d(var(--px, 0px), var(--py, 0px), 0);
 }
 
-/* 位图层：静止状态看到的就是它（和改造前像素级一致） */
+/* 开场（无序云 + 归位）：画布临时铺满整个视口，点才是"满屏"的。
+   归位结束的同一帧里这个类会被摘掉，画布收回山景那一块，画面不会跳
+   （原因见 ParticleMountain.jsx 顶部的坐标换算说明）。 */
+.mountain--full {
+  position: fixed;
+  inset: 0;
+}
+
+/* 位图层：只在系统开启「减少动态效果」时显示（静态点阵山）。
+   它本身就是按 6 倍格子分辨率画好的圆点图，直接缩放即可。 */
 .mountain__raster {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  /* 关键：画布本身是低分辨率的，用 pixelated 放大后就是那种颗粒方块质感 */
-  image-rendering: pixelated;
 }
 
-/* 粒子层：只有滚动或鼠标介入时才会有内容 */
+/* 粒子层：开场和鼠标/滚动介入时由它来画 */
 .mountain__particles {
   position: absolute;
   inset: 0;
