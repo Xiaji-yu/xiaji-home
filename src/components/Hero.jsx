@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import DotMountain from './DotMountain.jsx'
+import ParticleMountain from './ParticleMountain.jsx'
 import { site } from '../data/site.js'
 import { prefersReducedMotion } from '../hooks/useCountUp.js'
 import './Hero.css'
@@ -105,7 +105,7 @@ export default function Hero() {
 
       <div className="hero__stage" ref={stageRef}>
         <div className="hero__mount" ref={mountRef}>
-          <DotMountain />
+          <ParticleMountain />
         </div>
         <div className="hero__grid" aria-hidden="true" />
       </div>

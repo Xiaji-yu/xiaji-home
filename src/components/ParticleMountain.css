@@ -1,16 +1,26 @@
 /* ==========================================================================
-   点阵山景画布
+   粒子山景
    ========================================================================== */
 
 .mountain {
   position: absolute;
   inset: 0;
-  will-change: transform;
 }
 
-.mountain canvas {
+/* 位图层：静止状态看到的就是它（和改造前像素级一致） */
+.mountain__raster {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   /* 关键：画布本身是低分辨率的，用 pixelated 放大后就是那种颗粒方块质感 */
   image-rendering: pixelated;
+}
+
+/* 粒子层：只有滚动或鼠标介入时才会有内容 */
+.mountain__particles {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }

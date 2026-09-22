@@ -1,6 +1,13 @@
 /* ==========================================================================
    点阵山景：用数学噪声 + 有序抖动（Bayer dithering）现场算出来
    不依赖任何图片素材
+
+   这个文件只负责"山长什么样"：
+     computeShade()   → 每个格子的墨量（0~1），山的全部数学都在这里
+     isLit()          → 有序抖动判定：这个格子要不要被点亮
+     renderMountain() → 把墨量画成点阵位图（静止状态用的就是它）
+
+   "把每个点亮的格子变成会飞的粒子"那部分在 lib/particles.js
    ========================================================================== */
 
 /* 8x8 Bayer 矩阵：有序抖动的核心。
@@ -16,8 +23,11 @@ const BAYER8 = [
   [63, 31, 55, 23, 61, 29, 53, 21],
 ]
 
+/** 墨色（近黑）。位图和粒子用的是同一个颜色，保证视觉一致 */
+export const INK = '17, 17, 17'
+
 /** 确定性哈希：同样的 (x, y) 永远得到同样的 0~1 随机数 */
-function hash2(x, y) {
+export function hash2(x, y) {
   let h = (Math.imul(x | 0, 374761393) + Math.imul(y | 0, 668265263)) | 0
   h = Math.imul(h ^ (h >>> 13), 1274126177)
   h ^= h >>> 16
@@ -108,17 +118,12 @@ const LAYERS = [
 ]
 
 /**
- * 把山景画进 canvas。
- * canvas 的"像素"故意做得很大（cols x rows 大约是 CSS 尺寸的 1/3），
- * 再靠 CSS 的 image-rendering: pixelated 放大 —— 这样得到的就是参考图那种
- * 颗粒方块质感，而且计算量极小。
+ * 算出每个格子的"墨量"。
+ * 0 表示这里没有山（留白），越接近 1 越黑。
+ * 返回一个长度 cols*rows 的 Float32Array，行优先。
  */
-export function renderMountain(canvas, cols, rows) {
-  const ctx = canvas.getContext('2d')
-  if (!ctx || cols < 2 || rows < 2) return
-
-  canvas.width = cols
-  canvas.height = rows
+export function computeShade(cols, rows) {
+  const out = new Float32Array(cols * rows)
 
   // 每一层山，逐列算出山脊线的位置（0 = 顶部，1 = 底部）
   const ridges = LAYERS.map((L) => {
@@ -141,17 +146,14 @@ export function renderMountain(canvas, cols, rows) {
     return arr
   })
 
-  const img = ctx.createImageData(cols, rows)
-  const data = img.data
-
   for (let r = 0; r < rows; r++) {
-    const v = r / (rows - 1)
+    const v = r / Math.max(1, rows - 1)
 
     // 底部整体淡出，避免在画布最后一像素处出现一条硬边
     const bottomFade = 1 - smoothstep(0.88, 1.0, v) * 0.9
 
     for (let c = 0; c < cols; c++) {
-      const cn = c / (cols - 1)
+      const cn = c / Math.max(1, cols - 1)
 
       // 找到"最靠前、并且覆盖了这个格子"的那一层山
       let shade = 0
@@ -178,19 +180,51 @@ export function renderMountain(canvas, cols, rows) {
       // 细颗粒
       shade += (hash2(c * 5 + 7, r * 11 + 3) - 0.5) * 0.34
       shade = clamp01(shade)
-      if (shade <= 0.02) continue
 
-      // 有序抖动：shade 越大，被点亮的格子越密
-      const threshold = (BAYER8[r & 7][c & 7] + 0.5) / 64
-      if (shade > threshold) {
-        const i = (r * cols + c) * 4
-        data[i] = 17
-        data[i + 1] = 17
-        data[i + 2] = 17
-        data[i + 3] = shade > 0.94 ? 255 : 232
-      }
+      out[r * cols + c] = shade > 0.02 ? shade : 0
+    }
+  }
+
+  return out
+}
+
+/** 有序抖动判定：墨量越大的格子，被点亮的概率越高 */
+export function isLit(shade, c, r) {
+  const threshold = (BAYER8[r & 7][c & 7] + 0.5) / 64
+  return shade > threshold
+}
+
+/**
+ * 把山画成点阵位图。
+ * canvas 的"像素"故意做得很大（cols x rows 大约是 CSS 尺寸的 1/3），
+ * 再靠 CSS 的 image-rendering: pixelated 放大 —— 这样得到的就是参考图那种
+ * 颗粒方块质感，而且计算量极小。
+ * 这是"静止状态"看到的那张图。
+ */
+export function renderMountain(canvas, cols, rows) {
+  const ctx = canvas.getContext('2d')
+  if (!ctx || cols < 2 || rows < 2) return null
+
+  canvas.width = cols
+  canvas.height = rows
+
+  const shade = computeShade(cols, rows)
+  const img = ctx.createImageData(cols, rows)
+  const data = img.data
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const s = shade[r * cols + c]
+      if (s <= 0 || !isLit(s, c, r)) continue
+
+      const i = (r * cols + c) * 4
+      data[i] = 17
+      data[i + 1] = 17
+      data[i + 2] = 17
+      data[i + 3] = s > 0.94 ? 255 : 232
     }
   }
 
   ctx.putImageData(img, 0, 0)
+  return shade
 }
