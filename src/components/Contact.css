@@ -1,0 +1,111 @@
+/* ==========================================================================
+   联系方式：三张带边框的通道卡片，悬停时黑色从左侧填满
+   ========================================================================== */
+
+.contact__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0;
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+  margin-top: clamp(28px, 4vw, 52px);
+}
+
+.channel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 190px;
+  padding: clamp(20px, 2.4vw, 30px);
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+  overflow: hidden;
+  transition: color 0.45s var(--ease);
+}
+
+.channel__inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* 悬停填充用的那层黑 */
+.channel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--ink);
+  transform: translateX(-101%);
+  transition: transform 0.6s var(--ease);
+}
+
+.channel:hover::before,
+.channel:focus-visible::before {
+  transform: translateX(0);
+}
+
+.channel:hover,
+.channel:focus-visible {
+  color: var(--paper);
+}
+
+.channel__label {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  transition: color 0.45s var(--ease);
+}
+
+.channel:hover .channel__label {
+  color: rgba(245, 244, 241, 0.6);
+}
+
+.channel__value {
+  margin-top: auto;
+  font-size: clamp(15px, 1.5vw, 19px);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  word-break: break-all;
+}
+
+.channel__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-soft);
+  transition: border-color 0.45s var(--ease);
+}
+
+.channel:hover .channel__row {
+  border-color: rgba(245, 244, 241, 0.28);
+}
+
+.channel__note {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  transition: color 0.45s var(--ease);
+}
+
+.channel:hover .channel__note {
+  color: rgba(245, 244, 241, 0.65);
+}
+
+.channel__arrow {
+  font-size: 15px;
+  transition: transform 0.5s var(--ease);
+}
+
+.channel:hover .channel__arrow {
+  transform: translateX(6px);
+}

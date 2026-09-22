@@ -1,0 +1,55 @@
+{
+  "name": "xiaji-home",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "夏祭的个人主页 — 黑白点阵（dither）风格的 React + Vite 单页作品集",
+  "keywords": [
+    "personal-website",
+    "portfolio",
+    "react",
+    "vite",
+    "canvas",
+    "dither",
+    "ordered-dithering",
+    "brutalism",
+    "minimal"
+  ],
+  "author": "夏祭 (Xiaji) <variant305@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/Xiaji-yu/xiaji-home",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Xiaji-yu/xiaji-home.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Xiaji-yu/xiaji-home/issues"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 4173",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run lint && npm run format:check && npm run build"
+  },
+  "dependencies": {
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@vitejs/plugin-react": "^6.1.1",
+    "eslint": "^10.11.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.12.0",
+    "prettier": "^3.4.2",
+    "vite": "^8.3.0"
+  }
+}

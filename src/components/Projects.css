@@ -1,0 +1,140 @@
+/* ==========================================================================
+   项目作品：无缝的边框网格（gap:0 + border 拼出表格感），悬停时卡片微微 3D 倾斜
+   ========================================================================== */
+
+.work__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 0;
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+  margin-top: clamp(24px, 3vw, 40px);
+  perspective: 1100px; /* 3D 倾斜需要的"镜头" */
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 320px;
+  padding: clamp(22px, 2.6vw, 34px);
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+  transform-style: preserve-3d;
+  transition:
+    transform 0.5s var(--ease),
+    background-color 0.5s var(--ease);
+}
+
+.card:hover {
+  background: var(--paper-2);
+}
+
+/* 卡片左上角的角标 */
+.card__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: clamp(28px, 6vw, 64px);
+  color: var(--muted);
+}
+
+.card__id {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+}
+
+.card__title {
+  font-size: clamp(24px, 2.5vw, 34px);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.card__titleCn {
+  display: block;
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+
+.card__desc {
+  margin-top: 16px;
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  line-height: 1.85;
+}
+
+.card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 24px;
+}
+
+.card__tag {
+  padding: 4px 10px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-pill);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+  transition:
+    border-color 0.35s var(--ease),
+    color 0.35s var(--ease);
+}
+
+.card:hover .card__tag {
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+.card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line-soft);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.card__link {
+  color: var(--ink);
+  position: relative;
+}
+
+.card__link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 1px;
+  background: var(--ink);
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition: transform 0.4s var(--ease);
+}
+
+.card__link:hover::after {
+  transform: scaleX(1);
+  transform-origin: left center;
+}
+
+.work__hint {
+  margin-top: 16px;
+  color: var(--muted);
+}

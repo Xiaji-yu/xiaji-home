@@ -1,0 +1,9 @@
+node_modules/
+dist/
+dist-ssr/
+package-lock.json
+.npm-cache/
+.verify/
+.vite/
+coverage/
+*.log

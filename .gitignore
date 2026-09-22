@@ -1,0 +1,43 @@
+# ---- 依赖 ----
+node_modules/
+
+# ---- 构建产物 ----
+dist/
+dist-ssr/
+*.local
+
+# ---- 编辑器 / IDE ----
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ---- 操作系统 ----
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- 日志 ----
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---- 环境变量（不要提交任何密钥）----
+.env
+.env.local
+.env.*.local
+
+# ---- 本地临时目录 ----
+.npm-cache/
+.verify/
+.vite/
+.cache/
+*.tsbuildinfo

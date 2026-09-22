@@ -1,0 +1,71 @@
+/* ==========================================================================
+   关于我：左边一段大字号自述，右边一张细边框信息表
+   ========================================================================== */
+
+.about__grid {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: clamp(28px, 5vw, 72px);
+  align-items: start;
+}
+
+.about__lead {
+  font-size: clamp(18px, 2.05vw, 27px);
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: -0.02em;
+  margin-bottom: clamp(20px, 2.6vw, 32px);
+}
+
+.about__body p {
+  color: var(--ink-soft);
+  font-size: clamp(13.5px, 1.05vw, 15px);
+  line-height: 1.95;
+  margin-bottom: 14px;
+}
+
+.about__body p:last-child {
+  margin-bottom: 0;
+}
+
+/* 信息表：每一行一条细线，和参考图的页脚表格是同一套做法 */
+.about__facts {
+  border-top: 1px solid var(--line);
+}
+
+.about__fact {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 16px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--line-soft);
+  align-items: baseline;
+}
+
+.about__fact dt {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.about__fact dd {
+  margin: 0;
+  font-size: 14px;
+}
+
+.about__fact a {
+  border-bottom: 1px solid var(--line-soft);
+  transition: border-color 0.3s var(--ease);
+}
+
+.about__fact a:hover {
+  border-color: var(--ink);
+}
+
+@media (max-width: 880px) {
+  .about__grid {
+    grid-template-columns: 1fr;
+  }
+}

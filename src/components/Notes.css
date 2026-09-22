@@ -1,0 +1,219 @@
+/* ==========================================================================
+   便签墙
+   ========================================================================== */
+
+.notes__form {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 0;
+  border: 1px solid var(--line);
+  margin-top: clamp(24px, 3vw, 40px);
+  background: var(--paper);
+}
+
+.notes__field {
+  padding: clamp(18px, 2.2vw, 26px);
+  border-right: 1px solid var(--line);
+}
+
+.notes__field label {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.notes__textarea {
+  display: block;
+  width: 100%;
+  min-height: 92px;
+  resize: vertical;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.8;
+  outline: none;
+}
+
+.notes__textarea::placeholder {
+  color: #b3b0aa;
+}
+
+.notes__side {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  padding: clamp(18px, 2.2vw, 26px);
+}
+
+.notes__name {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line-soft);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.3s var(--ease);
+}
+
+.notes__name:focus {
+  border-color: var(--line);
+}
+
+.notes__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted);
+}
+
+.notes__meta.is-over {
+  color: #b23c2a;
+}
+
+.notes__submit {
+  width: 100%;
+}
+
+.notes__submit:disabled {
+  opacity: 0.38;
+  pointer-events: none;
+}
+
+/* ---- 便签列表 ---- */
+
+.notes__wall {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 0;
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+  margin-top: clamp(24px, 3vw, 40px);
+}
+
+.note {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 176px;
+  padding: 18px 20px 16px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+  animation: noteIn 0.5s var(--ease) both;
+}
+
+@keyframes noteIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.note__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.note__who {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note__when {
+  flex: none;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.note__text {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--ink-soft);
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.note__del {
+  position: absolute;
+  right: 8px;
+  bottom: 6px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1;
+  opacity: 0;
+  transition:
+    opacity 0.3s var(--ease),
+    color 0.3s var(--ease);
+}
+
+.note:hover .note__del,
+.note__del:focus-visible {
+  opacity: 1;
+}
+
+.note__del:hover {
+  color: var(--ink);
+}
+
+/* ---- 空状态 ---- */
+
+.notes__empty {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 16px;
+  padding: 20px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.notes__ghost {
+  min-height: 140px;
+  border: 1px dashed var(--line-soft);
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  text-align: center;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 760px) {
+  .notes__form {
+    grid-template-columns: 1fr;
+  }
+  .notes__field {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+}

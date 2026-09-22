@@ -1,0 +1,32 @@
+/* ==========================================================================
+   设计变量（Design Tokens）
+   想换配色 / 字体 / 间距，只改这个文件就够了
+   ========================================================================== */
+
+:root {
+  /* ---- 颜色：严格的黑白灰米白 ---- */
+  --paper: #f5f4f1; /* 页面底色（米白） */
+  --paper-2: #efeeea; /* 略深一层的底色，用于悬停/填充 */
+  --ink: #111111; /* 主墨色（近黑，不是纯黑，更耐看） */
+  --ink-soft: #3a3a3a; /* 正文灰 */
+  --muted: #8a8782; /* 次要信息灰（小标签） */
+  --line: #111111; /* 主描边 */
+  --line-soft: #cbc9c3; /* 次级分隔线 */
+  --white: #ffffff;
+
+  /* ---- 字体 ---- */
+  --sans:
+    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei',
+    'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  --mono:
+    'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', Menlo,
+    monospace;
+
+  /* ---- 尺寸 ---- */
+  --pad: clamp(20px, 4.2vw, 64px); /* 页面左右留白（随屏幕缩放） */
+  --maxw: 1440px; /* 内容最大宽度 */
+  --radius-pill: 999px;
+
+  /* ---- 动效曲线：先快后慢，显得"贵" ---- */
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}

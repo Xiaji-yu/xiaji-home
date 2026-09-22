@@ -1,0 +1,48 @@
+/* ==========================================================================
+   自定义光标：一个小黑点（跟手）+ 一个空心圆环（带惯性拖尾）
+   ========================================================================== */
+
+.cur-dot,
+.cur-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  border-radius: 50%;
+  will-change: transform;
+}
+
+.cur-dot {
+  z-index: 10000;
+  width: 5px;
+  height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  background: var(--ink);
+  transition: opacity 0.25s var(--ease);
+}
+
+.cur-ring {
+  z-index: 9999;
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
+  border: 1px solid var(--ink);
+  transition:
+    width 0.32s var(--ease),
+    height 0.32s var(--ease),
+    margin 0.32s var(--ease),
+    background-color 0.32s var(--ease),
+    opacity 0.25s var(--ease);
+}
+
+/* 悬停到可交互元素上：圆环变大、变淡 */
+.cur-ring.is-hover {
+  width: 62px;
+  height: 62px;
+  margin: -31px 0 0 -31px;
+  background: rgba(17, 17, 17, 0.07);
+}
+
+.cur-dot.is-hover {
+  opacity: 0;
+}

@@ -1,0 +1,85 @@
+/* ==========================================================================
+   开场遮罩：加载进度 000 → 100，然后整块向上滑走
+   ========================================================================== */
+
+.pre {
+  position: fixed;
+  inset: 0;
+  z-index: 9990;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: flex-end;
+  transition: transform 0.9s var(--ease);
+}
+
+.pre.is-done {
+  transform: translateY(-101%);
+}
+
+.pre__inner {
+  width: 100%;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 var(--pad) clamp(28px, 5vw, 56px);
+}
+
+/* 2x2 的方块标志：像参考图里的那颗小星标 */
+.pre__mark {
+  display: grid;
+  grid-template-columns: repeat(2, 14px);
+  grid-template-rows: repeat(2, 14px);
+  gap: 4px;
+  margin-bottom: clamp(20px, 4vw, 40px);
+}
+
+.pre__mark span {
+  background: var(--ink);
+  animation: preBlock 1.4s var(--ease) infinite alternate;
+}
+
+.pre__mark span:nth-child(1) {
+  animation-delay: 0s;
+}
+.pre__mark span:nth-child(2) {
+  animation-delay: 0.12s;
+}
+.pre__mark span:nth-child(3) {
+  animation-delay: 0.24s;
+}
+.pre__mark span:nth-child(4) {
+  animation-delay: 0.36s;
+}
+
+@keyframes preBlock {
+  from {
+    opacity: 0.18;
+    transform: scale(0.72);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.pre__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  color: var(--ink);
+  margin-bottom: 12px;
+}
+
+.pre__bar {
+  height: 2px;
+  background: var(--line-soft);
+  overflow: hidden;
+}
+
+.pre__bar i {
+  display: block;
+  height: 100%;
+  background: var(--ink);
+  transform-origin: left center;
+  transform: scaleX(0);
+}

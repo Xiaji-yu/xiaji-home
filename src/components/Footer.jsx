@@ -1,0 +1,74 @@
+import { site } from '../data/site.js'
+import './Footer.css'
+
+export default function Footer() {
+  const { footer } = site
+  const socials = footer.socials || []
+
+  return (
+    <footer>
+      {/* 上下的斜线阴影条：缓慢向左流动 */}
+      <div className="hatch" aria-hidden="true" />
+
+      <div className="foot__grid">
+        <div className="foot__brand">
+          <div>
+            <div className="foot__brandTop">
+              <span className="foot__mark">夏</span>
+              <span className="foot__name">
+                夏祭
+                <em>XIAJI</em>
+              </span>
+            </div>
+            <p className="foot__tagline" style={{ marginTop: 16 }}>
+              {footer.tagline}
+            </p>
+          </div>
+
+          <div className="foot__socials">
+            {socials.map((item) =>
+              item.href ? (
+                <a
+                  className="foot__social"
+                  key={item.code}
+                  href={item.href}
+                  title={item.title}
+                  aria-label={item.title}
+                  {...(item.href.startsWith('http')
+                    ? { target: '_blank', rel: 'noreferrer' }
+                    : {})}
+                >
+                  {item.code}
+                </a>
+              ) : (
+                <span className="foot__social" key={item.code} title={item.title}>
+                  {item.code}
+                </span>
+              ),
+            )}
+          </div>
+        </div>
+
+        {footer.columns.map((col) => (
+          <div className="foot__col" key={col.headEn}>
+            <div className="foot__colHead mono">
+              {col.head} · {col.headEn}
+            </div>
+            {col.links.map((link) => (
+              <a className="foot__link" key={link.label} href={link.href}>
+                {link.label}
+              </a>
+            ))}
+          </div>
+        ))}
+      </div>
+
+      <div className="hatch" aria-hidden="true" />
+
+      <div className="foot__bottom mono">
+        <span>{footer.copyright}</span>
+        <span>{footer.credit}</span>
+      </div>
+    </footer>
+  )
+}

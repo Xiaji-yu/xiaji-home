@@ -1,0 +1,27 @@
+version: 2
+updates:
+  # 每周检查一次 npm 依赖更新，自动开 PR
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      # 小版本/补丁合并成一个 PR，避免 PR 刷屏
+      minor-and-patch:
+        patterns:
+          - '*'
+        update-types:
+          - minor
+          - patch
+    commit-message:
+      prefix: 'chore(deps)'
+
+  # GitHub Actions 自身也顺手更新
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: 'chore(ci)'

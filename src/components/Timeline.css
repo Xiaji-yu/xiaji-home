@@ -1,0 +1,65 @@
+/* ==========================================================================
+   经历时间线：左边年份，右边内容，一条竖线串起来
+   ========================================================================== */
+
+.tl {
+  border-top: 1px solid var(--line);
+  margin-top: clamp(24px, 3vw, 40px);
+}
+
+.tl__item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 148px 1fr;
+  gap: clamp(16px, 3vw, 40px);
+  padding: clamp(20px, 2.6vw, 30px) 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+/* 年份左边那个小方块，滚动到时点亮 */
+.tl__marker {
+  position: absolute;
+  left: -5px;
+  top: clamp(28px, 3.2vw, 38px);
+  width: 9px;
+  height: 9px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  transition:
+    background-color 0.5s var(--ease) 0.25s,
+    transform 0.5s var(--ease) 0.25s;
+}
+
+.tl__item.is-in .tl__marker {
+  background: var(--ink);
+  transform: rotate(45deg);
+}
+
+.tl__year {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--ink);
+  padding-top: 2px;
+}
+
+.tl__title {
+  font-size: clamp(16px, 1.5vw, 19px);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  margin-bottom: 8px;
+}
+
+.tl__text {
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  line-height: 1.9;
+  max-width: 640px;
+}
+
+@media (max-width: 640px) {
+  .tl__item {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}

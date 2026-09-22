@@ -1,0 +1,68 @@
+name: Bug report
+description: 报告一个可复现的问题
+title: '[Bug] '
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈！请尽量把信息填完整，这样问题能被更快定位。
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: 发生了什么
+      description: 实际看到的现象是什么？
+      placeholder: 例如：首屏的点阵山景一直不出现，只有空白区域。
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 你期望发生什么
+      placeholder: 例如：应该能看到黑色的点阵山。
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1. 运行 npm run dev
+        2. 打开 http://127.0.0.1:5173/
+        3. 向下滚动到 ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: browsers
+    attributes:
+      label: 出现在哪些浏览器
+      multiple: true
+      options:
+        - Chrome / Edge
+        - Firefox
+        - Safari
+        - 手机浏览器
+        - 其他
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: 项目版本 / 提交号
+      placeholder: 例如 v1.0.0 或 a1b2c3d
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 控制台报错或截图
+      description: 按 F12 打开开发者工具，把 Console 里的红色报错贴上来。
+      render: shell
+    validations:
+      required: false
