@@ -254,28 +254,44 @@ xiaji-home/
 
 ## 部署
 
-### GitHub Pages（仓库已配好，推上去就行）
+> 这个仓库是**私有**的，所以主线托管走 **Cloudflare Pages**：它的免费版支持私有仓库，
+> 构建在 Cloudflare 那边跑，推上来就自动发布（不需要任何 GitHub Actions 工作流）。
+> GitHub Pages 只在公开仓库、或 Pro/Team/Enterprise 的私有仓库上可用 —— 公开仓库转私有时
+> GitHub 会**自动下线**已发布的 Pages 站点，所以 `.github/workflows/deploy-pages.yml`
+> 已经改名成 `.yml.disabled`（留着备查，以后要是升了 Pro 想切回去，改回 `.yml` 即可）。
 
-1. 把代码推到 GitHub 的 `main` 分支
-2. 仓库 **Settings → Pages → Build and deployment → Source** 选择 **GitHub Actions**
-3. 之后每次推送到 `main`，`.github/workflows/deploy-pages.yml` 会自动构建并发布
-4. 地址是 `https://<你的用户名>.github.io/xiaji-home/`
+### Cloudflare Pages（当前使用）
 
-> 项目页的资源路径前缀必须带仓库名。工作流里已经用 `BASE_PATH=/${{ github.event.repository.name }}/` 自动处理了，
-> 对应的读取逻辑在 `vite.config.js`。如果你用的是「用户主页仓库」（仓库名形如 `<用户名>.github.io`），
-> 把工作流里那行 `BASE_PATH` 删掉即可。
+1. Cloudflare 控制台 → **Workers & Pages → Create → Pages → Connect to Git**，
+   授权 Cloudflare 的 GitHub App 访问这个私有仓库
+2. 构建设置填：
 
-### Vercel / Netlify / Cloudflare Pages
+   | 项                     | 值                                                                     |
+   | ---------------------- | ---------------------------------------------------------------------- |
+   | Production branch      | `main`                                                                 |
+   | Build command          | `npm run build`                                                        |
+   | Build output directory | `dist`                                                                 |
+   | 环境变量               | `NODE_VERSION` = `22`（仓库 `.nvmrc` 是 22；Vite 8 要求 Node ≥ 20.19） |
 
-导入这个仓库，构建设置填：
+3. 之后每次推 `main` 都会自动构建发布；地址形如 `https://<项目名>.pages.dev`
+4. 想用自己的域名：**Custom domains → Add**，按提示加 CNAME
 
-| 项               | 值              |
-| ---------------- | --------------- |
-| Build command    | `npm run build` |
-| Output directory | `dist`          |
-| Node version     | 20 或以上       |
+不需要 `BASE_PATH`：站点在根路径上（`vite.config.js` 里默认就是 `/`）。
 
-这种托管不需要 `BASE_PATH`（站点在根路径）。
+### Vercel / Netlify
+
+同样是「导入仓库 + 填构建配置」，表格同上（Node 22、`npm run build`、输出 `dist`），
+两家的免费版也都支持私有仓库，且不需要 `BASE_PATH`。
+
+### GitHub Pages（需要公开仓库或 Pro 以上）
+
+1. 把 `.github/workflows/deploy-pages.yml.disabled` 改回 `deploy-pages.yml`
+2. 仓库 **Settings → Pages → Build and deployment → Source** 选 **GitHub Actions**
+3. 推到 `main` 就会自动构建发布，地址是 `https://<用户名>.github.io/<仓库名>/`
+
+> 项目页的资源路径前缀必须带仓库名。工作流里已经用
+> `BASE_PATH=/${{ github.event.repository.name }}/` 自动处理了，对应的读取逻辑在 `vite.config.js`。
+> 如果你用的是「用户主页仓库」（仓库名形如 `<用户名>.github.io`），把工作流里那行 `BASE_PATH` 删掉即可。
 
 ## 浏览器支持
 
