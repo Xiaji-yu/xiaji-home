@@ -1,12 +1,15 @@
 /* ==========================================================================
    粒子山景的"物理"部分
    --------------------------------------------------------------------------
-   这个文件不碰 DOM，也不碰 canvas，只做三件事：
+   这个文件不碰 DOM，也不碰 canvas，只做几件事：
 
-     buildParticles()      把点亮的格子采样成一批独立的方块粒子
-     setupAssemble()       给每个粒子安排一个"从四面八方飞来"的出发位置
-     stepParticles()       推进一帧：汇聚动画 / 鼠标吹散 / 弹簧归位
-     particleTransform()   算出某个粒子此刻最终画在哪、多大、多透明
+     buildParticles()     把山体按疏密采样成一批圆形粒子
+     setupIntro()         安排"开场无序云"：每个粒子散在画面里的某个随机位置
+     stepIntro()          推进一帧无序漂浮（缓慢摇摆，看起来是活的）
+     beginSettle()        把此刻的位置记为起点，从这一刻开始归位
+     stepSettle()         推进一帧归位插值（带一点过冲，1.5 秒内全部落定）
+     stepParticles()      推进一帧常态：鼠标吹散 + 弹簧归位
+     particleTransform()  算出某个粒子此刻最终画在哪、多大、多透明
 
    之所以把纯计算单独拎出来，一是组件里清爽，二是这些函数能在 Node 里直接跑 ——
    开发时就是把任意时刻渲染成图片来对着调的。
@@ -20,10 +23,10 @@ import { hash2, isLit } from './dither.js'
 export const TARGET_DESKTOP = 6000
 export const TARGET_SMALL = 2600
 
-/** 粒子边长 = 格子边长 × 这个系数 */
+/** 粒子直径 = 格子边长 × 这个系数（和换成圆点之前完全一致，所以"大小不变"） */
 export const SIZE_FACTOR = 1.9
 
-/** 每个粒子的边长再乘上一个 0.6~1.6 的随机系数 —— 有大有小才有"碎屑"感 */
+/** 每个粒子的直径再乘上一个 0.6~1.6 的随机系数 —— 有大有小，疏密层次才自然 */
 const SIZE_SPREAD_MIN = 0.6
 const SIZE_SPREAD_MAX = 1.6
 
@@ -41,32 +44,23 @@ const MOUSE_FOLLOW = 0.2
 
 /* ---------------- 弹簧 ---------------- */
 
-/** 弹簧刚度。配合下面的阻尼，回弹会有一点点过冲 —— 官网那种手感 */
+/** 弹簧刚度。配合下面的阻尼，回弹会明显过冲一次 —— 那种弹性手感 */
 export const SPRING = 0.055
-/** 每帧阻尼（越接近 1 越弹）。0.92 大约相当于阻尼比 0.36，会明显过冲一次再稳住 */
+/** 每帧阻尼（越接近 1 越弹）。0.92 大约相当于阻尼比 0.36 */
 export const DAMPING = 0.92
 
-/* ---------------- 载入汇聚 ---------------- */
+/* ---------------- 开场：无序云 → 归位 ---------------- */
 
-/** 开场遮罩要滑走的时候再起飞，这样"汇聚"正好被看到 */
-export const ASSEMBLE_DELAY_MS = 1450
-/** 单个粒子从远处飞到位的时长 */
-export const ASSEMBLE_DURATION_MS = 850
-/** 错峰：让粒子先后抵达，而不是齐刷刷一起到 */
-export const ASSEMBLE_STAGGER_MS = 320
-
-/** 位移超过这么多像素，粒子就完全显形（否则它和底下的位图重叠，会double变黑） */
-const SHOW_AT = 7
+/** 无序漂浮持续多久。必须和开场遮罩时长一致（components/Preloader.jsx 的 DURATION） */
+export const INTRO_CLOUD_MS = 1500
+/** 归位总时长：错峰 + 单个粒子的飞行时间，加起来正好 1.5 秒 */
+export const SETTLE_DURATION_MS = 1150
+export const SETTLE_STAGGER_MS = 350
 
 /* ---------------- 曲线 ---------------- */
 
 /** 平滑曲线：先慢、中间快、结尾慢 */
 export function ease(t) {
-  return t * t * (3 - 2 * t)
-}
-
-function smoothstep(from, to, x) {
-  const t = Math.min(1, Math.max(0, (x - from) / (to - from)))
   return t * t * (3 - 2 * t)
 }
 
@@ -78,27 +72,20 @@ function easeOutBack(t) {
   return 1 + c3 * p * p * p + c1 * p * p
 }
 
-/**
- * 位图与粒子的"交接"系数。
- * 位图在 progress≈0.45 时基本淡完，粒子则在这个区间里逐渐加到满，
- * 这样既能早点看到颗粒感，又不会在位图还很清楚的时候叠出一层多余的墨。
- */
-function handoff(progress) {
-  return 0.35 + 0.65 * smoothstep(0, 0.5, progress)
-}
-
 /* ---------------- 构建 ---------------- */
 
 /**
- * 把点亮的格子采样成一批粒子。
+ * 把山体采样成一批粒子。
+ * 采样规则和以前一样（按有序抖动挑出"点亮的格子"，再等间隔抽样压到目标数量），
+ * 所以山的明暗层次仍然由粒子的疏密表现 —— 靠疏密认轮廓，而不是靠实心色块。
  *
- * @param cols,rows  点阵网格的尺寸（和位图版完全一致）
+ * @param cols,rows  点阵网格的尺寸
  * @param shade      computeShade() 的结果
  * @param cell       一个格子在屏幕上的边长（CSS 像素）
  * @param target     目标粒子数
  */
 export function buildParticles({ cols, rows, shade, cell, target = TARGET_DESKTOP }) {
-  // ① 先按位图版完全相同的规则，找出所有"被点亮"的格子
+  // ① 先按位图版完全相同的规则，找出所有"点亮的格子"
   const lit = []
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
@@ -108,36 +95,42 @@ export function buildParticles({ cols, rows, shade, cell, target = TARGET_DESKTO
     }
   }
 
-  // ② 等间隔抽样，把数量压到目标值。
-  //    因为是"均匀地抽"，各区域的相对密度不变 —— 山的明暗层次因此得以保留。
-  const stride = Math.max(1, Math.ceil(lit.length / target))
+  // ② 抽样：做"哈希随机抽取"，而不是等间隔抽样。
+  //    等间隔抽样会和 Bayer 矩阵的 8×8 周期谐振，归位后整片山会浮出一层
+  //    规则的蜂窝状网纹；随机抽取的密度期望值完全一样，但不会出现周期结构。
+  const keepRatio = target / lit.length
   const items = []
 
-  for (let i = 0; i < lit.length; i += stride) {
+  for (let i = 0; i < lit.length; i++) {
     const idx = lit[i]
+    if (hash2(idx, 97) > keepRatio) continue
+
     const c = idx % cols
     const r = (idx - c) / cols
     const s = shade[idx]
 
-    // 边长随机系数
     const spread = SIZE_SPREAD_MIN + (SIZE_SPREAD_MAX - SIZE_SPREAD_MIN) * hash2(idx, 3)
     // 越大的粒子越"重"，被鼠标推开得越少
     const weight =
       1.35 - 0.6 * ((spread - SIZE_SPREAD_MIN) / (SIZE_SPREAD_MAX - SIZE_SPREAD_MIN))
 
+    // 位置再加一点点抖动（±0.35 格），彻底打散残余的网格感，更像沙
+    const jitterX = (hash2(idx, 71) - 0.5) * 0.7 * cell
+    const jitterY = (hash2(idx, 73) - 0.5) * 0.7 * cell
+
     items.push({
-      // 出生位置（静止状态下它就是原来那个方块的位置）
-      x: (c + 0.5) * cell,
-      y: (r + 0.5) * cell,
+      // 出生位置（归位结束后它就落在这里）
+      x: (c + 0.5) * cell + jitterX,
+      y: (r + 0.5) * cell + jitterY,
 
       // 墨量大的（近处的黑山）= 更实
       alpha: 0.55 + 0.45 * s,
 
-      // 大小差异：0.6~1.6 倍
+      // 直径：和换成圆点之前的大小一致
       size: cell * SIZE_FACTOR * spread,
       weight,
 
-      // 飞行速度：0.55~1.45 倍，快慢不一 → 散开时有层次
+      // 横向飞散速度：0.55~1.45 倍，快慢不一 → 滚动散开时有层次
       speed: 0.55 + 0.9 * hash2(idx, 7),
 
       // 纵向的随机漂移（-0.75 ~ 0.75）
@@ -147,47 +140,115 @@ export function buildParticles({ cols, rows, shade, cell, target = TARGET_DESKTO
       curl: hash2(idx, 13) > 0.5 ? 1 : -1,
 
       // ↓ 以下是每帧变化的动态状态
-      ox: 0, // 相对出生位置的弹性偏移
+      ox: 0, // 相对出生位置的偏移
       oy: 0,
-      vx: 0, // 弹性偏移的速度
+      vx: 0, // 偏移的速度（弹簧用）
       vy: 0,
-      delay: 0, // 汇聚动画里的起飞延时
-      startX: 0, // 汇聚动画的出发点（相对出生位置的偏移）
+
+      cloudX: 0, // 无序云里它散在哪儿
+      cloudY: 0,
+      wobbleSpeed: 0, // 摇摆频率（rad/ms）
+      wobblePhase: 0,
+      wobbleAmpX: 0,
+      wobbleAmpY: 0,
+
+      startX: 0, // 归位动画的出发点
       startY: 0,
-      t: 1, // 汇聚进度 0~1
+      delay: 0, // 归位的错峰延时
+      t: 1, // 归位进度 0~1
     })
   }
 
-  // ③ 按墨色从深到浅排序。
-  //    绘制时透明度只会单调变化，fillStyle 每帧只需切换个位数次 —— 这是性能关键。
+  // ③ 按墨色从深到浅排序：绘制时按透明度分桶批量画，一桶只需一次 fill
   items.sort((a, b) => b.alpha - a.alpha)
 
   return items
 }
 
+/* ---------------- 开场：无序云 ---------------- */
+
 /**
- * 安排"载入汇聚"：每个粒子从画面外的随机方向飞进来。
- * 距离取容器长边的 0.8~1.8 倍，保证出发点都在画面外。
+ * 把粒子打散成"无序云"：每个粒子被随机丢在画面里的某个位置，
+ * 并给一段缓慢摇摆的参数，让它看起来是漂着的而不是钉死的。
+ * 注意：只改视觉偏移，不动出生位置 —— 归位就是把这些偏移收回 0。
  */
-export function setupAssemble(items, width, height, stagger = ASSEMBLE_STAGGER_MS) {
-  const reach = Math.max(width, height)
+export function setupIntro(items, width, height) {
   for (let i = 0; i < items.length; i++) {
     const it = items[i]
-    const angle = hash2(i, 23) * Math.PI * 2
-    // 0.62~1.37 倍长边：保证出发点在画面外，但也不会远到白白飞很久
-    const distance = (0.62 + 0.75 * hash2(i, 29)) * reach
-    it.startX = Math.cos(angle) * distance
-    it.startY = Math.sin(angle) * distance
-    it.ox = it.startX
-    it.oy = it.startY
+
+    // 在椭圆里均匀撒点（sqrt 让面积分布均匀，不然会全挤在中心）
+    const angle = hash2(i, 41) * Math.PI * 2
+    const radius = Math.sqrt(hash2(i, 43))
+    it.cloudX = Math.cos(angle) * radius * width * 0.52
+    it.cloudY = Math.sin(angle) * radius * height * 0.46
+
+    // 缓慢摇摆：周期 3~8 秒，幅度 8~22px
+    it.wobbleSpeed = 0.0008 + 0.0012 * hash2(i, 47)
+    it.wobblePhase = hash2(i, 53) * Math.PI * 2
+    it.wobbleAmpX = 8 + 14 * hash2(i, 59)
+    it.wobbleAmpY = 6 + 12 * hash2(i, 61)
+
+    it.ox = it.cloudX
+    it.oy = it.cloudY
     it.vx = 0
     it.vy = 0
-    it.delay = hash2(i, 31) * stagger
     it.t = 0
   }
 }
 
-/** 把粒子直接按到"已经就位"的状态（尺寸变化后重建、或跳过动画时用） */
+/** 推进一帧无序漂浮：绕着各自的散点缓慢摇摆 */
+export function stepIntro(items, elapsed) {
+  for (const it of items) {
+    const phase = elapsed * it.wobbleSpeed + it.wobblePhase
+    it.ox = it.cloudX + Math.sin(phase) * it.wobbleAmpX
+    it.oy = it.cloudY + Math.cos(phase * 0.82) * it.wobbleAmpY
+  }
+}
+
+/* ---------------- 开场：归位 ---------------- */
+
+/** 把"此刻的位置"记作归位的起点，并给每个粒子分配错峰延时 */
+export function beginSettle(items) {
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i]
+    it.startX = it.ox
+    it.startY = it.oy
+    it.vx = 0
+    it.vy = 0
+    it.delay = hash2(i, 31) * SETTLE_STAGGER_MS
+    it.t = 0
+  }
+}
+
+/**
+ * 推进一帧归位。
+ *
+ * @param elapsed 从"开始归位"那一刻算起的毫秒数
+ * @returns { allDone, maxMotion }
+ */
+export function stepSettle(items, elapsed) {
+  let allDone = true
+  let maxMotion = 0
+
+  for (const it of items) {
+    const raw = (elapsed - it.delay) / SETTLE_DURATION_MS
+    const t = raw <= 0 ? 0 : raw >= 1 ? 1 : raw
+    if (t < 1) allDone = false
+    it.t = t
+
+    // 起点 → 出生位置的插值；easeOutBack 会冲过头一点点再收回
+    const remain = 1 - easeOutBack(t)
+    it.ox = it.startX * remain
+    it.oy = it.startY * remain
+
+    const d = it.ox * it.ox + it.oy * it.oy
+    if (d > maxMotion) maxMotion = d
+  }
+
+  return { allDone, maxMotion: Math.sqrt(maxMotion) }
+}
+
+/** 直接按到"已经就位"的状态（尺寸变化后重建、或跳过开场动画时用） */
 export function resetToHome(items) {
   for (const it of items) {
     it.ox = 0
@@ -199,47 +260,25 @@ export function resetToHome(items) {
   }
 }
 
+/* ---------------- 常态：鼠标吹散 + 弹簧归位 ---------------- */
+
 /**
- * 推进一帧。
+ * 推进一帧常态物理。
  *
- * @param items    粒子数组
- * @param opts.dt         距上一帧的倍数（1 = 正好 60fps 一帧）
- * @param opts.elapsed    从组件挂载算起的毫秒数
- * @param opts.mode       'assemble' | 'live'
- * @param opts.progress   滚动进度 0~1（散开时鼠标影响会递减）
- * @param opts.mouse      { x, y, strength } 或 null
- * @returns { allDone, maxMotion }  —— 用来判断动画是否停稳，可以停掉帧循环
+ * @param items          粒子数组
+ * @param opts.dt        距上一帧的倍数（1 = 正好 60fps 一帧）
+ * @param opts.progress  滚动进度 0~1（散开时鼠标影响会递减）
+ * @param opts.mouse     { x, y, strength } 或 null
+ * @returns { maxMotion }
  */
 export function stepParticles(items, opts) {
-  const { dt, elapsed, mode, progress = 0, mouse = null } = opts
+  const { dt, progress = 0, mouse = null } = opts
   const step = Math.min(2, Math.max(0.5, dt))
-  let maxMotion = 0
-
-  /* ---------------- 载入汇聚 ---------------- */
-  if (mode === 'assemble') {
-    let allDone = true
-    for (const it of items) {
-      const raw = (elapsed - ASSEMBLE_DELAY_MS - it.delay) / ASSEMBLE_DURATION_MS
-      const t = raw <= 0 ? 0 : raw >= 1 ? 1 : raw
-      if (t < 1) allDone = false
-      it.t = t
-
-      // 出发点 → 出生位置的插值；easeOutBack 会冲过头一点点再收回
-      const remain = 1 - easeOutBack(t)
-      it.ox = it.startX * remain
-      it.oy = it.startY * remain
-
-      const d = it.ox * it.ox + it.oy * it.oy
-      if (d > maxMotion) maxMotion = d
-    }
-    return { allDone, maxMotion: Math.sqrt(maxMotion) }
-  }
-
-  /* ---------------- 正常状态：鼠标吹散 + 弹簧归位 ---------------- */
   const dampStep = Math.pow(DAMPING, step)
   const springStep = SPRING * step
   const R2 = MOUSE_RADIUS * MOUSE_RADIUS
   const pushScale = mouse ? mouse.strength * Math.max(0, 1 - progress) : 0
+  let maxMotion = 0
 
   for (const it of items) {
     // ① 鼠标推力：把偏移"软性"地拉向被推开的位置
@@ -275,19 +314,20 @@ export function stepParticles(items, opts) {
     if (d > maxMotion) maxMotion = d
   }
 
-  return { allDone: true, maxMotion: Math.sqrt(maxMotion) }
+  return { maxMotion: Math.sqrt(maxMotion) }
 }
+
+/* ---------------- 取最终画面 ---------------- */
 
 /**
  * 算出某个粒子此刻最终的样子。
  *
- * @param item        粒子
- * @param progress    滚动进度：0 = 山还在原地，1 = 完全散尽
- * @param width       山景容器的宽度（CSS 像素）
- * @param height      山景容器的高度
- * @param assembleFade 汇聚阶段的整体显形系数（1 = 全部可见，0 = 交给位图）
+ * @param item      粒子
+ * @param progress  滚动进度：0 = 山还在原地，1 = 完全散尽
+ * @param width     山景容器的宽度（CSS 像素）
+ * @param height    山景容器的高度
  */
-export function particleTransform(item, progress, width, height, assembleFade = 0) {
+export function particleTransform(item, progress, width, height) {
   const e = ease(progress)
 
   // ① 滚动散开：从画面中线向左右推开（中线左边的往左飞，右边的往右飞）
@@ -295,31 +335,12 @@ export function particleTransform(item, progress, width, height, assembleFade = 
   const scrollX = dir * e * item.speed * width * 0.62
   const scrollY = e * item.drift * height * 0.22
 
-  // ② 弹性偏移（鼠标吹散 / 载入汇聚）直接叠加在上面
-  const x = item.x + scrollX + item.ox
-  const y = item.y + scrollY + item.oy
-
-  // ③ 显形系数。常态下"没被扰动的粒子是看不见的"——
-  //    因为静止时底下的位图已经把它画出来了，再叠一层只会让山发黑；
-  //    一旦被吹开，它就"从山体里浮出来"。而汇聚阶段（assembleFade≈1）必须全都可见，
-  //    否则粒子刚落位就消失，山根本聚不起来。
-  const offset = Math.sqrt(item.ox * item.ox + item.oy * item.oy)
-  const emerging = Math.min(1, offset / SHOW_AT)
-  const scrolling = Math.min(1, progress * 12)
-  const visible = Math.max(assembleFade, emerging, scrolling)
-
-  // ④ 汇聚过程中顺便淡入 + 稍微放大一点，看起来像"碎屑落定"
-  const settling = item.t >= 1 ? 1 : smoothstep(0, 0.3, item.t)
-
+  // ② 偏移（无序云 / 归位 / 鼠标吹散）直接叠加在上面
+  // ③ 越散越淡、越散越小
   return {
-    x,
-    y,
-    size: item.size * (1 - 0.45 * progress) * (0.72 + 0.28 * (item.t >= 1 ? 1 : item.t)),
-    alpha:
-      item.alpha *
-      handoff(progress) *
-      Math.max(0, 1 - progress * 1.05) *
-      visible *
-      settling,
+    x: item.x + scrollX + item.ox,
+    y: item.y + scrollY + item.oy,
+    size: item.size * (1 - 0.45 * progress),
+    alpha: item.alpha * Math.max(0, 1 - progress * 1.05),
   }
 }

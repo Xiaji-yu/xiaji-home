@@ -202,22 +202,26 @@ export function isLit(shade, c, r) {
  * canvas 的"像素"故意做得很大（cols x rows 大约是 CSS 尺寸的 1/3），
  * 再靠 CSS 的 image-rendering: pixelated 放大 —— 这样得到的就是参考图那种
  * 颗粒方块质感，而且计算量极小。
- * 这是"静止状态"看到的那张图。
+ *
+ * 注意：正常路径下这块位图是不显示的（山由粒子画出来），
+ * 它只在系统开启「减少动态效果」时作为静态降级方案出现。
+ *
+ * @param shade 可以传入已经算好的 computeShade() 结果，避免重复计算
  */
-export function renderMountain(canvas, cols, rows) {
+export function renderMountain(canvas, cols, rows, shade = null) {
   const ctx = canvas.getContext('2d')
   if (!ctx || cols < 2 || rows < 2) return null
 
   canvas.width = cols
   canvas.height = rows
 
-  const shade = computeShade(cols, rows)
+  const field = shade || computeShade(cols, rows)
   const img = ctx.createImageData(cols, rows)
   const data = img.data
 
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
-      const s = shade[r * cols + c]
+      const s = field[r * cols + c]
       if (s <= 0 || !isLit(s, c, r)) continue
 
       const i = (r * cols + c) * 4
@@ -229,5 +233,5 @@ export function renderMountain(canvas, cols, rows) {
   }
 
   ctx.putImageData(img, 0, 0)
-  return shade
+  return field
 }

@@ -105,6 +105,13 @@
   bottom: 0;
 }
 
+/* 开场期间把山景层抬到开场遮罩的"背景层"之上、内容层之下，
+   这样加载界面上那团无序的粒子就飘在纸色背景上，而不会挡住进度数字。
+   层级约定：.pre-bg 9989 < 这里 9995 < .pre 9999（见 Preloader.css） */
+.hero--intro .hero__mount {
+  z-index: 9995;
+}
+
 /* 山景上罩一层很淡的网格，和参考图一样 */
 .hero__grid {
   position: absolute;

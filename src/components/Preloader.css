@@ -1,18 +1,30 @@
 /* ==========================================================================
-   开场遮罩：加载进度 000 → 100，然后整块向上滑走
+   开场遮罩
+   拆成两层（见 Preloader.jsx 的注释），粒子云可以夹在两层中间
    ========================================================================== */
 
-.pre {
+/* 背景层：纯纸色，粒子云就浮在它上面 */
+.pre-bg {
   position: fixed;
   inset: 0;
-  z-index: 9990;
+  z-index: 9989;
   background: var(--paper);
   border-bottom: 1px solid var(--line);
-  display: flex;
-  align-items: flex-end;
   transition: transform 0.9s var(--ease);
 }
 
+/* 内容层：标志 + 进度数字，永远在最上面 */
+.pre {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: flex-end;
+  pointer-events: none;
+  transition: transform 0.9s var(--ease);
+}
+
+.pre-bg.is-done,
 .pre.is-done {
   transform: translateY(-101%);
 }
