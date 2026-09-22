@@ -26,6 +26,9 @@ const BAYER8 = [
 /** 墨色（近黑）。位图和粒子用的是同一个颜色，保证视觉一致 */
 export const INK = '17, 17, 17'
 
+/** 纸色。鼠标"擦除盘"用它把底下的位图盖掉，所以必须和 tokens.css 里的 --paper 一致 */
+export const PAPER = '245, 244, 241'
+
 /** 确定性哈希：同样的 (x, y) 永远得到同样的 0~1 随机数 */
 export function hash2(x, y) {
   let h = (Math.imul(x | 0, 374761393) + Math.imul(y | 0, 668265263)) | 0

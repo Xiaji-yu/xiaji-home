@@ -1,11 +1,15 @@
 import { useEffect, useRef } from 'react'
-import { INK, renderMountain } from '../lib/dither.js'
+import { INK, PAPER, renderMountain } from '../lib/dither.js'
 import {
+  MOUSE_RADIUS,
   TARGET_DESKTOP,
   TARGET_SMALL,
   buildParticles,
   ease,
   particleTransform,
+  resetToHome,
+  setupAssemble,
+  stepParticles,
 } from '../lib/particles.js'
 import { prefersReducedMotion } from '../hooks/useCountUp.js'
 import './ParticleMountain.css'
@@ -16,15 +20,21 @@ import './ParticleMountain.css'
    两层叠在一起：
 
    ① 位图层（mountain__raster）
-      就是改造前那张点阵山，低分辨率画布 + pixelated 放大。
-      静止状态看到的就是它 —— 和以前像素级一致，而且静止时每帧零开销。
+      就是最初那张点阵山，低分辨率画布 + pixelated 放大。
+      静止时看到的就是它 —— 像素级等同于改造前，且静止时每帧零开销。
 
    ② 粒子层（mountain__particles）
-      把位图里"点亮的格子"采样成约 5000 个独立小方块。
-      滚动时位图从画面中线裂开并淡出，粒子同时向左右两侧飞散、变小、淡出。
-      进度由滚动位置驱动，所以是**可逆**的：滚回顶部，粒子归位、位图重新合拢。
+      把位图里"点亮的格子"采样成约 5000 个独立小方块。它负责三件事：
 
-   手机自动降量；系统开了「减少动态效果」就直接只留位图，永远不散。
+      · 载入汇聚：每个粒子从画面外的随机方向飞进来，带一点过冲地落到位，
+        错峰抵达；落定后位图淡入，看起来就是山"凝聚"成形。
+      · 鼠标吹散：光标附近的粒子被推开（径向 + 一点切向旋转），同时在这一层
+        用纸色渐变化一个柔边圆盘，把底下的位图"擦"掉 —— 于是真的出现一个空洞，
+        颗粒堆在空洞边缘。鼠标离开后粒子按弹簧回弹，会过冲一下再稳住。
+      · 滚动散开：往下滚时位图从画面中线柔化裂开并淡出，粒子向左右两侧飞散。
+        进度由滚动位置驱动，所以是可逆的：滚回顶部，粒子归位、位图重新合拢。
+
+   手机自动降量；系统开了「减少动态效果」就只留位图，永远不散、不飞。
    ========================================================================== */
 
 const CELL_DESKTOP = 3 // 一个格子的边长（CSS 像素）：越小越细腻、粒子越多
@@ -32,7 +42,9 @@ const CELL_SMALL = 4
 const GAP_MAX = 62 // 位图裂开的最大半宽（占容器宽度的百分比）
 const GAP_FEATHER = 7 // 裂缝两侧的羽化宽度（百分比）
 const RASTER_FADE_AT = 0.45 // 位图在这个进度时彻底淡完，之后画面交给粒子
-const SETTLE = 0.0015 // 小于这个差值就认为动画停稳了，可以停掉 rAF
+const SETTLE = 0.0015 // 进度差值小于它就认为滚动停了
+const REST_MOTION = 0.4 // 弹性位移小于它就认为粒子已经归位
+const VOID_SCALE = 1.15 // 鼠标"擦除盘"的半径 = MOUSE_RADIUS × 它
 
 export default function ParticleMountain() {
   const wrapRef = useRef(null)
@@ -55,10 +67,17 @@ export default function ParticleMountain() {
     const target = small ? TARGET_SMALL : TARGET_DESKTOP
     const dpr = Math.min(window.devicePixelRatio || 1, 2)
 
+    const mountTime = performance.now()
     let width = 0
     let height = 0
     let heroHeight = 0
     let items = []
+
+    // 开场：先是"汇聚"模式；系统开了减少动效就直接进入常态且位图立刻可见
+    let mode = reduced ? 'live' : 'assemble'
+    let rasterShown = reduced ? 1 : 0
+    // 汇聚阶段粒子整体显形；落定后与位图交叉淡变，把画面交还给位图
+    let particleFade = reduced ? 0 : 1
 
     let progress = 0 // 平滑后的散开进度：0 → 1
     let targetProgress = 0
@@ -66,6 +85,7 @@ export default function ParticleMountain() {
     const mouseTarget = { x: 0, y: 0, inside: false }
 
     let raf = 0
+    let lastFrame = 0
     let schedule = () => {}
 
     /* ---------------- 滚动进度 ---------------- */
@@ -75,21 +95,39 @@ export default function ParticleMountain() {
         targetProgress = 0
         return
       }
-      // 山景差不多滑出视野时，进度刚好到 1
       const passed = window.scrollY || window.pageYOffset || 0
       targetProgress = Math.min(1, Math.max(0, passed / (heroHeight * 0.85)))
+    }
+
+    /* ---------------- 鼠标"擦除盘" ---------------- */
+    // 在粒子层上画一个纸色圆盘盖住底下的位图，于是山上出现一个空洞。
+    // 内部必须"实心"（完全盖住），只在最外圈收窄 —— 否则会糊成一团白雾而不是洞。
+    function drawVoid(x, y, strength) {
+      if (strength <= 0.01) return
+      const cx = x * dpr
+      const cy = y * dpr
+      const r = MOUSE_RADIUS * VOID_SCALE * dpr
+      const gradient = layerCtx.createRadialGradient(cx, cy, 0, cx, cy, r)
+      gradient.addColorStop(0, `rgba(${PAPER}, ${strength})`)
+      gradient.addColorStop(0.62, `rgba(${PAPER}, ${strength})`)
+      gradient.addColorStop(0.86, `rgba(${PAPER}, ${strength * 0.94})`)
+      gradient.addColorStop(1, `rgba(${PAPER}, 0)`)
+      layerCtx.fillStyle = gradient
+      layerCtx.beginPath()
+      layerCtx.arc(cx, cy, r, 0, Math.PI * 2)
+      layerCtx.fill()
     }
 
     /* ---------------- 绘制 ---------------- */
 
     function draw() {
-      // ① 位图层：先于粒子退场，并从画面中线裂开一道缝。
-      //    缝的宽度和粒子让开的距离一致，看起来就是"山被从中间掰开、碎成颗粒"。
-      //    缝隙两侧留 7% 的羽化，避免出现一条生硬的竖直切口（那会像幕布而不是粒子）。
-      const e = ease(progress)
-      const faded = Math.min(1, progress / RASTER_FADE_AT)
-      raster.style.opacity = faded >= 1 ? '0' : String(1 - faded)
+      // ① 位图层：随滚动淡出、从中间裂开；载入汇聚期间它整体不可见，
+      //    等粒子落定后再淡入 —— 那一下就是山"凝固"成实体的感觉。
+      const scrollFade = Math.min(1, progress / RASTER_FADE_AT)
+      const opacity = rasterShown * (1 - scrollFade)
+      raster.style.opacity = opacity <= 0.003 ? '0' : String(opacity)
 
+      const e = ease(progress)
       if (e > 0.001) {
         const half = e * GAP_MAX
         const feather = Math.min(GAP_FEATHER, half)
@@ -107,14 +145,17 @@ export default function ParticleMountain() {
       // ② 粒子层
       layerCtx.clearRect(0, 0, layer.width, layer.height)
       if (!items.length) return
-      if (progress <= 0.001 && mouse.strength <= 0.02) return // 静止：什么都不用画
 
-      const m = mouse.strength > 0.02 ? mouse : null
+      const voidStrength = mode === 'live' ? mouse.strength * (1 - progress) : 0
+      if (voidStrength > 0.01) drawVoid(mouse.x, mouse.y, voidStrength)
+
+      const active = progress > 0.001 || mouse.strength > 0.02 || particleFade > 0.01
+      if (!active) return
+
       let lastAlpha = -1
-
       for (let i = 0; i < items.length; i++) {
-        const t = particleTransform(items[i], progress, width, height, m)
-        if (t.alpha <= 0.02) continue // 已经淡到看不见
+        const t = particleTransform(items[i], progress, width, height, particleFade)
+        if (t.alpha <= 0.02) continue // 没被扰动（或已经淡尽）的粒子根本不画
 
         const size = Math.max(1, Math.round(t.size * dpr))
         const x = Math.round(t.x * dpr)
@@ -133,7 +174,7 @@ export default function ParticleMountain() {
 
     /* ---------------- 构建（首次 + 尺寸变化时） ---------------- */
 
-    function build() {
+    function build(first) {
       width = wrap.clientWidth
       height = wrap.clientHeight
       if (!width || !height) return
@@ -154,37 +195,70 @@ export default function ParticleMountain() {
       const heroEl = wrap.closest('.hero')
       heroHeight = heroEl ? heroEl.offsetHeight : window.innerHeight
 
+      if (items.length) {
+        if (first && mode === 'assemble') setupAssemble(items, width, height)
+        else resetToHome(items)
+      }
+
       readScroll()
       draw()
     }
 
     /* ---------------- 主循环 ---------------- */
 
-    function frame() {
+    function frame(now) {
       raf = 0
+      const dt = lastFrame ? (now - lastFrame) / 16.6667 : 1
+      lastFrame = now
+      const elapsed = now - mountTime
 
+      // 滚动进度与鼠标影响都做平滑，动作才不会生硬
       progress += (targetProgress - progress) * 0.14
       if (Math.abs(targetProgress - progress) < SETTLE) progress = targetProgress
 
-      mouse.x += (mouseTarget.x - mouse.x) * 0.18
-      mouse.y += (mouseTarget.y - mouse.y) * 0.18
+      mouse.x += (mouseTarget.x - mouse.x) * 0.2
+      mouse.y += (mouseTarget.y - mouse.y) * 0.2
       const wantStrength = mouseTarget.inside && !reduced ? 1 : 0
       mouse.strength += (wantStrength - mouse.strength) * 0.16
+
+      // 物理：汇聚中按时间走曲线，常态下是弹簧。
+      // 注意：鼠标必须是"离开首屏就立刻撤掉推力"，弹回时的那下过冲才看得出来；
+      // 如果让推力随强度慢慢衰减，回弹就被抹平成一条平滑曲线了。
+      const pushMouse = mouseTarget.inside && !reduced ? mouse : null
+      const result = stepParticles(items, {
+        dt,
+        elapsed,
+        mode,
+        progress,
+        mouse: pushMouse,
+      })
+
+      if (mode === 'assemble' && result.allDone) {
+        mode = 'live'
+        resetToHome(items)
+      }
+
+      // 粒子落定后与位图交叉淡变（"山体凝实"）：
+      // 位图逐渐显现的同时粒子整体退场，墨量总量大致守恒，不会出现忽明忽暗
+      const wantRaster = mode === 'live' ? 1 : 0
+      rasterShown += (wantRaster - rasterShown) * 0.2
+      particleFade += (1 - wantRaster - particleFade) * 0.2
 
       draw()
 
       const settled =
+        mode === 'live' &&
         progress === targetProgress &&
-        Math.abs(wantStrength - mouse.strength) < 0.02 &&
-        Math.abs(mouseTarget.x - mouse.x) < 0.5 &&
-        Math.abs(mouseTarget.y - mouse.y) < 0.5
+        mouse.strength < 0.02 &&
+        result.maxMotion < REST_MOTION &&
+        rasterShown > 0.995 &&
+        particleFade < 0.005
 
       if (settled) {
-        // 归位到最终值再收工，避免停在中间态
-        mouse.strength = wantStrength
-        mouse.x = mouseTarget.x
-        mouse.y = mouseTarget.y
-        draw()
+        mouse.strength = 0
+        rasterShown = 1
+        particleFade = 0
+        draw() // 用最终状态收尾，避免停在中间态
       } else {
         schedule()
       }
@@ -222,11 +296,12 @@ export default function ParticleMountain() {
 
     let resizeObserver = null
     if (typeof ResizeObserver !== 'undefined') {
-      resizeObserver = new ResizeObserver(() => build())
+      resizeObserver = new ResizeObserver(() => build(false))
       resizeObserver.observe(wrap)
     }
 
-    build()
+    build(true)
+    schedule()
 
     return () => {
       window.removeEventListener('scroll', onScroll)
@@ -236,6 +311,10 @@ export default function ParticleMountain() {
       if (resizeObserver) resizeObserver.disconnect()
       cancelAnimationFrame(raf)
       raf = 0
+      // 清理时把位图恢复成可见，避免热更新后先是一片空白
+      raster.style.opacity = '1'
+      raster.style.maskImage = ''
+      raster.style.webkitMaskImage = ''
     }
   }, [])
 
