@@ -32,8 +32,8 @@
 }
 
 /* 每行外面套一个 overflow:hidden，文字从下方推上来。
-   延时跟着"开场遮罩时长"走：遮罩 2s 结束、之后整块上滑 0.9s，
-   于是文字从 2.25s 起一行行推入，正好浮在正在归位的山景之上。
+   延时跟着开场走：遮罩 2s 结束 → 整块上滑、页眉上移各 0.9s（2.9s 落位），
+   于是文字从 2.9s 起一行行推入，正好浮在刚就位的页眉和正在归位的山景之间。
    （开场时长见 lib/particles.js 的 INTRO_MS） */
 .hero__line {
   display: block;
@@ -48,11 +48,11 @@
 }
 
 .hero__line:nth-child(1) > span {
-  animation-delay: 2.25s;
+  animation-delay: 2.9s;
 }
 
 .hero__line:nth-child(2) > span {
-  animation-delay: 2.42s;
+  animation-delay: 3.07s;
 }
 
 @keyframes heroLine {
@@ -69,7 +69,7 @@
   line-height: 1.95;
   opacity: 0;
   transform: translateY(14px);
-  animation: heroFade 0.9s var(--ease) 2.6s forwards;
+  animation: heroFade 0.9s var(--ease) 3.25s forwards;
 }
 
 .hero__cta {
@@ -80,7 +80,7 @@
   margin-top: clamp(24px, 3vw, 38px);
   opacity: 0;
   transform: translateY(14px);
-  animation: heroFade 0.9s var(--ease) 2.78s forwards;
+  animation: heroFade 0.9s var(--ease) 3.43s forwards;
 }
 
 @keyframes heroFade {
@@ -111,9 +111,9 @@
   bottom: 0;
 }
 
-/* 开场期间把山景层抬到开场遮罩的"背景层"之上、内容层之下，
-   这样加载界面上那团无序的粒子就飘在纸色背景上，而不会挡住进度数字。
-   层级约定：.pre-bg 9989 < 这里 9995 < .pre 9999（见 Preloader.css） */
+/* 开场期间把山景层抬到纸色遮罩之上、页眉之下，
+   这样加载界面上那团无序的粒子就飘在纸色背景上，而不会挡住百分比数字。
+   层级约定：.load-bg 9989 < 这里 9995 < .header 9999（见 Header.css） */
 .hero--intro .hero__mount {
   z-index: 9995;
 }

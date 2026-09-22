@@ -1,0 +1,242 @@
+/* ==========================================================================
+   页眉（开场时它就是屏幕底部那根加载条）
+   --------------------------------------------------------------------------
+   一份样式演两种形态：
+
+     is-loading  在屏幕底部（靠 translateY 挪过去）、百分比在右、进度条只占内容宽
+     is-rising   整体上移到位（0.9s）
+     is-extended 终态：进度条延伸成通栏细线、百分比淡出、导航链接淡入
+
+   z-index 一直保持高位（9999）不往下掉：那是为了让它在开场时压住纸色遮罩和
+   抬高的粒子层；而"粒子落定"那一帧正好是全场最敏感的时刻，少做一次层级变化
+   就少一次卡顿。反正页眉本来就该在内容之上。
+   ========================================================================== */
+
+.header {
+  /* 加载时页眉底边离屏幕底边多远（和旧版开场遮罩的底部留白一致） */
+  --load-pad: clamp(28px, 5vw, 56px);
+  /* 进度条加载时两端的位置：和 .header__inner 的内容区左右对齐 */
+  --bar-inset: max(var(--pad), calc((100% - var(--maxw)) / 2 + var(--pad)));
+
+  position: sticky;
+  top: 0;
+  z-index: 900;
+  width: 100%;
+  background: var(--paper);
+}
+
+/* ---- 加载中：整块挪到屏幕底部 ---- */
+
+.header.is-loading {
+  z-index: 9999; /* 要在纸色遮罩(9989)和开场粒子层(9995)之上 */
+  transform: translateY(calc(100vh - 100% - var(--load-pad)));
+}
+/* 有 dvh 就用 dvh（手机上地址栏收起时 vh 会算多） */
+.header.is-loading {
+  transform: translateY(calc(100dvh - 100% - var(--load-pad)));
+}
+
+/* ---- 上移到位 ---- */
+
+.header.is-rising {
+  z-index: 9999;
+  transform: translateY(0);
+  transition: transform 900ms var(--ease);
+}
+
+/* ---- 到位之后：粒子还在归位，页眉先待在高层，等它落定再退下来 ---- */
+
+.header.is-extended {
+  z-index: 9999;
+}
+
+.header__inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 56px;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 var(--pad);
+}
+
+/* ---- 左边：品牌（和曾经的页眉一模一样） ---- */
+
+.header__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+}
+
+.header__mark {
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1;
+  transition:
+    background-color 0.35s var(--ease),
+    color 0.35s var(--ease);
+}
+
+.header__brand:hover .header__mark {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.header__name {
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.header__name em {
+  font-style: normal;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+  margin-left: 8px;
+  text-transform: uppercase;
+}
+
+/* ---- 右边：链接 / 手机上的 Mail / 加载时的百分比 ---- */
+
+.header__end {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+.header__links {
+  display: flex;
+  gap: 22px;
+}
+
+.header__links a {
+  position: relative;
+  padding: 2px 0;
+  color: var(--ink-soft);
+  transition: color 0.3s var(--ease);
+}
+
+/* 下划线从左划出 */
+.header__links a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 1px;
+  background: var(--ink);
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition: transform 0.4s var(--ease);
+}
+
+.header__links a:hover {
+  color: var(--ink);
+}
+
+.header__links a:hover::after {
+  transform: scaleX(1);
+  transform-origin: left center;
+}
+
+.header__mail {
+  display: none;
+  margin-left: auto;
+  color: var(--ink);
+}
+
+/* 百分比：压在链接那一格上，原地交叉淡变 */
+.header__pct {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  transition: opacity 0.35s var(--ease);
+}
+
+/* 加载期间：链接先藏着（不闪、不可点、不进 Tab 序列） */
+.header__links,
+.header__mail {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.45s var(--ease) 0.1s;
+}
+
+.header.is-extended .header__links,
+.header.is-extended .header__mail {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.header.is-extended .header__pct {
+  opacity: 0;
+}
+
+/* ---- 底下那根线：加载时是进度条，到位后延伸成通栏细线（也就是页眉的分隔线） ---- */
+
+.header__bar {
+  position: absolute;
+  left: var(--bar-inset);
+  right: var(--bar-inset);
+  bottom: 0;
+  height: 2px;
+  background: var(--line-soft);
+}
+
+.header.is-extended .header__bar {
+  left: 0;
+  right: 0;
+  height: 1px;
+  transition:
+    left 0.6s var(--ease),
+    right 0.6s var(--ease),
+    height 0.6s var(--ease);
+}
+
+.header__bar i {
+  display: block;
+  height: 100%;
+  background: var(--ink);
+  transform-origin: left center;
+}
+
+/* ---- 加载时的纸色遮罩：整块上滑离场 ---- */
+
+.load-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 9989;
+  background: var(--paper);
+  transition: transform 0.9s var(--ease);
+  /* 这里刻意不留描边。遮罩是整屏滑出去的，页眉只上移到顶部就停 ——
+     遮罩底边要是带一条线，它会从下往上扫过整屏、并横穿页眉那一行，
+     看上去就像平白多出一根线。分隔线由页眉自己那根进度条兼任。 */
+  border-bottom: 0;
+}
+
+.load-bg.is-done {
+  transform: translateY(-101%);
+}
+
+@media (max-width: 860px) {
+  .header__links {
+    display: none;
+  }
+
+  .header__mail {
+    display: block;
+  }
+}

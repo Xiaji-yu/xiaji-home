@@ -154,12 +154,17 @@ const BOTTOM_LIGHTEN = 0.3
 const GRAIN = 0.04
 
 /**
- * 算出每个格子的"墨量"。
- * 0 表示这里没有山（留白），越接近 1 越黑。
- * 返回一个长度 cols*rows 的 Float32Array，行优先。
+ * 算出每个格子的"墨量"，以及它属于哪一层山。
+ *
+ * shade:  长度 cols*rows 的 Float32Array，0 表示这里没有山（留白），越接近 1 越黑
+ * layer:  同样长度的 Uint8Array，0 = 最远的山、3 = 最前面的山
+ *         （滚动散开时，粒子按这个逐层反向飞开，见 lib/particles.js）
+ *
+ * 行优先。
  */
 export function computeShade(cols, rows) {
   const out = new Float32Array(cols * rows)
+  const layerOf = new Uint8Array(cols * rows)
 
   // 每一层山，逐列算出山脊线的位置（0 = 顶部，1 = 底部）
   const ridges = LAYERS.map((L) => {
@@ -201,6 +206,7 @@ export function computeShade(cols, rows) {
           // 山脊线上最实，往下按 falloff 淡出
           shade = L.baseTone + (L.ridgeTone - L.baseTone) * Math.pow(1 - t, L.falloff)
           shade += (hash2(c * 3 + li * 17, r * 5 + li * 29) - 0.5) * L.noise
+          layerOf[r * cols + c] = li
           break
         }
       }
@@ -218,11 +224,16 @@ export function computeShade(cols, rows) {
       shade += (hash2(c * 5 + 7, r * 11 + 3) - 0.5) * GRAIN
       shade = clamp01(shade)
 
-      out[r * cols + c] = shade > 0.015 ? shade : 0
+      if (shade > 0.015) {
+        out[r * cols + c] = shade
+      } else {
+        out[r * cols + c] = 0
+        layerOf[r * cols + c] = 0
+      }
     }
   }
 
-  return out
+  return { shade: out, layer: layerOf }
 }
 
 /**
@@ -257,7 +268,7 @@ export function renderMountain(canvas, cols, rows, shade = null) {
   canvas.width = cols * RASTER_SUB
   canvas.height = rows * RASTER_SUB
 
-  const field = shade || computeShade(cols, rows)
+  const field = shade || computeShade(cols, rows).shade
   const radius = (DOT_FACTOR * RASTER_SUB) / 2
   const TAU = Math.PI * 2
 

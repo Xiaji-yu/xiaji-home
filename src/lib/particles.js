@@ -75,7 +75,7 @@ const RETURN_RATE = 0.045
 
 /* ---------------- 开场：无序云 → 归位 ---------------- */
 
-/** 点的无序状态持续多久。必须和开场遮罩时长一致（components/Preloader.jsx） */
+/** 点的无序状态持续多久。必须和页眉那根加载条的时长一致（components/Header.jsx） */
 export const INTRO_MS = 2000
 
 /** 归位总时长：错峰 + 单个点的飞行时间，加起来正好 1.5 秒 */
@@ -112,10 +112,11 @@ function easeOutBack(t) {
  * 由墨量决定 —— 山的明暗、轮廓，全都体现为点的稀疏与密集。
  *
  * @param cols,rows  点阵网格的尺寸
- * @param shade      computeShade() 的结果
+ * @param shade      computeShade() 的 shade（每个格子的墨量）
+ * @param layer      computeShade() 的 layer（每个格子属于哪一层山，0 = 最远）
  * @param cell       一个格子在屏幕上的边长（CSS 像素）
  */
-export function buildParticles({ cols, rows, shade, cell }) {
+export function buildParticles({ cols, rows, shade, layer, cell }) {
   const items = []
   const size = cell * DOT_FACTOR // 统一大小：全篇只有这一个尺寸
 
@@ -146,6 +147,11 @@ export function buildParticles({ cols, rows, shade, cell }) {
       // ↓ 以下的数值只影响"怎么动"，不影响"长什么样"
       // 被鼠标推开时的响应（略有差异，散开的样子才自然）
       weight: 0.85 + 0.3 * hash2(idx, 3),
+      // 滚动时往哪边飞：**按山的层逐层反向** —— 最前面那层往左，
+      // 往后依次右、左、右。于是下滑时整座山像被拆成几张纸片错开滑走，
+      // 而不是从画面中线往两边裂开。
+      layer: layer[idx],
+      dir: layer[idx] % 2 === 0 ? 1 : -1,
       // 横向飞散速度：0.55~1.45 倍，快慢不一 → 滚动散开时有层次
       speed: 0.55 + 0.9 * hash2(idx, 7),
       // 纵向的随机漂移（-0.75 ~ 0.75）
@@ -343,9 +349,9 @@ export function stepParticles(items, opts) {
 export function particleTransform(item, progress, width, height) {
   const e = ease(progress)
 
-  // ① 滚动散开：从画面中线向左右推开（中线左边的往左飞，右边的往右飞）
-  const dir = item.x < width / 2 ? -1 : 1
-  const scrollX = dir * e * item.speed * width * 0.62
+  // ① 滚动散开：按"它属于哪一层山"逐层反向飞开（item.dir 在 buildParticles 里定好），
+  //    同一层里再按各自的 speed 有快有慢，于是层与层错开、层内又有疏密
+  const scrollX = item.dir * e * item.speed * width * 0.62
   const scrollY = e * item.drift * height * 0.22
 
   // ② 偏移（无序云 / 归位 / 鼠标吹散）直接叠加在上面

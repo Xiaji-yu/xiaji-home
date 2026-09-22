@@ -47,6 +47,16 @@ const ALPHA_BUCKETS = 10 // 按透明度分 10 桶，每桶一次 fill —— �
 const TAU = Math.PI * 2
 
 /**
+ * 粒子落定之后隔多久，才把画布从"铺满视口"收回山景那一块。
+ *
+ * 这一步躲不开，但它很重：要摘掉 hero--intro（层级变化）、要读一次布局、
+ * 要把画布位图重新分配成山景的尺寸、再重画 1.5 万颗点 —— 实测这一帧的 JS
+ * 是平时的 4 倍。**绝不能放在粒子刚停住的那一帧上**，否则就是肉眼可见的"顿一下"。
+ * 往后挪几帧，等画面彻底静止了再做：内容一模一样，只是换个画布，看不出来。
+ */
+const HANDOVER_MS = 120
+
+/**
  * 尺寸变化超过这么多像素才重建粒子。
  *
  * 这条阈值是**必需品**，不是优化：网页字体加载完会换一次字体、滚动条出现或消失，
@@ -108,6 +118,7 @@ export default function ParticleMountain() {
 
     let raf = 0
     let lastFrame = 0
+    let handoverAt = 0 // 粒子落定后，等这一刻再把画布收回山景那一块（见 HANDOVER_MS）
     let schedule = () => {}
 
     // 按透明度分桶：每个桶存 [x, y, r, x, y, r, ...]
@@ -153,6 +164,18 @@ export default function ParticleMountain() {
 
       layer.width = Math.max(1, Math.round(canvasW * dpr))
       layer.height = Math.max(1, Math.round(canvasH * dpr))
+    }
+
+    /**
+     * 粒子停稳之后的"交接"：画布从铺满视口收回山景那一块。
+     * 此刻画面是静止的，所以这一步再重也不会被看出来。
+     */
+    function handover() {
+      if (heroEl) heroEl.classList.remove('hero--intro')
+      stageW = mount.clientWidth
+      stageH = mount.clientHeight
+      layoutCanvas()
+      readScroll()
     }
 
     /* ---------------- 绘制 ---------------- */
@@ -202,7 +225,7 @@ export default function ParticleMountain() {
      * 开场无序云的范围：**宽度和加载进度条一样、高度半屏、垂直居中**的一条带子
      * （不是铺满整个屏幕）。
      *
-     * 宽度直接量进度条那张 DOM 元素，跟遮罩的排版永远对得上；
+     * 宽度直接量页眉底下那根进度条，跟它的排版永远对得上；
      * 万一度不到（比如遮罩已经卸载了）就退回一个居中的固定宽度。
      */
     function introBox() {
@@ -210,7 +233,7 @@ export default function ParticleMountain() {
       const vh = window.innerHeight
       const h = vh * 0.5
       const y = (vh - h) / 2
-      const bar = document.querySelector('.pre__bar')
+      const bar = document.querySelector('.header__bar')
       const rect = bar ? bar.getBoundingClientRect() : null
       if (rect && rect.width > 40) return { x: rect.left, y, w: rect.width, h }
       const w = Math.min(vw * 0.86, 1200)
@@ -238,10 +261,12 @@ export default function ParticleMountain() {
       const cols = Math.max(2, Math.round(stageW / cell))
       const rows = Math.max(2, Math.round(stageH / cell))
 
-      const shade = computeShade(cols, rows)
-      if (reduced) renderMountain(raster, cols, rows, shade)
+      const field = computeShade(cols, rows)
+      if (reduced) renderMountain(raster, cols, rows, field.shade)
 
-      items = reduced ? [] : buildParticles({ cols, rows, shade, cell })
+      items = reduced
+        ? []
+        : buildParticles({ cols, rows, shade: field.shade, layer: field.layer, cell })
 
       // 首屏高度缓存起来：滚动处理里就不再读布局，避免每滚一下都触发布局计算
       heroHeight = heroEl ? heroEl.offsetHeight : window.innerHeight
@@ -322,15 +347,17 @@ export default function ParticleMountain() {
         if (result.allDone) {
           phase = 'live'
           resetToHome(items)
-          if (heroEl) heroEl.classList.remove('hero--intro')
-          // 画布从"铺满视口"收回山景那一块。此刻所有偏移都是 0，画面不会跳。
-          // 顺带把尺寸对齐到此刻真实的容器大小（开场期间可能有被我们忽略的小回流）
-          stageW = mount.clientWidth
-          stageH = mount.clientHeight
-          layoutCanvas()
+          // 注意：这里**不要**顺手把画布收回山景那一块 —— 这一帧正好是粒子落定的
+          // 瞬间，重排 + 画布重新分配 + 层级变化叠在一起，画面会明显顿一下。
+          // 往后挪几帧，交给 handover() 在静止时做（见 HANDOVER_MS）。
+          handoverAt = now + HANDOVER_MS
         }
       } else {
         // ③ 常态：光标一离开首屏就立刻撤掉推力，点按一阶滞后慢慢流回原位
+        if (handoverAt && now >= handoverAt) {
+          handoverAt = 0
+          handover()
+        }
         const result = stepParticles(items, {
           dt,
           progress,
@@ -343,6 +370,7 @@ export default function ParticleMountain() {
 
       const settled =
         phase === 'live' &&
+        !handoverAt && // 交接还没做完，主循环先别停
         progress === targetProgress &&
         mouse.strength < 0.02 &&
         maxMotion < REST_MOTION

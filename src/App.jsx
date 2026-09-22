@@ -1,7 +1,6 @@
-import Preloader from './components/Preloader.jsx'
+import Header from './components/Header.jsx'
 import Cursor from './components/Cursor.jsx'
 import BackToTop from './components/BackToTop.jsx'
-import Nav from './components/Nav.jsx'
 import Hero from './components/Hero.jsx'
 import About from './components/About.jsx'
 import Skills from './components/Skills.jsx'
@@ -18,12 +17,11 @@ import Footer from './components/Footer.jsx'
 export default function App() {
   return (
     <>
-      {/* 三个浮在最上层的东西：开场遮罩、自定义光标、右下角的回到顶部 */}
-      <Preloader />
+      {/* 页眉同时是开场那根加载条（见 components/Header.jsx）；
+          另外两个浮在最上层的东西：自定义光标、右下角的回到顶部 */}
+      <Header />
       <Cursor />
       <BackToTop />
-
-      <Nav />
 
       <main>
         <Hero />
