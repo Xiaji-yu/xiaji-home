@@ -26,6 +26,8 @@
   --rail-w: clamp(140px, 12vw, 186px);
   --gap-x: clamp(20px, 2.6vw, 48px);
   --fig-w: min(58vh, 720px);
+  /* 正文栏贴左栏的程度：1 = 紧贴左栏（默认，跟选项卡耦合最强）；调小就往右挪回栅格中间 */
+  --pull: 1;
   position: relative;
   display: grid;
   /* 两栏：左（选项卡）· 内容（宽度跟屏幕长、在屏幕上居中）。
@@ -116,15 +118,13 @@
   min-width: 0; /* grid 子项默认 min-width:auto，会被宽内容顶破 */
   width: var(--col-w);
   justify-self: center;
-  /* 在"屏幕"上居中，而不是在"左栏右边那块地方"里居中：
-     栅格的居中点比屏幕中心偏右半个（左栏 + 间距）—— 左边那半格被选项卡占了；
-     所以把整块往左拉回一倍（左栏 + 间距）。这里为什么是"两倍"：
-     负 margin 会把 margin box 撑大，居中又把它摊回去一半，实际位移只有一半。
-     空间不够时（窄屏）拉到贴住左栏就停 —— min() 的第二个值就是栅格的富余量，
-     100% 指这一格栅格的宽度。 */
-  margin-inline-start: calc(
-    -1 * min(calc(var(--rail-w) + var(--gap-x)), calc(100% - var(--col-w)))
-  );
+  /* 往左贴住左栏，让正文跟选项卡看上去是一整块（耦合感最强）。
+     栅格这一栏是从"左栏右缘 + 间距"开始的，但 justify-self: center 会把它推到栏中间，
+     所以用负 margin 拉回来，拉的距离 = 这一栏的富余量（100% 指栅格宽度，减掉栏宽）。
+     为什么"取满富余量"就等于贴住：负 margin 把 margin box 撑大到整栏，居中再摊回去
+     一半，实际位移恰好是一半 —— 取满时就正好落到栏的起点。
+     --pull 是拉的比例：1 = 贴住左栏（默认），0 = 在栅格里居中。 */
+  margin-inline-start: calc(-1 * var(--pull) * max(0px, calc(100% - var(--col-w))));
   /* 纸色底 + 比图形高一层：图形需要时可以压在它底下，而文字区域始终干净 */
   z-index: 1;
   background: var(--paper);
