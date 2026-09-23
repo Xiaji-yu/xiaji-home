@@ -192,6 +192,82 @@
   }
 }
 
+/* ---- 章节里更细一层的入场 ----
+   面板整体已经错落淡入了（panelIn），这里再给"重复出现的元素"加一层方向性入场：
+   技能行从左往右依次就位、经历条目从左滑入、卡片横向擦出来。
+   都挂在 .is-armed 下，切章时逐格重放；开了减少动态效果会被 base.css 统一关掉。 */
+
+@keyframes cellIn {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+  }
+
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* 技能行：序号 → 名称 → 条 → 数值，从左往右依次就位（行与行之间还叠着 --d 的错落）*/
+.tabs.is-armed .tabs__view:not([hidden]) .skill > * {
+  animation: cellIn 0.42s var(--ease) both;
+  animation-delay: calc(var(--d, 0ms) + var(--i, 0) * 70ms);
+}
+
+.tabs .skill > *:nth-child(1) {
+  --i: 0;
+}
+
+.tabs .skill > *:nth-child(2) {
+  --i: 1;
+}
+
+.tabs .skill > *:nth-child(3) {
+  --i: 2;
+}
+
+.tabs .skill > *:nth-child(4) {
+  --i: 3;
+}
+
+/* 经历：每条也是"标记 → 年份 → 正文"从左往右（条目之间同样叠 --d）*/
+.tabs.is-armed .tabs__view:not([hidden]) .tl__item > * {
+  animation: cellIn 0.42s var(--ease) both;
+  animation-delay: calc(var(--d, 0ms) + var(--i, 0) * 70ms);
+}
+
+.tabs .tl__item > *:nth-child(1) {
+  --i: 0;
+}
+
+.tabs .tl__item > *:nth-child(2) {
+  --i: 1;
+}
+
+.tabs .tl__item > *:nth-child(3) {
+  --i: 2;
+}
+
+/* 卡片（项目 / 联系）：横向擦出来，不用 transform —— 卡片自己有悬停倾斜，
+   动 transform 会把那个效果顶掉 */
+.tabs.is-armed .tabs__view:not([hidden]) .grid-cell > * {
+  animation: cardIn 0.5s var(--ease) both;
+  animation-delay: calc(var(--d, 0ms) + 80ms);
+}
+
 .tabs__view {
   display: flex;
   flex-direction: column;
