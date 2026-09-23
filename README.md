@@ -310,6 +310,13 @@ xiaji-home/
 Vercel / Netlify），构建设置同样是「`npm run build` / 输出 `dist` / Node 22」，
 都不需要 `BASE_PATH`（站点在根路径上，`vite.config.js` 默认就是 `/`）。
 
+### 自托管（PM2 + Nginx）
+
+自己的服务器上跑：仓库自带零依赖静态服务器 `server/index.cjs`（node 内置模块写的）、
+PM2 进程定义 `ecosystem.config.cjs`、一键更新脚本 `scripts/deploy.sh`，
+完整步骤（Nginx 反代 / TLS / 开机自启 / 日志轮转 / 回滚 / 排错）见
+[docs/PM2-DEPLOY.md](docs/PM2-DEPLOY.md)。与托管平台二选一，切换只改 DNS。
+
 ### GitHub Pages（需要公开仓库或 Pro 以上）
 
 1. 把 `.github/workflows/deploy-pages.yml.disabled` 改回 `deploy-pages.yml`

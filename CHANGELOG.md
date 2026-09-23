@@ -7,6 +7,10 @@
 
 ## [Unreleased]
 
+### 新增
+
+- **自托管部署（PM2 + Nginx）**：新增零依赖静态服务器 `server/index.cjs`（只用 node 内置 `http`/`fs`/`zlib`：SPA 回退、按 `Accept-Encoding` 做 brotli/gzip 且压缩结果驻留内存、`/assets/*` 一年 `immutable`、`index.html` `no-cache`、`GET /healthz` 探针、目录穿越 404、SIGTERM 优雅退出）、PM2 进程定义 `ecosystem.config.cjs`（fork 单实例、`max_memory_restart` / `max_restarts` 兜底、只监听 `127.0.0.1`）、一键更新脚本 `scripts/deploy.sh`（`git pull --ff-only` → `npm ci` → `npm run build` → `pm2 reload --update-env` → 轮询 `/healthz`，任一步失败即非 0 退出，线上留旧版本）和完整文档 `docs/PM2-DEPLOY.md`（Nginx 反代 + certbot TLS + 开机自启 + pm2-logrotate + 回滚 + 排错）。
+
 ### 修复
 
 - **切板块之后右侧图形大半是空的**（真 bug）。配对原本是"每颗粒子找离自己最近的格子"，结果是**后一个图形大半格子分不到粒子** —— 点都堆在两个图形重叠的那块区域去抢同一个最近点；实测最惨的一次：3267 个格子只分到 539 颗粒子，切过去就是一片空白。现在改成两边先按**空间填充曲线（Morton 序）**排序、再一一对应：完整性和"就近"同时拿到（每个格子必定有粒子，位移又被限制在邻近区域）。中间试过"两边各自按 上→下 / 左→右 排序后对应" —— 图形是完整了，但能配出很长的位移（人像头顶的点被配到时间轴左下角），过渡中间糊成一团雾，已弃用。
