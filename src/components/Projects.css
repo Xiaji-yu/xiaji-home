@@ -20,7 +20,7 @@
   padding: clamp(22px, 2.6vw, 34px);
   border-right: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
-  background: var(--paper);
+  background: transparent;
   transform-style: preserve-3d;
   transition:
     transform 0.5s var(--ease),
@@ -28,7 +28,7 @@
 }
 
 .card:hover {
-  background: var(--paper-2);
+  background: rgba(17, 17, 17, 0.022);
 }
 
 /* 卡片左上角的角标 */

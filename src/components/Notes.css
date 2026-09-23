@@ -8,7 +8,7 @@
   gap: 0;
   border: 1px solid var(--line);
   margin-top: clamp(24px, 3vw, 40px);
-  background: var(--paper);
+  background: transparent;
 }
 
 .notes__field {
@@ -104,7 +104,7 @@
   padding: 18px 20px 16px;
   border-right: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
-  background: var(--paper);
+  background: transparent;
   animation: noteIn 0.5s var(--ease) both;
 }
 

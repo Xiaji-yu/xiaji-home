@@ -220,7 +220,7 @@
   margin-bottom: clamp(16px, 4vh, 44px);
   padding-bottom: clamp(10px, 1.8vh, 20px);
   border-bottom: 1px solid var(--line);
-  background: var(--paper); /* 粒子从底下载过时不会糊在标题上 */
+  background: transparent; /* 透明：粒子可以从元素背面穿过去 */
 }
 
 .tabs .sec-head__num {
@@ -328,7 +328,7 @@
 
 /* 内容块自己垫纸色：粒子从底下载过去的时候不会糊在字上 */
 .tabs .pane > *:not(.pane__slot) {
-  background: var(--paper);
+  background: transparent;
 }
 
 .pane__slot {

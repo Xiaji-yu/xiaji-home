@@ -19,7 +19,7 @@
   padding: clamp(20px, 2.4vw, 30px);
   border-right: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
-  background: var(--paper);
+  background: transparent;
   overflow: hidden;
   transition: color 0.45s var(--ease);
 }

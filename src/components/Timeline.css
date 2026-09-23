@@ -23,7 +23,7 @@
   top: clamp(28px, 3.2vw, 38px);
   width: 9px;
   height: 9px;
-  background: var(--paper);
+  background: transparent;
   border: 1px solid var(--line);
   transition:
     background-color 0.5s var(--ease) 0.25s,
