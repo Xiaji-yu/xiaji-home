@@ -72,192 +72,192 @@ function about(ctx) {
   rect(ctx, 14, 93, 72, 4)
 }
 
-/** 技能栈：一段往上走的阶梯（每级踏面一条边线）+ 顶上插一面小旗 */
+/** 技能栈：一叠"横向条形"（跟这一页那五行技能条同一种语法）+ 轴 + 趋势线 */
 function skills(ctx) {
-  const base = 90
-  for (let i = 0; i < 4; i++) {
-    const x = 9 + i * 20.5
-    const top = 76 - i * 18
-    rect(ctx, x, top, 20, base - top)
-    rect(ctx, x + 5, top + 5, 15, 3) // 踏面边线
+  // 纵轴
+  rect(ctx, 12, 12, 3, 76)
+  // 五条：长度各不相同，左侧留出"名称位"
+  const rows = [
+    [20, 72],
+    [32, 62],
+    [44, 68],
+    [56, 44],
+    [68, 54],
+  ]
+  for (const [y, w] of rows) {
+    rect(ctx, 22, y, 12, 5) // 名称块
+    rect(ctx, 40, y, w, 5) // 条
+    rect(ctx, 40, y, Math.round(w * 0.62), 5) // 已填的那一段（更实）
   }
-  rect(ctx, 9, 93, 82, 3)
-  // 扶手：沿阶梯外侧的一道斜线
-  ctx.lineWidth = 4
+  // 趋势：折线 + 节点
+  ctx.lineWidth = 3
   ctx.beginPath()
-  ctx.moveTo(13, 68)
-  ctx.lineTo(88, 8)
+  rows.forEach(([y, w], k) => {
+    const x = 44 + w
+    k === 0 ? ctx.moveTo(x, y + 2) : ctx.lineTo(x, y + 2)
+  })
   ctx.stroke()
-  // 小旗：杆 + 旗面
-  rect(ctx, 87, 6, 3, 18)
-  ctx.beginPath()
-  ctx.moveTo(90, 6)
-  ctx.lineTo(99, 11)
-  ctx.lineTo(90, 16)
-  ctx.closePath()
-  ctx.fill()
-}
-
-/** 项目作品：一个浏览器窗口（三张卡片叠在一起在点阵尺度下会糊成一团，换成这个） */
-function work(ctx) {
-  ctx.lineWidth = 5
-  strokeRect(ctx, 10, 20, 80, 62)
-  rect(ctx, 10, 32, 80, 4) // 标题栏
-  for (const x of [18, 26, 34]) rect(ctx, x, 24, 5, 5) // 窗口按钮
-  rect(ctx, 32, 36, 3, 46) // 侧栏分隔
-  for (const y of [42, 52, 62]) rect(ctx, 39, y, 12, 3) // 侧栏条目
-  rect(ctx, 56, 42, 28, 22) // 内容区的图位
-  rect(ctx, 56, 70, 28, 3) // 内容线
-  rect(ctx, 87, 38, 3, 40) // 滚动条
-  rect(ctx, 12, 76, 76, 3) // 底部状态栏
-  rect(ctx, 66, 56, 16, 3) // 再来一条内容线
-  rect(ctx, 22, 50, 8, 4)
-  rect(ctx, 22, 62, 8, 4)
-}
-
-/** 经历：一条蜿蜒向前的路，路边插着三面里程碑小旗，尽头一个箭头 */
-function journey(ctx) {
-  // 路：两段贝塞尔拼出来的 S 形，粗线点阵化之后是一条有走向的带子
-  ctx.lineWidth = 6
-  ctx.lineCap = 'round'
-  ctx.beginPath()
-  ctx.moveTo(6, 72)
-  ctx.bezierCurveTo(26, 72, 30, 40, 48, 44)
-  ctx.bezierCurveTo(66, 48, 70, 24, 92, 28)
-  ctx.stroke()
-
-  // 里程碑：一根杆 + 一面三角旗，立在路的三个位置上
-  for (const [x, y] of [
-    [24, 58],
-    [48, 44],
-    [70, 32],
-  ]) {
-    rect(ctx, x - 1.5, y - 24, 3, 24)
+  for (const [y, w] of rows) {
     ctx.beginPath()
-    ctx.moveTo(x + 1.5, y - 24)
-    ctx.lineTo(x + 14, y - 19)
-    ctx.lineTo(x + 1.5, y - 13)
-    ctx.closePath()
+    ctx.arc(44 + w, y + 2, 3, 0, Math.PI * 2)
     ctx.fill()
   }
+  rect(ctx, 12, 90, 80, 3) // 底轴
+}
 
-  // 起点：一个圆点（路的开始）
-  ctx.beginPath()
-  ctx.arc(6, 72, 4, 0, Math.PI * 2)
-  ctx.fill()
-
-  // 路中心：一条表示走向的虚线
-  ctx.beginPath()
-  for (const [x, y] of [
-    [18, 70],
-    [30, 60],
-    [44, 51],
-    [58, 41],
-    [72, 33],
-    [84, 29],
+/** 项目作品：三张"项目卡片"叠在一起（跟这一页三张卡对应） */
+function work(ctx) {
+  // 后面两张先画，露出边角
+  for (const [dx, dy] of [
+    [10, 16],
+    [6, 9],
   ]) {
-    ctx.moveTo(x - 3, y)
-    ctx.lineTo(x + 3, y)
+    ctx.lineWidth = 3
+    strokeRect(ctx, 10 + dx, 14 + dy, 62, 52)
   }
+  // 最前面那张：标题栏 + 缩略图 + 两行说明 + 标签
+  ctx.lineWidth = 5
+  strokeRect(ctx, 20, 30, 68, 56)
+  rect(ctx, 20, 30, 68, 8) // 标题栏
+  rect(ctx, 26, 44, 22, 16) // 缩略图
+  rect(ctx, 54, 44, 26, 4) // 说明两行
+  rect(ctx, 54, 54, 20, 4)
+  rect(ctx, 26, 68, 16, 6) // 标签
+  rect(ctx, 46, 68, 20, 6)
+  rect(ctx, 26, 78, 46, 3) // 页脚
+}
+
+/** 经历：一条时间轴（跟这一页那四条同一种语法）：轴 + 刻度 + 节点 + 上行折线 + 旗 */
+function journey(ctx) {
+  // 主轴
+  rect(ctx, 12, 62, 76, 4)
+  // 刻度 + 节点（越往后越大）
+  const xs = [26, 42, 58, 74]
+  xs.forEach((x, k) => {
+    rect(ctx, x, 56, 2, 16) // 刻度
+    ctx.beginPath()
+    ctx.arc(x, 64, 5 + k * 1.4, 0, Math.PI * 2)
+    ctx.fill()
+  })
+  // 上行折线：从第一个节点爬到最后一个
+  ctx.lineWidth = 3
+  ctx.beginPath()
+  xs.forEach((x, k) => {
+    const y = 46 - k * 8
+    k === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+  })
   ctx.stroke()
-
-  // 路边两粒小石子
+  // 尽头一面旗
+  rect(ctx, 74, 6, 3, 14)
   ctx.beginPath()
-  ctx.arc(34, 78, 3, 0, Math.PI * 2)
-  ctx.arc(62, 22, 2.5, 0, Math.PI * 2)
-  ctx.fill()
-
-  // 里程碑底座：杆下各一小段地面线
-  for (const [x, y] of [
-    [24, 58],
-    [48, 44],
-    [70, 32],
-  ]) {
-    rect(ctx, x - 6, y + 1, 12, 3)
-  }
-
-  // 尽头：一个指向右上的箭头
-  ctx.beginPath()
-  ctx.moveTo(96, 20)
-  ctx.lineTo(84, 24)
-  ctx.lineTo(89, 31)
+  ctx.moveTo(77, 6)
+  ctx.lineTo(90, 11)
+  ctx.lineTo(77, 16)
   ctx.closePath()
   ctx.fill()
+  // 底部年份位
+  for (const x of xs) rect(ctx, x - 4, 74, 9, 4)
 }
 
-/** 联系方式：信封 */
+/** 联系方式：一个对话气泡 + 从里面飞出去的纸飞机（带虚线航迹） */
 function contact(ctx) {
-  ctx.lineWidth = 6
-  strokeRect(ctx, 11, 27, 78, 46)
-  ctx.beginPath()
-  ctx.moveTo(11, 27)
-  ctx.lineTo(50, 55)
-  ctx.lineTo(89, 27)
-  ctx.stroke()
-  // 邮票
-  ctx.lineWidth = 3
-  strokeRect(ctx, 70, 33, 13, 15)
-  // 收件人两行 + 寄件人一行
-  rect(ctx, 18, 60, 24, 3)
-  rect(ctx, 18, 66, 16, 3)
-  rect(ctx, 18, 36, 18, 3)
-  // 邮票齿孔
-  for (const y of [35, 41, 47]) rect(ctx, 84, y, 2, 2)
-}
-
-/** 留言便签：一张折了角的便签纸 + 一支斜放的铅笔（照参考图） */
-function notes(ctx) {
+  // 气泡
   ctx.lineWidth = 5
   ctx.beginPath()
-  ctx.moveTo(18, 12)
-  ctx.lineTo(64, 12)
-  ctx.lineTo(82, 30)
-  ctx.lineTo(82, 88)
-  ctx.lineTo(18, 88)
+  ctx.moveTo(10, 26)
+  ctx.lineTo(58, 26)
+  ctx.quadraticCurveTo(66, 26, 66, 34)
+  ctx.lineTo(66, 50)
+  ctx.quadraticCurveTo(66, 58, 58, 58)
+  ctx.lineTo(30, 58)
+  ctx.lineTo(20, 70) // 小尾巴
+  ctx.lineTo(24, 58)
+  ctx.lineTo(10, 58)
+  ctx.quadraticCurveTo(2, 58, 2, 50)
+  ctx.lineTo(2, 34)
+  ctx.quadraticCurveTo(2, 26, 10, 26)
   ctx.closePath()
   ctx.stroke()
-  // 折角
-  ctx.beginPath()
-  ctx.moveTo(64, 12)
-  ctx.lineTo(64, 30)
-  ctx.lineTo(82, 30)
-  ctx.stroke()
-  // 顶部回形针
+  // 气泡里两行"话"
+  rect(ctx, 12, 38, 34, 4)
+  rect(ctx, 12, 48, 22, 4)
+  // 虚线航迹
   ctx.lineWidth = 3
   ctx.beginPath()
-  ctx.moveTo(40, 12)
-  ctx.lineTo(40, 4)
-  ctx.lineTo(52, 4)
-  ctx.lineTo(52, 14)
-  ctx.stroke()
-  // 折角内侧的阴影线
-  rect(ctx, 67, 13, 13, 3)
-
-  // 标题线 + 项目符 + 几行字
-  rect(ctx, 28, 22, 22, 4)
-  for (const [y, w] of [
-    [44, 34],
-    [56, 42],
-    [68, 24],
-    [78, 34],
+  for (const [x, y] of [
+    [70, 52],
+    [76, 44],
+    [82, 36],
+    [88, 28],
   ]) {
-    rect(ctx, 34, y, w, 4)
-    rect(ctx, 26, y + 1, 4, 4) // 项目符
+    ctx.moveTo(x - 3, y + 1)
+    ctx.lineTo(x + 1, y - 1)
   }
+  ctx.stroke()
+  // 纸飞机
+  ctx.beginPath()
+  ctx.moveTo(96, 14)
+  ctx.lineTo(72, 30)
+  ctx.lineTo(84, 32)
+  ctx.lineTo(80, 44)
+  ctx.lineTo(88, 34)
+  ctx.lineTo(96, 34)
+  ctx.closePath()
+  ctx.fill()
+}
 
-  // 右上角斜放一支铅笔（照参考图 3 的手绘）：笔杆 + 金属箍 + 笔尖
+/** 留言便签：一"面"便签（三张叠着，最上面那张斜一点）+ 一支铅笔 */
+function notes(ctx) {
+  // 后面两张（错开露出边）
+  for (const [dx, dy, rot] of [
+    [12, 10, -0.05],
+    [6, 5, 0.04],
+  ]) {
+    ctx.save()
+    ctx.translate(50 + dx - 6, 52 + dy - 5)
+    ctx.rotate(rot)
+    ctx.lineWidth = 3
+    strokeRect(ctx, -30, -34, 62, 62)
+    ctx.restore()
+  }
+  // 最上面那张：折角 + 标题 + 项目符若干行
+  ctx.lineWidth = 5
+  ctx.beginPath()
+  ctx.moveTo(16, 14)
+  ctx.lineTo(60, 14)
+  ctx.lineTo(78, 32)
+  ctx.lineTo(78, 90)
+  ctx.lineTo(16, 90)
+  ctx.closePath()
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.moveTo(60, 14)
+  ctx.lineTo(60, 32)
+  ctx.lineTo(78, 32)
+  ctx.stroke()
+  rect(ctx, 26, 24, 22, 4) // 标题
+  for (const [y, w] of [
+    [40, 30],
+    [50, 40],
+    [60, 34],
+    [70, 22],
+  ]) {
+    rect(ctx, 32, y, w, 4)
+    rect(ctx, 24, y + 1, 4, 3) // 项目符
+  }
+  // 右上角斜放的铅笔
   ctx.save()
   ctx.translate(74, 30)
   ctx.rotate(0.62)
-  rect(ctx, -5, -30, 10, 44) // 笔杆
-  rect(ctx, -5, 14, 10, 5) // 金属箍
-  ctx.beginPath() // 笔尖
+  rect(ctx, -5, -30, 10, 44)
+  rect(ctx, -5, 14, 10, 5)
+  ctx.beginPath()
   ctx.moveTo(-5, 19)
   ctx.lineTo(5, 19)
   ctx.lineTo(0, 30)
   ctx.closePath()
   ctx.fill()
-  rect(ctx, -5, -34, 10, 4) // 笔尾
+  rect(ctx, -5, -34, 10, 4)
   ctx.restore()
 }
 
