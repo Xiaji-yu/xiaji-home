@@ -53,17 +53,12 @@ function strokeRect(ctx, x, y, w, h) {
   ctx.strokeRect(x, y, w, h)
 }
 
-/** 关于我：人像（头 + 肩 + 脖颈），外面一圈证件照的那种细框，底下压一条地平线 */
+/** 关于我：人像（头 + 肩），底下压一条地平线 */
 function about(ctx) {
-  // 证件照外框
-  ctx.lineWidth = 3
-  strokeRect(ctx, 7, 7, 86, 86)
   // 头
   ctx.beginPath()
   ctx.arc(50, 32, 15, 0, Math.PI * 2)
   ctx.fill()
-  // 脖颈
-  rect(ctx, 45, 45, 10, 13)
   // 肩：从两侧收上去的梯形，顶部带一点圆弧
   ctx.beginPath()
   ctx.moveTo(20, 88)
