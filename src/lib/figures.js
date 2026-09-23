@@ -139,7 +139,7 @@ function contact(ctx) {
   ctx.stroke()
 }
 
-/** 留言便签：一张折了角的便签纸 */
+/** 留言便签：一张折了角的便签纸 + 一支斜放的铅笔（照参考图） */
 function notes(ctx) {
   ctx.lineWidth = 5
   ctx.beginPath()
@@ -164,6 +164,21 @@ function notes(ctx) {
   ]) {
     rect(ctx, 28, y, w, 5)
   }
+
+  // 右上角斜放一支铅笔（照参考图 3 的手绘）：笔杆 + 金属箍 + 笔尖
+  ctx.save()
+  ctx.translate(74, 30)
+  ctx.rotate(0.62)
+  rect(ctx, -5, -30, 10, 44) // 笔杆
+  rect(ctx, -5, 14, 10, 5) // 金属箍
+  ctx.beginPath() // 笔尖
+  ctx.moveTo(-5, 19)
+  ctx.lineTo(5, 19)
+  ctx.lineTo(0, 30)
+  ctx.closePath()
+  ctx.fill()
+  rect(ctx, -5, -34, 10, 4) // 笔尾
+  ctx.restore()
 }
 
 const FIGURES = { about, skills, work, journey, contact, notes }
