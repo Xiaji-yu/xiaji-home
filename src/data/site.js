@@ -48,8 +48,6 @@ export const site = {
 
   /* ---- 技能栈：value 是 0~100 的自评，随便改 ---- */
   skills: [
-    { name: 'HTML & CSS', note: '排版 / 布局 / 响应式', value: 82 },
-    { name: 'JavaScript', note: '逻辑 / 交互 / 动画', value: 76 },
     { name: 'React', note: '组件 / 状态 / 工程化', value: 70 },
     { name: 'TypeScript', note: '类型 / 少写 bug', value: 58 },
     { name: 'Git & GitHub', note: '版本 / 协作', value: 64 },

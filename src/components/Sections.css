@@ -25,6 +25,8 @@
   --col-w: clamp(620px, 78vw, 1560px);
   --rail-w: clamp(140px, 12vw, 186px);
   --gap-x: clamp(20px, 2.6vw, 48px);
+  /* 左右留白：整组（左栏 + 间距 + 板块）在屏幕上居中，靠下面那条 max-width 卡住 */
+  --pad-x: clamp(24px, 3.4vw, 56px);
   /* 留白穴的边长（六个章节各留一处，图形嵌在这里面）*/
   --slot-w: clamp(320px, 27vw, 500px);
   /* 正文栏贴左栏的程度：1 = 紧贴左栏（默认，跟选项卡耦合最强）；调小就往右挪回栅格中间 */
@@ -38,10 +40,12 @@
   gap: var(--gap-x);
   align-items: center;
   width: 100%;
-  max-width: 2200px;
+  /* 宽度正好等于"左栏 + 间距 + 板块 + 两侧留白"，再 margin auto —— 整组在屏幕上居中，
+     1080P 上不再整体偏左（想改板块宽度只动 --col-w 就行）*/
+  max-width: calc(var(--rail-w) + var(--gap-x) + var(--col-w) + var(--pad-x) * 2);
   min-height: 100vh;
   margin: 0 auto;
-  padding: clamp(56px, 7vh, 88px) clamp(24px, 3.4vw, 56px);
+  padding: clamp(56px, 7vh, 88px) var(--pad-x);
 }
 
 /* ---- 左栏：选项 ---- */
@@ -340,46 +344,29 @@
   background: none;
 }
 
-/* ① 关于我 · 穴在右上：正文 | 信息表 | 穴 */
+/* ① 关于我 · 图形在右（正文 + 信息表 : 图形 ≈ 6 : 4）：
+   信息表挪到正文下面，左边一栏装"正文 + 信息表"，右边是图形那 4 成 */
 .tabs .pane--about {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 320px) var(--slot-w);
+  /* 图形这一格给到板块的 4 成（6:4），比别的章节大一圈 */
+  --slot-w: clamp(320px, 32vw, 600px);
+  grid-template-columns: minmax(0, 1fr) var(--slot-w);
+  grid-template-rows: auto auto;
 }
 
 .tabs .pane--about > .about__body {
   grid-column: 1;
+  grid-row: 1;
 }
 
 .tabs .pane--about > .about__facts {
-  grid-column: 2;
+  grid-column: 1;
+  grid-row: 2;
 }
 
 .tabs .pane--about > .pane__slot {
-  grid-column: 3;
-}
-
-/* 关于我这一块是三栏（正文 | 信息表 | 穴），窄一点的桌面上正文会被挤成
-   20 来个字一行；所以下面 1700px 以内改成两栏：正文 | 穴，信息表落到正文下面。
-   穴仍然在右上，没有换位置。 */
-@media (max-width: 1699px) {
-  .tabs .pane--about {
-    grid-template-columns: minmax(0, 1fr) var(--slot-w);
-    grid-template-rows: auto auto;
-  }
-
-  .tabs .pane--about > .about__body {
-    grid-column: 1;
-    grid-row: 1;
-  }
-
-  .tabs .pane--about > .about__facts {
-    grid-column: 1;
-    grid-row: 2;
-  }
-
-  .tabs .pane--about > .pane__slot {
-    grid-column: 2;
-    grid-row: 1 / span 2;
-  }
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
 }
 
 /* ② 技能栈 · 穴在右中 */
@@ -393,42 +380,44 @@
   grid-row: 1;
 }
 
+/* 删掉两条技能之后只剩 5 行：把行距拉开（拉长），整块再往下挪一点 */
 .tabs .pane--skills > .skills__list {
   grid-column: 1;
   grid-row: 2;
+  margin-top: clamp(20px, 2.6vw, 44px);
 }
 
 .tabs .pane--skills > .pane__slot {
   grid-column: 2;
   grid-row: 1 / span 2;
-  align-self: center;
+  align-self: start; /* 阶梯图形挪到右上角 */
 }
 
-/* ③ 项目作品 · 穴在右下：引导句和卡片占左半边，穴落在右下 */
+/* ③ 项目作品 · 图形在左上角：引导句与卡片在右栏，卡片整体下移一点点 */
 .tabs .pane--work {
-  grid-template-columns: minmax(0, 1fr) var(--slot-w);
-  grid-template-rows: auto 1fr;
+  grid-template-columns: var(--slot-w) minmax(0, 1fr);
 }
 
 .tabs .pane--work > .sec-lead {
-  grid-column: 1;
+  grid-column: 2;
   grid-row: 1;
 }
 
 .tabs .pane--work > .work__grid {
-  grid-column: 1;
+  grid-column: 2;
   grid-row: 2;
+  margin-top: clamp(20px, 2.6vw, 44px);
 }
 
 .tabs .pane--work > .work__hint {
-  grid-column: 1;
+  grid-column: 2;
   grid-row: 3;
 }
 
 .tabs .pane--work > .pane__slot {
-  grid-column: 2;
-  grid-row: 2;
-  align-self: end;
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  align-self: start;
 }
 
 /* ④ 经历 · 穴在左中 */
@@ -454,24 +443,26 @@
 }
 
 /* ⑤ 联系方式 · 穴在左上：引导句挪到穴右边，渠道卡在下面通铺 */
+/* 穴让给项目作品（左上）之后，联系方式改到右下角 */
 .tabs .pane--contact {
-  grid-template-columns: var(--slot-w) minmax(0, 1fr);
-  grid-template-rows: auto auto;
-}
-
-.tabs .pane--contact > .pane__slot {
-  grid-column: 1;
-  grid-row: 1;
+  grid-template-columns: minmax(0, 1fr) var(--slot-w);
+  grid-template-rows: auto 1fr;
 }
 
 .tabs .pane--contact > .sec-lead {
-  grid-column: 2;
+  grid-column: 1 / -1;
   grid-row: 1;
 }
 
 .tabs .pane--contact > .contact__grid {
-  grid-column: 1 / -1;
+  grid-column: 1;
   grid-row: 2;
+}
+
+.tabs .pane--contact > .pane__slot {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: end;
 }
 
 /* ⑥ 留言便签 · 穴在左下：表单在左上，穴在它下面，便签墙占右半边两行 */

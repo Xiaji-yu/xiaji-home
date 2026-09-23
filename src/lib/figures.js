@@ -13,16 +13,17 @@ const INK = '#111111'
 /**
  * 每个图形在画布里的落点：scale 是占画布的比例，dx/dy 是相对中心的偏移（画布比例）。
  *
- * **刻意让六个位置各不相同** —— 换板块时粒子不只是原地重排，而是"从这边挪到那边"，
- * 于是过渡里多了一层平移，不会显得生硬。偏移控制在 ±0.06，保证图形不会被画布切掉。
+ * 六个图形的"落点差异"现在由章节里的留白穴负责（每个穴位置不同），所以这里统一：
+ * 居中、留 6% 内缩（保证描边不会被画布切掉）。想让某一块的图形大一点小一点，
+ * 改那个面板里的 data-fig-scale。
  */
 const PLACEMENT = {
-  about: { scale: 0.88, dx: -0.06, dy: -0.04 },
-  skills: { scale: 0.9, dx: 0.05, dy: 0.05 },
-  work: { scale: 0.94, dx: 0.01, dy: -0.05 },
-  journey: { scale: 0.96, dx: -0.05, dy: 0.06 },
-  contact: { scale: 0.86, dx: 0.06, dy: 0.02 },
-  notes: { scale: 0.9, dx: -0.02, dy: 0.05 },
+  about: { scale: 0.94, dx: 0, dy: 0 },
+  skills: { scale: 0.94, dx: 0, dy: 0 },
+  work: { scale: 0.94, dx: 0, dy: 0 },
+  journey: { scale: 0.94, dx: 0, dy: 0 },
+  contact: { scale: 0.94, dx: 0, dy: 0 },
+  notes: { scale: 0.94, dx: 0, dy: 0 },
 }
 
 /** 统一入口：把某个板块的图形按它自己的落点画进 (0,0)-(size,size) 这块区域 */
@@ -92,18 +93,39 @@ function work(ctx) {
   rect(ctx, 22, 64, 46, 4)
 }
 
-/** 经历：一条时间轴，三个菱形节点（和板块里那排小方块同一种语言） */
+/** 经历：一条蜿蜒向前的路，路边插着三面里程碑小旗，尽头一个箭头 */
 function journey(ctx) {
-  rect(ctx, 10, 47, 80, 6)
-  for (const x of [22, 50, 78]) {
+  // 路：两段贝塞尔拼出来的 S 形，粗线点阵化之后是一条有走向的带子
+  ctx.lineWidth = 6
+  ctx.lineCap = 'round'
+  ctx.beginPath()
+  ctx.moveTo(6, 72)
+  ctx.bezierCurveTo(26, 72, 30, 40, 48, 44)
+  ctx.bezierCurveTo(66, 48, 70, 24, 92, 28)
+  ctx.stroke()
+
+  // 里程碑：一根杆 + 一面三角旗，立在路的三个位置上
+  for (const [x, y] of [
+    [24, 58],
+    [48, 44],
+    [70, 32],
+  ]) {
+    rect(ctx, x - 1.5, y - 24, 3, 24)
     ctx.beginPath()
-    ctx.moveTo(x, 34)
-    ctx.lineTo(x + 10, 50)
-    ctx.lineTo(x, 66)
-    ctx.lineTo(x - 10, 50)
+    ctx.moveTo(x + 1.5, y - 24)
+    ctx.lineTo(x + 14, y - 19)
+    ctx.lineTo(x + 1.5, y - 13)
     ctx.closePath()
     ctx.fill()
   }
+
+  // 尽头：一个指向右上的箭头
+  ctx.beginPath()
+  ctx.moveTo(96, 20)
+  ctx.lineTo(84, 24)
+  ctx.lineTo(89, 31)
+  ctx.closePath()
+  ctx.fill()
 }
 
 /** 联系方式：信封 */
