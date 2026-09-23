@@ -122,24 +122,14 @@ ol {
    分节 / 分节标题
    -------------------------------------------------------------------------- */
 
-/* 章节统一高度：每一节都至少占满一屏，内容垂直居中 —— 于是从上往下滚，
-   节的节奏完全一致（改之前是 0.67~1.10 屏不等）。内容比一屏还高的
-   （窄屏 / 矮屏上的项目、便签等）就让它自然变高：不裁切、也不压缩。
-   首屏和页脚不参与统一（见 App.jsx 的板块顺序）。 */
+/* 章节：六个板块现在装在左侧选项卡的面板里（components/Sections.jsx），
+   所以这里只管"它是个块"—— 高度、留白、分隔线都由 .tabs 那一层决定
+   （见 Sections.css 里的 .tabs .section）。 */
 .section {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-height: 100vh;
-  /* 统一成一屏之后，上下留白不必再那么厚 —— 多余的空间交给"居中"去分配 */
-  padding: clamp(48px, 5.5vw, 88px) 0;
-  border-top: 1px solid var(--line);
+  padding: 0;
 }
 
 /* 首屏底部已经有一条分界线了，避免和紧随其后的板块画成双线 */
-.hero + .section {
-  border-top: 0;
-}
 
 .sec-head {
   display: flex;

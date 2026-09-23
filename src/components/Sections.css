@@ -1,0 +1,280 @@
+/* ==========================================================================
+   板块选项卡：左边一列竖排选项 + 右边一块内容
+   参考图那种语法 —— 中文大字 + 右边小号英文 + 每条底下一根细线；
+   选中项：中文加粗变黑、左侧一条竖线、英文也转黑。
+   窄屏（≤860px）左栏放不下，改成顶部一条可横向滑动的标签行。
+   ========================================================================== */
+
+.tabs {
+  position: relative;
+  min-height: 100vh;
+  /* 用 clip-path 而不是 overflow:hidden 把左下角那行幽灵字裁在版面里 ——
+     overflow 会把这里变成滚动容器，窄屏上那排吸顶标签就粘不住了 */
+  clip-path: inset(0);
+  background: var(--paper);
+}
+
+.tabs__inner {
+  position: relative;
+  display: grid;
+  /* 两栏：左（选项卡）· 内容（正常宽度）。
+     粒子图形不在栅格里 —— 它绝对定位垫在右侧当背景层（见 .tabs__figure），
+     主内容比它高一层，所以内容可以是正常宽度、需要时把图形压在底下。 */
+  grid-template-columns: clamp(140px, 12vw, 186px) minmax(0, 620px);
+  gap: clamp(20px, 2.6vw, 48px);
+  align-items: center;
+  width: 100%;
+  max-width: 2200px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: clamp(56px, 7vh, 88px) clamp(24px, 3.4vw, 56px);
+}
+
+/* ---- 左栏：选项 ---- */
+
+.tabs__rail {
+  display: flex;
+  flex-direction: column;
+}
+
+.tab {
+  position: relative;
+  width: 100%; /* 每条底下的细线要一样长（图3 那种通栏线），别按文字宽度收 */
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 17px 0 16px;
+  border-bottom: 1px solid var(--line-soft);
+  background: none;
+  color: var(--muted);
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.35s var(--ease);
+}
+
+/* 选中时左侧那条竖线 */
+.tab::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--pad) * -0.32);
+  top: 50%;
+  width: 2px;
+  height: 0;
+  background: var(--ink);
+  transform: translateY(-50%);
+  transition: height 0.35s var(--ease);
+}
+
+.tab__cn {
+  font-size: clamp(17px, 1.5vw, 21px);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  transition: font-weight 0.2s var(--ease);
+}
+
+.tab__en {
+  color: inherit;
+  opacity: 0.72;
+}
+
+.tab:hover {
+  color: var(--ink-soft);
+}
+
+.tab.is-on {
+  color: var(--ink);
+  border-bottom-color: var(--line);
+}
+
+.tab.is-on::before {
+  height: 26px;
+}
+
+.tab.is-on .tab__cn {
+  font-weight: 600;
+}
+
+.tab.is-on .tab__en {
+  opacity: 1;
+}
+
+/* ---- 右栏：面板 ---- */
+
+.tabs__panel {
+  position: relative;
+  min-width: 0; /* grid 子项默认 min-width:auto，会被宽内容顶破 */
+  width: 100%;
+  max-width: 620px; /* 主内容正常宽度；右边让给图形 */
+  margin: 0;
+  /* 纸色底 + 比图形高一层：图形需要时可以压在它底下，而文字区域始终干净 */
+  position: relative;
+  z-index: 1;
+  background: var(--paper);
+}
+
+/* 主内容变窄了，板块内部原来的多列排版跟着收一收 */
+.tabs .about__grid {
+  grid-template-columns: 1fr;
+  gap: clamp(22px, 3vw, 32px);
+}
+
+/* 卡片按栏宽自适应：宽的时候两列，窄到一定程度自动变一列 */
+.tabs .work__grid,
+.tabs .contact__grid {
+  grid-template-columns: repeat(auto-fit, minmax(228px, 1fr));
+}
+
+.tabs .notes__form {
+  grid-template-columns: 1fr 200px;
+}
+
+.tabs__view {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: min(64vh, 560px);
+}
+
+/* hidden 的面板必须真的消失（下面的 display:flex 会盖掉 UA 的 [hidden]） */
+.tabs__view[hidden] {
+  display: none;
+}
+
+/* 面板里的章节：高度、留白、分隔线都由这一层管，章节自己只剩内容 */
+.tabs .section {
+  display: block;
+  min-height: 0;
+  padding: 0;
+  border-top: 0;
+}
+
+/* 章节标题交给左栏去说了，这里对读屏保留、视觉上藏起来（h2 还在文档里） */
+.tabs .sec-head {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  white-space: nowrap;
+  clip-path: inset(50%);
+  border: 0;
+}
+
+/* ---- 左下角的大号幽灵字：当前板块的英文名（挂在 .tabs__inner 上）---- */
+
+.tabs__mark {
+  position: absolute;
+  left: 0;
+  bottom: -0.18em;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+  font-size: clamp(56px, 9.5vw, 148px);
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 0.9;
+  text-transform: uppercase;
+  color: rgba(17, 17, 17, 0.045);
+  -webkit-text-stroke: 1px rgba(17, 17, 17, 0.07);
+}
+
+/* ---- 粒子图形：绝对定位垫在右侧，当背景层 ---- */
+
+.tabs__figure {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  z-index: 0;
+  width: min(58vh, 720px); /* 比上一版小约四分之一 */
+  transform: translateY(-50%);
+  pointer-events: none; /* 纯装饰，别挡住内容的点击 */
+}
+
+/* ---- 窄屏：左栏变成顶部一条可横滑的标签；三栏挤不下，图形藏起来 ---- */
+
+@media (max-width: 860px) {
+  .tabs__inner {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    align-content: center;
+    padding: clamp(72px, 12vh, 110px) var(--pad) clamp(56px, 9vh, 90px);
+  }
+
+  /* 手机上这排标签吸顶（贴在页眉下面）：面板动辄一千多像素，
+     不吸顶就得先滚回顶部才能切下一个 —— 桌面左栏按你说的不吸 */
+  .tabs__rail {
+    position: sticky;
+    top: 56px;
+    z-index: 5;
+    flex-direction: row;
+    gap: 20px;
+    padding: 4px 0 2px;
+    background: var(--paper);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tabs__rail::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab {
+    flex: none;
+    padding: 8px 0 12px;
+    white-space: nowrap;
+  }
+
+  .tab::before {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    transform: none;
+  }
+
+  .tab.is-on::before {
+    width: 100%;
+    height: 2px;
+  }
+
+  .tabs__view {
+    min-height: 0;
+  }
+
+  .tabs__figure {
+    display: none; /* 手机上只保留主内容 */
+  }
+
+  .tabs__panel {
+    max-width: none;
+    background: none;
+  }
+
+  /* 窄屏内容占满整宽，上面那几条单列/两列的收窄就不需要了 */
+  .tabs .work__grid,
+  .tabs .contact__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tabs .notes__form {
+    grid-template-columns: 1fr;
+  }
+
+  .tabs__mark {
+    bottom: -0.12em;
+  }
+}
+
+@media (max-width: 520px) {
+  .tab__cn {
+    font-size: 16px;
+  }
+
+  .tab__en {
+    display: none; /* 手机上只留中文，省地方 */
+  }
+}

@@ -194,6 +194,16 @@ export const site = {
 }
 
 /* ---- 顶部导航 ---- */
+/* ---- 左侧选项卡的六项（中文大字 + 英文小标签，和各个板块的标题一致） ---- */
+export const sectionTabs = [
+  { id: 'about', cn: '关于我', en: 'About' },
+  { id: 'skills', cn: '技能栈', en: 'Skills' },
+  { id: 'work', cn: '项目作品', en: 'Work' },
+  { id: 'journey', cn: '经历', en: 'Journey' },
+  { id: 'contact', cn: '联系方式', en: 'Contact' },
+  { id: 'notes', cn: '留言便签', en: 'Notes' },
+]
+
 export const navLinks = [
   { label: 'About', href: '#about' },
   { label: 'Skills', href: '#skills' },

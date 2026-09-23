@@ -1,0 +1,18 @@
+/* ==========================================================================
+   右侧的粒子图形：一块正方形画布，里面是当前板块的几何图形（粒子聚出来的）
+   窄屏放不下三栏，整块藏起来（见 Sections.css）
+   ========================================================================== */
+
+.figure {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  /* 不要 margin:0 auto：auto 外边距会盖掉父层的 justify-content，
+     图形就没法靠右站了（父层 Sections.css 的 .tabs__figure 用 flex-end） */
+}
+
+.figure__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
