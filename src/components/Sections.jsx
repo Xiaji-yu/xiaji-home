@@ -45,6 +45,9 @@ export default function Sections() {
   const [mark, setMark] = useState({ cur: '', prev: '' })
   /* 整块入场动画的"保险栓"：整块滚进视野之前先别演，滚到了才放行 */
   const [armed, setArmed] = useState(false)
+  /* 箭头和底部条只在**板块区在视野里**的时候出现 —— 它们是 fixed 的，
+     不然滚回首屏那座山、滚到页脚时也跟着飘在那里 */
+  const [inView, setInView] = useState(false)
   const blockRef = useRef(null)
 
   /** 把整块精确对齐到"落点"（页眉/页脚/首屏那些锚点用）：
@@ -169,6 +172,21 @@ export default function Sections() {
     return () => io.disconnect()
   }, [])
 
+  /* 板块区在不在视野里 → 箭头和底部条跟着显隐（它们是 fixed 的，不然首屏、页脚上也有）*/
+  useEffect(() => {
+    const el = blockRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') {
+      setInView(true)
+      return
+    }
+    const io = new IntersectionObserver(
+      (entries) => setInView(entries.some((e) => e.isIntersecting)),
+      { threshold: 0.12, rootMargin: '-6% 0px -6% 0px' },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
   const index = Math.max(
     0,
     sectionTabs.findIndex((t) => t.id === active),
@@ -233,7 +251,7 @@ export default function Sections() {
       {/* 左右箭头：贴在屏幕两侧、竖直居中（照参考图），到头循环。
           放在 section 外面 —— .tabs 上有 clip-path，fixed 子元素会被它裁掉 */}
       {armed ? (
-        <>
+        <div className={`tabs__nav${inView ? '' : ' is-away'}`}>
           <button
             className="tabs__arrow tabs__arrow--prev"
             type="button"
@@ -261,7 +279,7 @@ export default function Sections() {
               }}
             />
           </div>
-        </>
+        </div>
       ) : null}
     </>
   )

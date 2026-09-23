@@ -42,6 +42,18 @@
 
 /* ---- 左右箭头 + 底部条（照参考图：导航不再占左边一栏）---- */
 
+/* 箭头 + 底部条的外壳：板块区不在视野里时整体淡出（它们是 fixed 的，
+   不这样首屏那座山和页脚上也会飘着）*/
+.tabs__nav {
+  transition: opacity 0.4s var(--ease);
+}
+
+.tabs__nav.is-away {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .tabs__arrow {
   position: fixed;
   top: 50%;
