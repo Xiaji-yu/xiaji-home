@@ -55,11 +55,19 @@ export default function Footer() {
             <div className="foot__colHead mono">
               {col.head} · {col.headEn}
             </div>
-            {col.links.map((link) => (
-              <a className="foot__link" key={link.label} href={link.href}>
-                {link.label}
-              </a>
-            ))}
+            {col.links.map((link) =>
+              link.href ? (
+                <a className="foot__link" key={link.label} href={link.href}>
+                  {link.label}
+                </a>
+              ) : (
+                /* 没有 href 的条目是说明文字（如"关于这一页"那一列），不是链接：
+                   渲染成纯文本，点击没有反应，也不该有悬停翻转 */
+                <span className="foot__link foot__link--plain" key={link.label}>
+                  {link.label}
+                </span>
+              ),
+            )}
           </div>
         ))}
       </div>

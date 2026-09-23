@@ -170,19 +170,37 @@ ol {
    斜线阴影条（参考图里分隔区块的那种 hatching）
    -------------------------------------------------------------------------- */
 
+/* 频闪的由来：原来直接动画 background-position，45°  repeating-linear-gradient
+   每帧都要重新光栅化；Windows 上 125% / 150% 缩放这类非整数 DPR 会把亚像素
+   抖动放大，看起来就是条纹在闪。
+   改成 transform 平移：渐变只画一次，之后交给合成器搬图层，不再逐帧重绘。
+   `.hatch::before` 比容器宽出一个完整"周期"，搬到 -254.5585px 时图案和起点
+   完全重合 —— 循环处无跳变。（周期 = 45° 条纹沿 x 的投影 = 5px × √2 ≈ 7.071px，
+   取 36 个周期 ≈ 254.5585px，正好整除。） */
 .hatch {
+  position: relative;
   height: 18px;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
   background-color: var(--paper);
+  overflow: hidden;
+}
+
+.hatch::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: calc(100% + 254.5585px);
   background-image: repeating-linear-gradient(45deg, var(--ink) 0 1px, transparent 1px 5px);
-  background-size: 240px 100%;
   animation: hatchFlow 32s linear infinite;
+  will-change: transform;
 }
 
 @keyframes hatchFlow {
   to {
-    background-position: 240px 0;
+    transform: translateX(-254.5585px);
   }
 }
 
@@ -291,7 +309,8 @@ ol {
     transform: none !important;
   }
 
-  .hatch {
+  /* 动画现在挂在 .hatch::before 上，减少动态效果时连它一起停 */
+  .hatch::before {
     animation: none !important;
   }
 }

@@ -85,7 +85,7 @@ export default function Projects() {
 
         <div className="pane pane--work">
           <Reveal as="p" className="sec-lead">
-            三个小工具，都是自己做着用的：第一个就是这座点阵山背后的算法，第二个是页面最底下那块留言板的独立版。
+            下面几个都是我自己的项目：有大有小，共同点是都还在跑。链接在一道一道补，补上的卡片右下角会变成可点的入口。
           </Reveal>
 
           <div className="work__grid">

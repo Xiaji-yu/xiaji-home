@@ -32,8 +32,7 @@ export default function Timeline() {
           <div className="pane__slot" aria-hidden="true" data-fig-scale="0.9" />
 
           <Reveal as="p" className="sec-lead">
-            时间线是我自己记的，条目也都是占位 ——
-            换成你真实的时间点就行。我觉得比起"做了多厉害的事"，"什么时候开始做"往往更值得记住。
+            时间线是我自己记的。比起"做了多厉害的事"，"什么时候开始做"往往更值得记住。
           </Reveal>
 
           <div className="tl">

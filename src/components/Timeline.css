@@ -16,10 +16,13 @@
   border-bottom: 1px solid var(--line-soft);
 }
 
-/* 年份左边那个小方块，滚动到时点亮 */
+/* 年份左边那个小方块，滚动到时点亮。
+   left 原来是 -5px：方块横跨条目左缘（约 -6~+5px），旋转后的右尖会戳到
+   年份第一个字符，看着像被前面的一个"·"啃掉一截。挪到 -16px，整颗
+   都退到年份左边的留白里。 */
 .tl__marker {
   position: absolute;
-  left: -5px;
+  left: -16px;
   top: clamp(28px, 3.2vw, 38px);
   width: 9px;
   height: 9px;

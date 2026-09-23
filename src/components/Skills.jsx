@@ -48,7 +48,7 @@ export default function Skills() {
         <div className="pane pane--skills">
           <Reveal as="p" className="sec-lead">
             下面的百分比是我自己的诚实估计，不是考试分数 ——
-            数字会随着我学到的东西一直变。把鼠标放到某一行上，可以看到它对应的方向。
+            数字会随着我学到的东西一直变。滚到这里，进度条会跟着长出来。
           </Reveal>
 
           <div className="skills__list">

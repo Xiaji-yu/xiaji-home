@@ -195,10 +195,11 @@ export const site = {
         head: '关于这一页',
         headEn: 'Notes',
         links: [
-          { label: '纯静态页面，无后端', href: '#notes' },
-          { label: '便签只存在本地浏览器', href: '#notes' },
-          { label: '没有使用任何图片素材', href: '#top' },
-          { label: 'React + Vite 手写实现', href: '#top' },
+          /* 这四条是对页面的说明，不是导航 —— href 留空，页脚会渲染成纯文本 */
+          { label: '纯静态页面，无后端', href: '' },
+          { label: '便签只存在本地浏览器', href: '' },
+          { label: '没有使用任何图片素材', href: '' },
+          { label: 'React + Vite 手写实现', href: '' },
         ],
       },
     ],
