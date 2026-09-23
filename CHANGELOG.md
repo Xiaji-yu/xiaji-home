@@ -41,6 +41,8 @@
 
 ### 变更
 
+- **页脚加上备案号**（数据取自同工作区的 fts-blog 项目）：公安网安备 `沪公网安备31011202022181号`（指向 beian.gov.cn，带盾牌小图标）+ 工信部 ICP `沪ICP备2026007186号`（指向 beian.miit.gov.cn）。图标从 fts-blog 的 `icon/备案图标.png`（36×40）复制到 `src/assets/beian-icon.png`，走 Vite 打包（带 hash、跟着 `base` 前缀）。文案与链接都收在 `site.js` 的 `footer.beian` 里，要改只改那一处；页脚布局是".foot__beian"一行居中，窄屏自动换行。
+
 - **修：滚回首屏时左右箭头（和底部条）还飘在那里**。它们原来是"进过一次板块区（`armed`）就一直渲染"的 `fixed` 元素。现在多一个 `inView`（IntersectionObserver 盯着板块区），把箭头和底部条包进 `.tabs__nav`，板块区不在视野里就整体淡出（`opacity/visibility/pointer-events` 一起收）。实测：首屏未滚动不渲染、进了板块区显示、滚回首屏淡出、页脚（板块区还有约 76% 在视野里）照常显示。
 
 - **关于我的信息区加"博客"字段**（`https://xiaji.xin`，排在邮箱后面）：`site.js` 的 `about.facts` 加一行；`About.jsx` 把渲染逻辑从"只认邮箱"改成通用 —— 值以 `http/https` 开头就渲染成新窗口打开的链接（显示时去掉协议头，所以看到的是 `xiaji.xin`）。顺带把邮箱那格不再单独通栏，于是"邮箱 | 博客"和"坐标 | 建站于"正好各占一行，四行两列对齐。

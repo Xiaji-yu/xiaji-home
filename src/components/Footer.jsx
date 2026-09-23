@@ -1,4 +1,5 @@
 import { site } from '../data/site.js'
+import beianIcon from '../assets/beian-icon.png'
 import './Footer.css'
 
 export default function Footer() {
@@ -68,6 +69,32 @@ export default function Footer() {
       <div className="foot__bottom mono">
         <span>{footer.copyright}</span>
         <span>{footer.credit}</span>
+      </div>
+
+      {/* 备案号：公安网安备（带盾牌图标）+ 工信部 ICP */}
+      <div className="foot__beian mono">
+        <a
+          className="foot__beianLink"
+          href={footer.beian.gaUrl}
+          target="_blank"
+          rel="noreferrer"
+          title={footer.beian.gaLabel}
+        >
+          <img className="foot__beianIcon" src={beianIcon} alt="" width={16} height={18} />
+          {footer.beian.gaNumber}
+        </a>
+        <span className="foot__beianDot" aria-hidden="true">
+          ·
+        </span>
+        <a
+          className="foot__beianLink"
+          href={footer.beian.icpUrl}
+          target="_blank"
+          rel="noreferrer"
+          title={footer.beian.icpLabel}
+        >
+          {footer.beian.icpNumber}
+        </a>
       </div>
     </footer>
   )

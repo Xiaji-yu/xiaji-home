@@ -123,6 +123,42 @@
   color: var(--muted);
 }
 
+/* 备案号行：公安网安备（带盾牌小图标）+ ICP */
+.foot__beian {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 var(--pad) 22px;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+.foot__beianLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.3s var(--ease);
+}
+
+.foot__beianLink:hover {
+  color: var(--ink);
+}
+
+.foot__beianIcon {
+  width: 16px;
+  height: 18px;
+  display: block;
+}
+
+.foot__beianDot {
+  color: var(--line);
+}
+
 @media (max-width: 900px) {
   .foot__grid {
     grid-template-columns: 1fr 1fr;

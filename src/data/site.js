@@ -15,7 +15,7 @@ export const site = {
 
   /* ---- 大标题下面的副标题 ---- */
   heroSub:
-    '座右铭：真理会过时，构石永恒。所有此刻看起来板上钉钉的结论，迟早都会被更好的答案推翻；但把它们一块一块砌起来的过程，是留得住的。',
+    '真理会过时，构石永恒。所有此刻看起来板上钉钉的结论，迟早都会被更好的答案推翻；但把它们一块一块砌起来的过程，是留得住的。',
 
   /* ---- 首屏两颗按钮 ---- */
   heroCta: [
@@ -46,18 +46,18 @@ export const site = {
       ['博客', 'https://xiaji.xin'],
       /* 下面两格显示在信息区右下角（像身份证的"签发机关 / 有效期限"那一对），
          换成你自己的就行 */
-      ['坐标', '杭州'],
-      ['建站于', '2026.01'],
+      ['坐标', '上海'],
+      ['建站于', '2026.09'],
     ],
   },
 
   /* ---- 技能栈：value 是 0~100 的自评，随便改 ---- */
   skills: [
-    { name: 'React', note: '组件 / 状态 / 工程化', value: 70 },
+    { name: 'React', note: '组件 / 状态 / 工程化', value: 49 },
     { name: 'TypeScript', note: '类型 / 少写 bug', value: 58 },
     { name: 'Git & GitHub', note: '版本 / 协作', value: 64 },
-    { name: 'Node.js', note: '脚本 / 小工具', value: 52 },
-    { name: 'Python', note: '自动化 / 数据处理', value: 46 },
+    { name: 'Node.js', note: '脚本 / 小工具', value: 57 },
+    { name: 'Python', note: '自动化 / 数据处理', value: 80 },
   ],
 
   /* ---- 项目作品：这三个是占位，替换成你自己的就行 ---- */
@@ -104,12 +104,12 @@ export const site = {
       text: '一个自己每天都会用到的脚本。第一次体会到：写代码不是为了交作业，是为了解决自己的麻烦。',
     },
     {
-      year: '2025.06',
-      title: '认真学前端',
+      year: '2025.09',
+      title: '认真学AI&前端',
       text: 'HTML / CSS / JavaScript 从头过一遍，然后是 React。开始在意间距、对齐和字体 —— 审美也是要练的。',
     },
     {
-      year: '2026.01',
+      year: '2026.09',
       title: '搭起这个个人主页',
       text: '就是你正在看的这一页。那座点阵山景是浏览器现场算出来的，整页没有用任何一张图片素材。',
     },
@@ -136,7 +136,7 @@ export const site = {
         label: 'Steam / Discord / QQ',
         value: '待补充',
         href: '',
-        note: '想放就把账号填进 src/data/site.js',
+        note: '诶嘿，先不填',
       },
     ],
   },
@@ -154,6 +154,15 @@ export const site = {
     tagline: '真理会过时，构石永恒。',
     copyright: '© 2026 夏祭 · 保留所有权利',
     credit: 'Designed & Built by 夏祭',
+    /* ---- 备案号：工信部 ICP + 公安网安备（图标见 src/assets/beian-icon.png）---- */
+    beian: {
+      icpLabel: 'ICP备案',
+      icpNumber: '沪ICP备2026007186号',
+      icpUrl: 'https://beian.miit.gov.cn/',
+      gaLabel: '公网安备',
+      gaNumber: '沪公网安备31011202022181号',
+      gaUrl: 'http://www.beian.gov.cn/',
+    },
     /* 页脚左下角的四个小方块。href 留空就是不可点击的占位 */
     socials: [
       { code: 'ML', title: '写邮件', href: 'mailto:variant305@gmail.com' },
