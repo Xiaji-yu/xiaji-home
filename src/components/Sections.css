@@ -15,17 +15,20 @@
 }
 
 .tabs__inner {
-  /* 正文栏宽度、图形宽度（跟 .tabs__figure 同一份值）*/
-  --col-w: clamp(620px, 46vw, 900px);
+  /* 正文栏宽、左栏宽、栏间距、图形宽。
+     前三个都要参与"屏幕居中"的换算（见 .tabs__panel），所以抽成变量。
+     图形宽跟 .tabs__figure 共用同一份值。 */
+  --col-w: clamp(620px, 52vw, 1000px);
+  --rail-w: clamp(140px, 12vw, 186px);
+  --gap-x: clamp(20px, 2.6vw, 48px);
   --fig-w: min(58vh, 720px);
-  --fig-gap: clamp(20px, 2.4vw, 44px);
   position: relative;
   display: grid;
-  /* 两栏：左（选项卡）· 内容（居中，宽度跟屏幕长）。
+  /* 两栏：左（选项卡）· 内容（宽度跟屏幕长、在屏幕上居中）。
      粒子图形不在栅格里 —— 它绝对定位垫在右侧当背景层（见 .tabs__figure）；
-     内容比它高一层，所以内容能压到它身上，但"有富余时"会主动避开它。 */
-  grid-template-columns: clamp(140px, 12vw, 186px) minmax(0, 1fr);
-  gap: clamp(20px, 2.6vw, 48px);
+     内容比它高一层，所以内容压在它身上也没事（这是刻意接受的）。 */
+  grid-template-columns: var(--rail-w) minmax(0, 1fr);
+  gap: var(--gap-x);
   align-items: center;
   width: 100%;
   max-width: 2200px;
@@ -109,11 +112,15 @@
   min-width: 0; /* grid 子项默认 min-width:auto，会被宽内容顶破 */
   width: var(--col-w);
   justify-self: center;
-  /* 居中时先把右侧那块"图形位"让出来：
-       · 地方够 → 右边留出图形宽度，正文在"左栏~图形"之间真正居中；
-       · 地方不够（窄屏）→ 让到贴住左栏为止，剩下的宽度就压在图形上（图形是背景层，本来就该被压）。
-     100% 是这一格栅格的宽度，所以 min() 的第二个值就是"还有多少富余"。 */
-  margin-inline-end: min(calc(var(--fig-w) + var(--fig-gap)), calc(100% - var(--col-w)));
+  /* 在"屏幕"上居中，而不是在"左栏右边那块地方"里居中：
+     栅格的居中点比屏幕中心偏右半个（左栏 + 间距）—— 左边那半格被选项卡占了；
+     所以把整块往左拉回一倍（左栏 + 间距）。这里为什么是"两倍"：
+     负 margin 会把 margin box 撑大，居中又把它摊回去一半，实际位移只有一半。
+     空间不够时（窄屏）拉到贴住左栏就停 —— min() 的第二个值就是栅格的富余量，
+     100% 指这一格栅格的宽度。 */
+  margin-inline-start: calc(
+    -1 * min(calc(var(--rail-w) + var(--gap-x)), calc(100% - var(--col-w)))
+  );
   /* 纸色底 + 比图形高一层：图形需要时可以压在它底下，而文字区域始终干净 */
   z-index: 1;
   background: var(--paper);
@@ -126,7 +133,17 @@
   padding-inline: 0;
 }
 
-/* 栏宽了，板块内部跟着重排：正文一行压到舒服的长度，多出来的宽度给"信息表并排" */
+/* 栏可以很宽，但一行别跟着变长：纯文字段落压到 ~40em（约 40 个汉字），
+   多出来的宽度交给"结构"用 —— 卡片列数、信息表并排这些 */
+.tabs .about__body p {
+  max-width: 40em;
+}
+
+.tabs .about__lead {
+  max-width: 30em;
+}
+
+/* 栏宽了，板块内部跟着重排：多出来的宽度给"信息表并排" */
 .tabs .about__grid {
   grid-template-columns: 1fr;
   gap: clamp(22px, 3vw, 32px);
@@ -142,11 +159,11 @@
 
 /* 卡片按栏宽自适应：窄了自动变少列，宽了自动变三列（900px 栏宽刚好放三张 300px 的卡） */
 .tabs .work__grid {
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
 .tabs .contact__grid {
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
 }
 
 .tabs .notes__form {
@@ -216,15 +233,10 @@
   pointer-events: none; /* 纯装饰，别挡住内容的点击 */
 }
 
-/* ---- 窄一点的桌面（≤1249px）：正文至少 620，图形再贴着右边就只剩一条"残影"了，
-       与其露半张不如整块藏起来；同时把给图形留的位子归零，正文回到这一栏的正中 ---- */
+/* ---- 窄一点的桌面（≤1450px）：正文放大后，右边再挤一块 522~626 的图形就只剩一条
+       "残影"了（1366 上实测图形被盖住 31%），与其露半张不如整块藏起来 ---- */
 
-@media (max-width: 1249px) {
-  .tabs__inner {
-    --fig-w: 0px;
-    --fig-gap: 0px;
-  }
-
+@media (max-width: 1450px) {
   .tabs__figure {
     display: none;
   }
@@ -291,7 +303,7 @@
   .tabs__panel {
     width: 100%;
     justify-self: stretch;
-    margin-inline-end: 0;
+    margin-inline-start: 0;
     background: none;
   }
 
