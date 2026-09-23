@@ -172,6 +172,7 @@ xiaji-home/
 - 想让某个板块换个样子：改对应的那个函数即可（比如 `contact` 现在是信封）；想调它在画布里的落点，改同一个文件里的 `PLACEMENT`（`scale` 是占画布的比例，`dx/dy` 是偏移 —— 六个位置刻意错开，换板块时才有平移感）
 - 想调点阵粗细：`components/FigureCanvas.jsx` 顶部的 `CELL`（格子边长）、`DOT`（点直径 = 格子 × 它）、`COUNT`（粒子数）、`MORPH`（位移时长与错峰）
 - 想调它的大小/位置：`components/Sections.css` 里 `.tabs__inner` 的 `--fig-w`（默认 `min(58vh, 720px)`，`.tabs__figure` 直接用它）和 `.tabs__figure` 的 `right`（默认往右挪出画布宽的 7%，挪的是图形右边那圈空白，不会切到墨点）；它是**背景层**，正文压在它上面
+- **"一章一屏"怎么算**：`tokens.css` 里的 `--header-h`（页眉 56px）与 `--status-h`（首屏状态栏高，`App.jsx` 会量出来写回），每章高度 = `100vh − 两者`；`base.css` 的 `scroll-padding-top` 也用这两个值，所以跳转时那条线正好压在页眉线上。想改章节高度就动这两个变量（矮屏上另有 `max-height: 980px / 820px` 两档紧凑规则）
 - 想调板块宽度：`components/Sections.css` 的 `--col-w`（默认 `clamp(620px, 82vw, 1680px)`）；两边留白由 `--pad-x` 与那条 `max-width` 一起决定（板块在屏幕上居中）。箭头和底部条也在同一个文件（`.tabs__arrow` / `.tabs__bar`）
 - 六章现在的留白穴：关于我·中右（正文 + 信息表 : 图形 ≈ 6 : 4）· 技能栈·右上 · 项目作品·左上 · 经历·左中 · 联系方式·右下 · 便签·左下
 - 想挪某一块的留白穴：同一个文件里找 `.pane--about` / `--skills` / `--work` / `--journey` / `--contact` / `--notes`，改那几行的 `grid-column` / `grid-row` 即可（穴的大小是 `--slot-w`）；想让某一块的图形大一点小一点：改那个面板里的 `data-fig-scale`（0.82~1.0）

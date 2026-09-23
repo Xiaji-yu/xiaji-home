@@ -11,7 +11,9 @@
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
-  scroll-padding-top: 72px; /* 点导航跳转时，别被顶部栏盖住 */
+  /* 跳转到某一章时的落点：页眉 + 首屏状态栏 —— 这样首屏状态栏那条线
+     正好落在页眉线下面（两者重合），座右铭/SCROLL 紧贴页眉 */
+  scroll-padding-top: calc(var(--header-h) + var(--status-h));
 }
 
 body {

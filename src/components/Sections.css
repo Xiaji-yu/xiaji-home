@@ -7,7 +7,8 @@
 
 .tabs {
   position: relative;
-  min-height: 100vh;
+  /* 一章一屏：正好填满"页眉 + 首屏状态栏"以下的那块 */
+  min-height: calc(100vh - var(--header-h) - var(--status-h));
   /* 用 clip-path 而不是 overflow:hidden 把左下角那行幽灵字裁在版面里 ——
      overflow:hidden 会把这里变成滚动容器，窄屏上那排吸顶标签就粘不住了。
      overflow:clip 只裁不滚（不产生滚动容器），所以吸顶照样粘得住 ——
@@ -24,7 +25,7 @@
   /* 左右留白：板块在屏幕上居中，靠下面那条 max-width 卡住 */
   --pad-x: clamp(24px, 3.4vw, 56px);
   /* 留白穴的边长（六个章节各留一处，图形嵌在这里面）*/
-  --slot-w: clamp(320px, 27vw, 500px);
+  --slot-w: clamp(260px, 46vh, 500px);
   position: relative;
   display: grid;
   /* 只有一栏了：左栏那列选项整个取消（导航挪到屏幕两侧的箭头 + 底部那条线）*/
@@ -34,9 +35,9 @@
   /* 宽度正好等于"左栏 + 间距 + 板块 + 两侧留白"，再 margin auto —— 整组在屏幕上居中，
      1080P 上不再整体偏左（想改板块宽度只动 --col-w 就行）*/
   max-width: calc(var(--col-w) + var(--pad-x) * 2);
-  min-height: 100vh;
+  min-height: calc(100vh - var(--header-h) - var(--status-h));
   margin: 0 auto;
-  padding: clamp(56px, 7vh, 88px) var(--pad-x);
+  padding: clamp(36px, 5.4vh, 70px) var(--pad-x);
 }
 
 /* ---- 左右箭头 + 底部条（照参考图：导航不再占左边一栏）---- */
@@ -216,8 +217,8 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin-bottom: clamp(24px, 3vw, 44px);
-  padding-bottom: clamp(12px, 1.4vw, 20px);
+  margin-bottom: clamp(16px, 4vh, 44px);
+  padding-bottom: clamp(10px, 1.8vh, 20px);
   border-bottom: 1px solid var(--line);
   background: var(--paper); /* 粒子从底下载过时不会糊在标题上 */
 }
@@ -321,7 +322,7 @@
 
 .tabs .pane {
   display: grid;
-  gap: clamp(26px, 2.4vw, 44px);
+  gap: clamp(18px, 4vh, 44px);
   align-items: start;
 }
 
@@ -340,7 +341,7 @@
    信息表挪到正文下面，左边一栏装"正文 + 信息表"，右边是图形那 4 成 */
 .tabs .pane--about {
   /* 图形这一格给到板块的 4 成（6:4），比别的章节大一圈 */
-  --slot-w: clamp(320px, 32vw, 600px);
+  --slot-w: clamp(280px, 55vh, 600px);
   grid-template-columns: minmax(0, 1fr) var(--slot-w);
   grid-template-rows: auto auto;
 }
@@ -459,8 +460,9 @@
 
 /* ⑥ 留言便签 · 穴在左下：表单在左上，穴在它下面，便签墙占右半边两行 */
 .tabs .pane--notes {
-  /* 便签这一章内容本来就多（引导句 + 表单 + 便签墙），穴收一档才塞得进一屏 */
-  --slot-w: clamp(260px, 22vw, 400px);
+  /* 便签这一章内容最多（引导句 + 表单 + 便签墙 + 穴），穴再收一档并按视口高缩放，
+     才能连同一圈标题一起塞进"一章一屏" */
+  --slot-w: clamp(200px, 30vh, 340px);
   grid-template-columns: var(--slot-w) minmax(0, 1fr);
   grid-template-rows: auto auto auto;
 }
@@ -484,6 +486,96 @@
 .tabs .pane--notes > .notes__wall {
   grid-column: 2;
   grid-row: 3;
+}
+
+/* ---- 矮屏紧凑模式（视口高 ≤ 980px）----
+   一章一屏是硬要求：矮屏上把穴、间距、字号、行距一起收，保证不出现"章内滚动" */
+
+@media (max-height: 980px) {
+  .tabs__inner {
+    --slot-w: clamp(180px, 30vh, 400px);
+    padding: clamp(18px, 3.2vh, 40px) var(--pad-x);
+  }
+
+  .tabs .pane {
+    gap: clamp(10px, 2.2vh, 26px);
+  }
+
+  .tabs .sec-head {
+    margin-bottom: clamp(8px, 1.8vh, 20px);
+    padding-bottom: clamp(6px, 1vh, 12px);
+  }
+
+  .tabs .sec-head__title {
+    font-size: clamp(21px, 2.2vw, 30px);
+  }
+
+  .tabs .pane--about {
+    --slot-w: clamp(190px, 38vh, 480px);
+  }
+
+  .tabs .pane--notes {
+    --slot-w: clamp(150px, 21vh, 280px);
+  }
+
+  /* 文字类：行距与内边距都收，最占高度的是经历 4 条与便签墙 */
+  .tabs .tl__item {
+    padding: clamp(6px, 1.2vh, 12px) 0;
+  }
+
+  .tabs .tl__title {
+    font-size: 15px;
+  }
+
+  .tabs .tl__text,
+  .tabs .sec-lead,
+  .tabs .about__body p {
+    font-size: 13.5px;
+    line-height: 1.75;
+  }
+
+  .tabs .about__lead {
+    font-size: clamp(16px, 1.6vw, 21px);
+  }
+
+  .tabs .skill {
+    padding: clamp(10px, 2.2vh, 24px) 4px;
+  }
+
+  .tabs .work__grid,
+  .tabs .contact__grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}
+
+/* 再矮一档（≤820px，1366×768 那种老笔电）：继续收，保证还是一章一屏 */
+
+@media (max-height: 820px) {
+  .tabs__inner {
+    --slot-w: clamp(150px, 24vh, 320px);
+    padding: clamp(12px, 2.2vh, 28px) var(--pad-x);
+  }
+
+  .tabs .pane--about {
+    --slot-w: clamp(160px, 30vh, 380px);
+  }
+
+  .tabs .pane--notes {
+    --slot-w: clamp(130px, 17vh, 240px);
+  }
+
+  .tabs .sec-head {
+    margin-bottom: 8px;
+  }
+
+  .tabs .about__lead {
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+
+  .tabs .about__facts dl {
+    gap: 12px 28px;
+  }
 }
 
 /* ---- 窄一点的桌面（≤1450px）：正文放大后，右边再挤一块 522~626 的图形就只剩一条

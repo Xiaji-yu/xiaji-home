@@ -6,7 +6,9 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  /* 页眉是吸顶的，首屏只占"它下面那一屏" —— 这样底部那条状态栏
+     在首屏正好压在屏幕底边，往上滚时才能跟页眉线对齐 */
+  min-height: calc(100vh - var(--header-h));
   overflow: hidden;
   background: var(--paper);
 }

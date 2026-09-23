@@ -13,7 +13,7 @@
   align-items: center;
   gap: clamp(12px, 2.2vw, 28px);
   /* 只剩 5 条技能：行距拉开，整张表的高度跟原来 7 条差不多（拉长） */
-  padding: clamp(22px, 2.5vw, 34px) 4px;
+  padding: clamp(16px, 3.2vh, 34px) 4px;
   border-bottom: 1px solid var(--line-soft);
   transition: background-color 0.4s var(--ease);
 }
