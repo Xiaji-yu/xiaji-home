@@ -28,18 +28,28 @@
   margin-bottom: 0;
 }
 
-/* 信息表：每一行一条细线，和参考图的页脚表格是同一套做法 */
+/* 信息区：照身份证信息页那种语法 —— 标签是小灰字在上、"值"在下，
+   两列排开、最后一格（邮箱）通栏；不画分隔线，靠间距分栏 */
 .about__facts {
-  border-top: 1px solid var(--line);
+  border-top: 0;
+}
+
+.about__facts dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(18px, 2.2vw, 32px) clamp(28px, 3.4vw, 56px);
 }
 
 .about__fact {
-  display: grid;
-  grid-template-columns: 96px 1fr;
-  gap: 16px;
-  padding: 13px 0;
-  border-bottom: 1px solid var(--line-soft);
-  align-items: baseline;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0; /* 长一点的"最近在做"要能换行，别把格子顶破 */
+}
+
+/* 最后一格通栏（身份页里"住址 / 号码"那一行的位置）*/
+.about__fact:last-child {
+  grid-column: 1 / -1;
 }
 
 .about__fact dt {
@@ -52,7 +62,8 @@
 
 .about__fact dd {
   margin: 0;
-  font-size: 14px;
+  font-size: clamp(15px, 1.2vw, 17px);
+  letter-spacing: -0.01em;
 }
 
 .about__fact a {
@@ -64,8 +75,10 @@
   border-color: var(--ink);
 }
 
-@media (max-width: 880px) {
-  .about__grid {
+@media (max-width: 720px) {
+  /* 手机上字段区改单列（两列会挤成一条一条的）*/
+  .about__facts dl {
     grid-template-columns: 1fr;
+    gap: 18px;
   }
 }
