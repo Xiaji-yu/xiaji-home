@@ -64,20 +64,33 @@ export default function FigureCanvas({ id }) {
 
     /* ---------------- 量出"当前章节的留白穴" ---------------- */
 
+    /* 桌面（≥1280px）：穴量得出来，图形嵌在穴里。
+       平板段（≤1279px）：穴被 Sections.css 的响应式规则收起了（display:none），
+       但画布是全尺寸常驻的、内容又是透明的 —— 这里给一个居中的兜底目标框，
+       大小随画布收敛（宽、高两个方向都留余量，最小 280px）：不溢出、不缩成一小团。
+       格子比粒子少也没关系：fitToCells 会把多出的粒子匀到既有格子上，像素重合。 */
     function slotBox(figureId) {
       const view = document.querySelector(`#${figureId}`)
       const slot = view?.querySelector('.pane__slot')
-      if (!slot) return null
-      const r = slot.getBoundingClientRect()
-      const w = wrap.getBoundingClientRect()
-      if (r.width < 40 || r.height < 40) return null
+      const r = slot ? slot.getBoundingClientRect() : null
+      const box = wrap.getBoundingClientRect()
+      if (r && r.width >= 40 && r.height >= 40) {
+        return {
+          x: r.left - box.left,
+          y: r.top - box.top,
+          w: r.width,
+          h: r.height,
+          // 每个章节的图形略大略小（见各面板里的 data-fig-scale），切过去带一点缩放
+          scale: Number(slot.dataset.figScale || 1),
+        }
+      }
+      const size = Math.max(280, Math.min(box.width * 0.62, box.height * 0.58))
       return {
-        x: r.left - w.left,
-        y: r.top - w.top,
-        w: r.width,
-        h: r.height,
-        // 每个章节的图形略大略小（见各面板里的 data-fig-scale），切过去带一点缩放
-        scale: Number(slot.dataset.figScale || 1),
+        x: (box.width - size) / 2,
+        y: (box.height - size) / 2,
+        w: size,
+        h: size,
+        scale: 1,
       }
     }
 
