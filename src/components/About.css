@@ -47,8 +47,8 @@
   min-width: 0; /* 长一点的"最近在做"要能换行，别把格子顶破 */
 }
 
-/* 最后一格通栏（身份页里"住址 / 号码"那一行的位置）*/
-.about__fact:last-child {
+/* 通栏那一格（身份页里"住址 / 号码"那一行的位置）—— 由组件按标签加类名 */
+.about__fact.is-wide {
   grid-column: 1 / -1;
 }
 
@@ -62,17 +62,21 @@
 
 .about__fact dd {
   margin: 0;
+  padding-bottom: 8px;
+  /* 身份证那种"填空线"：一条细线托在值下面 */
+  border-bottom: 1px solid var(--line-soft);
   font-size: clamp(15px, 1.2vw, 17px);
   letter-spacing: -0.01em;
 }
 
+/* 邮箱本身是链接，别的字段已经有一条填空线了，这里不再叠一条 */
 .about__fact a {
-  border-bottom: 1px solid var(--line-soft);
-  transition: border-color 0.3s var(--ease);
+  color: inherit;
+  transition: color 0.3s var(--ease);
 }
 
 .about__fact a:hover {
-  border-color: var(--ink);
+  color: var(--ink);
 }
 
 @media (max-width: 720px) {

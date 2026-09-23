@@ -19,111 +19,94 @@
 }
 
 .tabs__inner {
-  /* 正文栏宽、左栏宽、栏间距、图形宽。
-     前三个都要参与"屏幕居中"的换算（见 .tabs__panel），所以抽成变量。
-     图形宽跟 .tabs__figure 共用同一份值。 */
-  --col-w: clamp(620px, 78vw, 1560px);
-  --rail-w: clamp(140px, 12vw, 186px);
-  --gap-x: clamp(20px, 2.6vw, 48px);
-  /* 左右留白：整组（左栏 + 间距 + 板块）在屏幕上居中，靠下面那条 max-width 卡住 */
+  /* 板块宽度 */
+  --col-w: clamp(620px, 82vw, 1680px);
+  /* 左右留白：板块在屏幕上居中，靠下面那条 max-width 卡住 */
   --pad-x: clamp(24px, 3.4vw, 56px);
   /* 留白穴的边长（六个章节各留一处，图形嵌在这里面）*/
   --slot-w: clamp(320px, 27vw, 500px);
-  /* 正文栏贴左栏的程度：1 = 紧贴左栏（默认，跟选项卡耦合最强）；调小就往右挪回栅格中间 */
-  --pull: 1;
   position: relative;
   display: grid;
-  /* 两栏：左（选项卡）· 内容（宽度跟屏幕长、在屏幕上居中）。
-     粒子图形不在栅格里 —— 它绝对定位垫在右侧当背景层（见 .tabs__figure）；
-     内容比它高一层，所以内容压在它身上也没事（这是刻意接受的）。 */
-  grid-template-columns: var(--rail-w) minmax(0, 1fr);
-  gap: var(--gap-x);
+  /* 只有一栏了：左栏那列选项整个取消（导航挪到屏幕两侧的箭头 + 底部那条线）*/
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
   width: 100%;
   /* 宽度正好等于"左栏 + 间距 + 板块 + 两侧留白"，再 margin auto —— 整组在屏幕上居中，
      1080P 上不再整体偏左（想改板块宽度只动 --col-w 就行）*/
-  max-width: calc(var(--rail-w) + var(--gap-x) + var(--col-w) + var(--pad-x) * 2);
+  max-width: calc(var(--col-w) + var(--pad-x) * 2);
   min-height: 100vh;
   margin: 0 auto;
   padding: clamp(56px, 7vh, 88px) var(--pad-x);
 }
 
-/* ---- 左栏：选项 ---- */
+/* ---- 左右箭头 + 底部条（照参考图：导航不再占左边一栏）---- */
 
-.tabs__rail {
-  position: relative; /* 选中那根竖线的定位基准 */
-  display: flex;
-  flex-direction: column;
-}
-
-.tab {
-  position: relative;
-  width: 100%; /* 每条底下的细线要一样长（图3 那种通栏线），别按文字宽度收 */
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  padding: 17px 0 16px;
-  border-bottom: 1px solid var(--line-soft);
+.tabs__arrow {
+  position: fixed;
+  top: 50%;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 72px;
+  padding: 0;
+  border: 0;
   background: none;
-  color: var(--muted);
-  text-align: left;
-  cursor: pointer;
-  transition: color 0.35s var(--ease);
-}
-
-/* 选中时左侧那条竖线 —— 整栏只有一根，位置和尺寸由 JS 量出来写进 --ind-*
-   （见 Sections.jsx 的 useLayoutEffect），所以切换时它是滑过去的，不是跳过去的。
-   窄屏标签行是横排的，同一套变量会把它变成底下那条线。 */
-.tabs__ind {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: var(--ind-w, 2px);
-  height: var(--ind-h, 0);
-  background: var(--ink);
-  transform: translate3d(var(--ind-x, 0), var(--ind-y, 0), 0);
-  pointer-events: none;
-}
-
-/* 第一次定位不要演动画（不然会从左上角滑进来），定位完再加过渡 */
-.tabs__rail.is-ind-ready .tabs__ind {
-  transition:
-    transform 0.42s var(--ease),
-    width 0.42s var(--ease),
-    height 0.42s var(--ease);
-}
-
-.tab__cn {
-  font-size: clamp(17px, 1.5vw, 21px);
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  transition: font-weight 0.2s var(--ease);
-}
-
-.tab__en {
-  color: inherit;
-  opacity: 0.72;
-}
-
-.tab:hover {
-  color: var(--ink-soft);
-}
-
-.tab.is-on {
   color: var(--ink);
-  border-bottom-color: var(--line);
+  opacity: 0.42;
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition:
+    opacity 0.3s var(--ease),
+    transform 0.3s var(--ease);
+  animation: arrowIn 0.5s var(--ease) both;
 }
 
-.tab.is-on::before {
-  height: 26px;
-}
-
-.tab.is-on .tab__cn {
-  font-weight: 600;
-}
-
-.tab.is-on .tab__en {
+.tabs__arrow:hover,
+.tabs__arrow:focus-visible {
   opacity: 1;
+}
+
+.tabs__arrow--prev {
+  left: clamp(6px, 1.6vw, 26px);
+}
+
+.tabs__arrow--prev:hover {
+  transform: translate(-3px, -50%);
+}
+
+.tabs__arrow--next {
+  right: clamp(6px, 1.6vw, 26px);
+}
+
+.tabs__arrow--next:hover {
+  transform: translate(3px, -50%);
+}
+
+@keyframes arrowIn {
+  from {
+    opacity: 0;
+  }
+}
+
+/* 底部条：一条通栏细线 + 一段"当前位置"，里面不写字 */
+.tabs__bar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 6;
+  height: 3px;
+  background: var(--line-soft);
+  pointer-events: none;
+  animation: arrowIn 0.6s var(--ease) both;
+}
+
+.tabs__bar-i {
+  display: block;
+  height: 100%;
+  background: var(--ink);
+  transition: transform 0.5s var(--ease);
 }
 
 /* ---- 右栏：面板 ---- */
@@ -131,15 +114,7 @@
 .tabs__panel {
   position: relative;
   min-width: 0; /* grid 子项默认 min-width:auto，会被宽内容顶破 */
-  width: var(--col-w);
-  justify-self: center;
-  /* 往左贴住左栏，让正文跟选项卡看上去是一整块（耦合感最强）。
-     栅格这一栏是从"左栏右缘 + 间距"开始的，但 justify-self: center 会把它推到栏中间，
-     所以用负 margin 拉回来，拉的距离 = 这一栏的富余量（100% 指栅格宽度，减掉栏宽）。
-     为什么"取满富余量"就等于贴住：负 margin 把 margin box 撑大到整栏，居中再摊回去
-     一半，实际位移恰好是一半 —— 取满时就正好落到栏的起点。
-     --pull 是拉的比例：1 = 贴住左栏（默认），0 = 在栅格里居中。 */
-  margin-inline-start: calc(-1 * var(--pull) * max(0px, calc(100% - var(--col-w))));
+  width: 100%;
   /* 比图形高一层；自己不要底色 —— 图形要能从留白穴里透出来。
      文字区域干净是靠"每个内容块自己垫纸色"（见 .pane > *）*/
   z-index: 1;
@@ -236,17 +211,34 @@
   border-top: 0;
 }
 
-/* 章节标题交给左栏去说了，这里对读屏保留、视觉上藏起来（h2 还在文档里） */
+/* 章节标题：照参考图那套 —— 中文大字、下面一行小号英文、再一根通栏细线 */
 .tabs .sec-head {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  white-space: nowrap;
-  clip-path: inset(50%);
-  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: clamp(24px, 3vw, 44px);
+  padding-bottom: clamp(12px, 1.4vw, 20px);
+  border-bottom: 1px solid var(--line);
+  background: var(--paper); /* 粒子从底下载过时不会糊在标题上 */
+}
+
+.tabs .sec-head__num {
+  display: none; /* 位置由底部那条线表示，序号就不重复了 */
+}
+
+.tabs .sec-head__title {
+  font-size: clamp(26px, 2.7vw, 42px);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+}
+
+.tabs .sec-head__en {
+  margin-left: 0;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
 /* ---- 左下角的大号幽灵字：当前板块的英文名（挂在 .tabs__inner 上）---- */
@@ -313,9 +305,9 @@
 
 .tabs__figure {
   position: absolute;
-  /* 画布不再贴着右边一角：它铺在整块板块区上（宽度 = 板块宽），
-     图形画在哪由"当前章节的留白穴"决定（FigureCanvas 量出来）。 */
-  left: calc(var(--rail-w) + var(--gap-x));
+  /* 铺满整块板块区：左边从 padding 之外开始（跟板块对齐）、宽度 = 板块宽。
+     图形画在哪由"当前章节的留白穴"决定（FigureCanvas 量出来）*/
+  left: var(--pad-x);
   top: 0;
   bottom: 0;
   z-index: 0;
@@ -519,40 +511,26 @@
   }
 }
 
-/* ---- 窄屏：左栏变成顶部一条可横滑的标签 ---- */
+/* ---- 窄屏：左栏没有了，箭头也收小一点、往边靠 ---- */
 
 @media (max-width: 860px) {
   .tabs__inner {
     grid-template-columns: 1fr;
-    gap: 20px;
     align-content: center;
     padding: clamp(72px, 12vh, 110px) var(--pad) clamp(56px, 9vh, 90px);
   }
 
-  /* 手机上这排标签吸顶（贴在页眉下面）：面板动辄一千多像素，
-     不吸顶就得先滚回顶部才能切下一个 —— 桌面左栏按你说的不吸 */
-  .tabs__rail {
-    position: sticky;
-    top: 56px;
-    z-index: 5;
-    flex-direction: row;
-    gap: 20px;
-    padding: 4px 0 2px;
-    background: var(--paper);
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
+  .tabs__arrow {
+    width: 40px;
+    height: 56px;
   }
 
-  .tabs__rail::-webkit-scrollbar {
-    display: none;
+  .tabs__arrow--prev {
+    left: 2px;
   }
 
-  .tab {
-    flex: none;
-    padding: 8px 0 12px;
-    white-space: nowrap;
+  .tabs__arrow--next {
+    right: 2px;
   }
 
   .tabs__view {
@@ -564,15 +542,7 @@
   }
 
   .tabs__panel {
-    width: 100%;
-    justify-self: stretch;
-    margin-inline-start: 0;
     background: none;
-  }
-
-  /* 窄屏"正文+信息表并排"那条规则要撤掉，回到单列 */
-  .tabs .about__grid {
-    grid-template-columns: 1fr;
   }
 
   /* 窄屏内容占满整宽，上面那几条单列/两列的收窄就不需要了 */
@@ -587,15 +557,5 @@
 
   .tabs__mark {
     bottom: -0.12em;
-  }
-}
-
-@media (max-width: 520px) {
-  .tab__cn {
-    font-size: 16px;
-  }
-
-  .tab__en {
-    display: none; /* 手机上只留中文，省地方 */
   }
 }

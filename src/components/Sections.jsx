@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import About from './About.jsx'
 import Skills from './Skills.jsx'
 import Projects from './Projects.jsx'
@@ -17,8 +17,9 @@ import './Sections.css'
      技能条动画、项目卡片的倾斜状态都还在；隐藏的用 hidden 属性（连同无障碍一起藏）
    · 地址栏和选项联动：#about / #skills … 直接进对应面板，页眉那几个链接
      点一下也是切面板（它们本来就是 <a href="#about">，不用改页眉）
-   · 按下方向键 / Home / End 可以在选项间移动（标准的 tablist 键盘操作）
-   · 选中那条竖线只有一根，位置由 JS 量出来写成 CSS 变量 —— 切换时是滑过去的
+   · 导航只有三处：屏幕两侧的箭头（照参考图）、页眉那几个锚点链接、键盘 ←/→
+     —— 左侧那列文字选项整个取消了，位置改由屏幕底部那根细线表示
+   · 底部条只有一条通栏细线 + 一段"当前位置"，里面不写字
    · 面板里的内容在"整块滚进视野"那一刻开始错落入场，之后每次切板块都重放一次
    ========================================================================== */
 
@@ -45,7 +46,6 @@ export default function Sections() {
   /* 整块入场动画的"保险栓"：整块滚进视野之前先别演，滚到了才放行 */
   const [armed, setArmed] = useState(false)
   const blockRef = useRef(null)
-  const railRef = useRef(null)
 
   /* 外部改 hash（页眉链接、浏览器前进后退）→ 切到对应面板 */
   useEffect(() => {
@@ -70,35 +70,36 @@ export default function Sections() {
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
 
-  /** 点选项：切面板 + 只改地址栏（replaceState 不触发 hashchange，免得重复滚动） */
+  /** 切面板 + 只改地址栏（replaceState 不触发 hashchange，免得重复滚动） */
   const select = useCallback((id) => {
     setActive(id)
     if (typeof window !== 'undefined' && window.location.hash !== `#${id}`) {
       window.history.replaceState(null, '', `#${id}`)
     }
-    // 窄屏那排标签是横向滚动的：切过去的选项要滑进视野（桌面上是空操作）
-    railRef.current?.querySelector(`#tab-${id}`)?.scrollIntoView({
-      block: 'nearest',
-      inline: 'nearest',
-    })
   }, [])
 
-  /* 键盘：上下（窄屏是左右）切换、Home / End 跳首尾 */
-  const onKeyDown = (e) => {
-    const keys = ['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft', 'Home', 'End']
-    if (!keys.includes(e.key)) return
-    e.preventDefault()
-    const i = sectionTabs.findIndex((t) => t.id === active)
-    let next = i
-    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') next = (i + 1) % sectionTabs.length
-    if (e.key === 'ArrowUp' || e.key === 'ArrowLeft')
-      next = (i - 1 + sectionTabs.length) % sectionTabs.length
-    if (e.key === 'Home') next = 0
-    if (e.key === 'End') next = sectionTabs.length - 1
-    const id = sectionTabs[next].id
-    select(id)
-    railRef.current?.querySelector(`#tab-${id}`)?.focus()
-  }
+  /** 左右箭头：在六章之间循环 */
+  const step = useCallback(
+    (d) => {
+      const i = sectionTabs.findIndex((t) => t.id === active)
+      select(sectionTabs[(i + d + sectionTabs.length) % sectionTabs.length].id)
+    },
+    [active, select],
+  )
+
+  /* 键盘：←/→ 切相邻章节（填表单时让开，不抢光标键） */
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
+      const t = e.target
+      if (t?.closest?.('input, textarea, select, [contenteditable]')) return
+      e.preventDefault()
+      step(e.key === 'ArrowRight' ? 1 : -1)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [step])
 
   const activeEn = sectionTabs.find((t) => t.id === active)?.en || ''
 
@@ -128,113 +129,100 @@ export default function Sections() {
     return () => io.disconnect()
   }, [])
 
-  /* 选中竖线：量出当前那一项的位置，写成 --ind-* 变量，让那一根线滑过去。
-     横向（窄屏标签行）时线在底下，纵向时线在左边 —— 两边用同一套变量。 */
-  useLayoutEffect(() => {
-    const rail = railRef.current
-    if (!rail) return
-
-    let ready = false
-    const place = () => {
-      const on = rail.querySelector('.tab.is-on')
-      if (!on) return
-      const row = window.matchMedia('(max-width: 860px)').matches
-      const x = row ? on.offsetLeft : on.offsetLeft - 15
-      const y = row
-        ? on.offsetTop + on.offsetHeight - 2
-        : on.offsetTop + (on.offsetHeight - 26) / 2
-      rail.style.setProperty('--ind-x', `${x}px`)
-      rail.style.setProperty('--ind-y', `${y}px`)
-      rail.style.setProperty('--ind-w', row ? `${on.offsetWidth}px` : '2px')
-      rail.style.setProperty('--ind-h', row ? '2px' : '26px')
-      // 第一次定位不要有滑动动画（否则会从 0,0 滑过去）
-      if (!ready) {
-        ready = true
-        rail.classList.add('is-ind-ready')
-      }
-    }
-
-    place()
-    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(place)
-    ro?.observe(rail)
-    window.addEventListener('resize', place)
-    document.fonts?.ready?.then(place).catch(() => {})
-    return () => {
-      ro?.disconnect()
-      window.removeEventListener('resize', place)
-    }
-  }, [active])
+  const index = Math.max(
+    0,
+    sectionTabs.findIndex((t) => t.id === active),
+  )
+  const chevron = (d) => (
+    <svg width="20" height="34" viewBox="0 0 20 34" fill="none" aria-hidden="true">
+      <path
+        d={d < 0 ? 'M17 2 3 17l14 15' : 'M3 2l14 15-14 15'}
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinecap="square"
+      />
+    </svg>
+  )
 
   return (
-    <section className={`tabs${armed ? ' is-armed' : ''}`} ref={blockRef} aria-label="板块">
-      <div className="tabs__inner">
-        <div
-          className="tabs__rail"
-          role="tablist"
-          aria-label="板块导航"
-          ref={railRef}
-          onKeyDown={onKeyDown}
-        >
-          {sectionTabs.map((t) => {
-            const on = t.id === active
-            return (
-              <button
-                key={t.id}
-                id={`tab-${t.id}`}
-                type="button"
-                role="tab"
-                aria-selected={on}
-                aria-controls={t.id}
-                tabIndex={on ? 0 : -1}
-                className={`tab${on ? ' is-on' : ''}`}
-                onClick={() => select(t.id)}
-              >
-                <span className="tab__cn">{t.cn}</span>
-                <span className="tab__en mono">{t.en}</span>
-              </button>
-            )
-          })}
+    <>
+      <section
+        className={`tabs${armed ? ' is-armed' : ''}`}
+        ref={blockRef}
+        aria-label="板块"
+      >
+        <div className="tabs__inner">
+          <div className="tabs__panel">
+            {sectionTabs.map((t) => {
+              const Panel = PANELS[t.id]
+              return (
+                <div
+                  key={t.id}
+                  id={t.id}
+                  role="tabpanel"
+                  aria-label={t.cn}
+                  hidden={t.id !== active}
+                  className="tabs__view"
+                >
+                  <Panel />
+                </div>
+              )
+            })}
+          </div>
 
-          {/* 选中那条竖线（横向标签行时是底下那条线）：只有一根，切换时滑过去 */}
-          <span className="tabs__ind" aria-hidden="true" />
-        </div>
+          {/* 粒子画布：铺在整块板块区上，图形落在当前章节的留白穴里 */}
+          <div className="tabs__figure">
+            <FigureCanvas id={active} />
+          </div>
 
-        <div className="tabs__panel">
-          {sectionTabs.map((t) => {
-            const Panel = PANELS[t.id]
-            return (
-              <div
-                key={t.id}
-                id={t.id}
-                role="tabpanel"
-                aria-labelledby={`tab-${t.id}`}
-                hidden={t.id !== active}
-                className="tabs__view"
-              >
-                <Panel />
-              </div>
-            )
-          })}
-        </div>
-
-        {/* 右栏：当前板块的几何图形，粒子聚出来的（换板块会重新聚散） */}
-        <div className="tabs__figure">
-          <FigureCanvas id={active} />
-        </div>
-
-        {/* 当前板块的名字，压成大号幽灵字（参考图左下那个 WORLD）。
-            挂在整块上而不是面板里：位置不随面板高度变，切标签时不会跳 */}
-        <span className="tabs__mark" aria-hidden="true">
-          {mark.prev ? (
-            <span key={`out-${mark.prev}`} className="tabs__mark-i is-out">
-              {mark.prev}
+          {/* 当前板块的名字，压成大号幽灵字（参考图左下那个 WORLD）。
+              挂在整块上而不是面板里：位置不随面板高度变，切标签时不会跳 */}
+          <span className="tabs__mark" aria-hidden="true">
+            {mark.prev ? (
+              <span key={`out-${mark.prev}`} className="tabs__mark-i is-out">
+                {mark.prev}
+              </span>
+            ) : null}
+            <span key={`in-${mark.cur}`} className="tabs__mark-i">
+              {mark.cur}
             </span>
-          ) : null}
-          <span key={`in-${mark.cur}`} className="tabs__mark-i">
-            {mark.cur}
           </span>
-        </span>
-      </div>
-    </section>
+        </div>
+      </section>
+
+      {/* 左右箭头：贴在屏幕两侧、竖直居中（照参考图），到头循环。
+          放在 section 外面 —— .tabs 上有 clip-path，fixed 子元素会被它裁掉 */}
+      {armed ? (
+        <>
+          <button
+            className="tabs__arrow tabs__arrow--prev"
+            type="button"
+            aria-label="上一章"
+            onClick={() => step(-1)}
+          >
+            {chevron(-1)}
+          </button>
+          <button
+            className="tabs__arrow tabs__arrow--next"
+            type="button"
+            aria-label="下一章"
+            onClick={() => step(1)}
+          >
+            {chevron(1)}
+          </button>
+
+          {/* 底部条：一条通栏细线 + 一段"当前位置"，不写字 */}
+          <div className="tabs__bar" aria-hidden="true">
+            <span
+              className="tabs__bar-i"
+              style={{
+                width: `${100 / sectionTabs.length}%`,
+                transform: `translateX(${index * 100}%)`,
+              }}
+            />
+          </div>
+        </>
+      ) : null}
+    </>
   )
 }

@@ -30,7 +30,10 @@ export default function About() {
           <Reveal className="about__facts" delay={250}>
             <dl style={{ margin: 0 }}>
               {about.facts.map(([label, value]) => (
-                <div className="about__fact" key={label}>
+                <div
+                  className={`about__fact${label === '邮箱' ? ' is-wide' : ''}`}
+                  key={label}
+                >
                   <dt>{label}</dt>
                   <dd>
                     {label === '邮箱' ? <a href={`mailto:${value}`}>{value}</a> : value}
