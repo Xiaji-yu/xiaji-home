@@ -176,14 +176,14 @@
 }
 
 .tabs.is-armed .tabs__view:not([hidden]) .reveal {
-  animation: panelIn 0.45s var(--ease) both;
+  animation: panelIn 0.55s var(--ease) both;
   animation-delay: var(--d, 0ms);
 }
 
 @keyframes panelIn {
   from {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(26px);
   }
 
   to {
@@ -200,7 +200,7 @@
 @keyframes cellIn {
   from {
     opacity: 0;
-    transform: translateX(-14px);
+    transform: translateX(-30px);
   }
 
   to {
@@ -223,8 +223,8 @@
 
 /* 技能行：序号 → 名称 → 条 → 数值，从左往右依次就位（行与行之间还叠着 --d 的错落）*/
 .tabs.is-armed .tabs__view:not([hidden]) .skill > * {
-  animation: cellIn 0.42s var(--ease) both;
-  animation-delay: calc(var(--d, 0ms) + var(--i, 0) * 70ms);
+  animation: cellIn 0.5s var(--ease) both;
+  animation-delay: calc(var(--d, 0ms) + var(--i, 0) * 90ms);
 }
 
 .tabs .skill > *:nth-child(1) {
@@ -245,8 +245,8 @@
 
 /* 经历：每条也是"标记 → 年份 → 正文"从左往右（条目之间同样叠 --d）*/
 .tabs.is-armed .tabs__view:not([hidden]) .tl__item > * {
-  animation: cellIn 0.42s var(--ease) both;
-  animation-delay: calc(var(--d, 0ms) + var(--i, 0) * 70ms);
+  animation: cellIn 0.5s var(--ease) both;
+  animation-delay: calc(var(--d, 0ms) + var(--i, 0) * 90ms);
 }
 
 .tabs .tl__item > *:nth-child(1) {
@@ -264,7 +264,7 @@
 /* 卡片（项目 / 联系）：横向擦出来，不用 transform —— 卡片自己有悬停倾斜，
    动 transform 会把那个效果顶掉 */
 .tabs.is-armed .tabs__view:not([hidden]) .grid-cell > * {
-  animation: cardIn 0.5s var(--ease) both;
+  animation: cardIn 0.62s var(--ease) both;
   animation-delay: calc(var(--d, 0ms) + 80ms);
 }
 
