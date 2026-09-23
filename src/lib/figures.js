@@ -107,13 +107,17 @@ function skills(ctx) {
 
 /** 项目作品：三张"项目卡片"叠在一起（跟这一页三张卡对应） */
 function work(ctx) {
-  // 后面两张先画，露出边角
+  // 后面四张先画（各带一条标题条），错开露出边角 —— 一叠卡片
   for (const [dx, dy] of [
-    [10, 16],
-    [6, 9],
+    [20, 26],
+    [15, 19],
+    [10, 13],
+    [5, 6],
   ]) {
     ctx.lineWidth = 3
-    strokeRect(ctx, 10 + dx, 14 + dy, 62, 52)
+    strokeRect(ctx, 6 + dx, 6 + dy, 58, 46)
+    rect(ctx, 11 + dx, 11 + dy, 22, 3)
+    rect(ctx, 11 + dx, 18 + dy, 14, 3)
   }
   // 最前面那张：标题栏 + 缩略图 + 两行说明 + 标签
   ctx.lineWidth = 5

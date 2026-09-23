@@ -99,7 +99,7 @@ export default function Projects() {
 
           <p className="work__hint mono">Hover / 悬停卡片试试 · 它们会跟着鼠标微微倾斜</p>
 
-          <div className="pane__slot" aria-hidden="true" data-fig-scale="0.86" />
+          <div className="pane__slot" aria-hidden="true" data-fig-scale="1" />
         </div>
       </div>
     </section>
