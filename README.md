@@ -174,7 +174,7 @@ xiaji-home/
 - 想调它的大小/位置：`components/Sections.css` 里 `.tabs__inner` 的 `--fig-w`（默认 `min(58vh, 720px)`，`.tabs__figure` 直接用它）和 `.tabs__figure` 的 `right`（默认往右挪出画布宽的 7%，挪的是图形右边那圈空白，不会切到墨点）；它是**背景层**，正文压在它上面
 - **"一章一屏"怎么算**：`tokens.css` 里的 `--header-h`（页眉 56px）与 `--status-h`（首屏状态栏高，`App.jsx` 会量出来写回），每章高度 = `100vh − 两者`；`base.css` 的 `scroll-padding-top` 也用这两个值，所以跳转时那条线正好压在页眉线上。想改章节高度就动这两个变量（矮屏上另有 `max-height: 980px / 820px` 两档紧凑规则）
 - 想调板块宽度：`components/Sections.css` 的 `--col-w`（默认 `clamp(620px, 82vw, 1680px)`）；两边留白由 `--pad-x` 与那条 `max-width` 一起决定（板块在屏幕上居中）。箭头和底部条也在同一个文件（`.tabs__arrow` / `.tabs__bar`）
-- 六章现在的留白穴：关于我·中右（正文 + 信息表 : 图形 ≈ 6 : 4）· 技能栈·右上 · 项目作品·左上 · 经历·左中 · 联系方式·右下 · 便签·左下
+- 六章现在的留白穴：关于我·中右（正文 + 信息表 : 图形 ≈ 6 : 4）· 技能栈·右上 · 项目作品·左上 · 经历·左中 · 联系方式·右下 · 留言便签·右中（表单在左、图形在它右边，便签墙通铺整宽）
 - 想挪某一块的留白穴：同一个文件里找 `.pane--about` / `--skills` / `--work` / `--journey` / `--contact` / `--notes`，改那几行的 `grid-column` / `grid-row` 即可（穴的大小是 `--slot-w`）；想让某一块的图形大一点小一点：改那个面板里的 `data-fig-scale`（0.82~1.0）
 - `lib/figureParticles.js` 里的配对用的是**空间填充曲线（Morton 序）**：两边按同一套序号排一遍再一一对应 —— 别改成"每颗点找最近的格子"，那样会让新图形大半格子分不到粒子（详见 CHANGELOG）
 

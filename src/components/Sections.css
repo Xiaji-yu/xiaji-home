@@ -462,33 +462,32 @@
   align-self: end;
 }
 
-/* ⑥ 留言便签 · 穴在左下：表单在左上，穴在它下面，便签墙占右半边两行 */
+/* ⑥ 留言便签 · 照参考图 3 的版面：
+     引导句通栏 → 表单独占左边那一行、图形在同一行的右侧 → 便签墙在下面通铺整宽 */
 .tabs .pane--notes {
-  /* 便签这一章内容最多（引导句 + 表单 + 便签墙 + 穴），穴再收一档并按视口高缩放，
-     才能连同一圈标题一起塞进"一章一屏" */
   --slot-w: clamp(200px, 30vh, 340px);
-  grid-template-columns: var(--slot-w) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) var(--slot-w);
   grid-template-rows: auto auto auto;
 }
 
 .tabs .pane--notes > .sec-lead {
   grid-column: 1 / -1;
+  grid-row: 1;
 }
 
 .tabs .pane--notes > .notes__form {
-  /* 表单通铺一行（穴那一列太窄，塞进去输入框会挤成一条）*/
-  grid-column: 1 / -1;
+  grid-column: 1;
   grid-row: 2;
-  max-width: min(1100px, 100%);
 }
 
 .tabs .pane--notes > .pane__slot {
-  grid-column: 1;
-  grid-row: 3;
+  grid-column: 2;
+  grid-row: 2;
+  align-self: center;
 }
 
 .tabs .pane--notes > .notes__wall {
-  grid-column: 2;
+  grid-column: 1 / -1;
   grid-row: 3;
 }
 
