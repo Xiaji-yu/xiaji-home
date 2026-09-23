@@ -85,8 +85,7 @@ export default function Projects() {
 
         <div className="pane pane--work">
           <Reveal as="p" className="sec-lead">
-            下面三张卡片是占位内容 —— 换成你自己的项目就行，改 src/data/site.js 里 projects
-            那一段。填上 link 之后，卡片右下角会自动变成可点击的链接。
+            三个小工具，都是自己做着用的：第一个就是这座点阵山背后的算法，第二个是页面最底下那块留言板的独立版。
           </Reveal>
 
           <div className="work__grid">
