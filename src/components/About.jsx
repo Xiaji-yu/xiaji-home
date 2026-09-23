@@ -29,17 +29,25 @@ export default function About() {
 
           <Reveal className="about__facts" delay={250}>
             <dl style={{ margin: 0 }}>
-              {about.facts.map(([label, value]) => (
-                <div
-                  className={`about__fact${label === '邮箱' ? ' is-wide' : ''}`}
-                  key={label}
-                >
-                  <dt>{label}</dt>
-                  <dd>
-                    {label === '邮箱' ? <a href={`mailto:${value}`}>{value}</a> : value}
-                  </dd>
-                </div>
-              ))}
+              {about.facts.map(([label, value]) => {
+                const isLink = /^https?:\/\//.test(value)
+                return (
+                  <div className="about__fact" key={label}>
+                    <dt>{label}</dt>
+                    <dd>
+                      {isLink ? (
+                        <a href={value} target="_blank" rel="noopener noreferrer">
+                          {value.replace(/^https?:\/\//, '')}
+                        </a>
+                      ) : label === '邮箱' ? (
+                        <a href={`mailto:${value}`}>{value}</a>
+                      ) : (
+                        value
+                      )}
+                    </dd>
+                  </div>
+                )
+              })}
             </dl>
           </Reveal>
 
