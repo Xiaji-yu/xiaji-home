@@ -268,6 +268,86 @@
   animation-delay: calc(var(--d, 0ms) + 80ms);
 }
 
+/* ---- 每一章一套自己的入场（风格尽量不一样）----
+   都挂 .is-armed，切章重放；减少动态效果时被 base.css 统一关掉。 */
+
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(34px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: translateY(26px) scale(0.92);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes wipeRight {
+  from {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+  }
+
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes unfold {
+  from {
+    opacity: 0;
+    clip-path: inset(0 0 100% 0);
+  }
+
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* 项目作品：卡片从下方"推上来"并轻微放大（动的是 .grid-cell 外壳，
+   卡片自己的悬停倾斜在里层，不会被顶掉）*/
+.tabs.is-armed .tabs__view:not([hidden]) .pane--work .grid-cell {
+  animation: popIn 0.62s var(--ease) both;
+  animation-delay: calc(var(--d, 0ms) + 60ms);
+}
+
+/* 联系方式：卡片横向擦出 + 稍大错落 */
+.tabs.is-armed .tabs__view:not([hidden]) .pane--contact .grid-cell {
+  animation: wipeRight 0.7s var(--ease) both;
+  animation-delay: calc(var(--d, 0ms) + 110ms);
+}
+
+/* 经历：时间轴从下往上长，条目从左边滑入 */
+.tabs.is-armed .tabs__view:not([hidden]) .pane--journey .tl {
+  animation: riseIn 0.7s var(--ease) both;
+}
+
+/* 留言便签：表单向下"展开"，便签墙从下往上浮起 */
+.tabs.is-armed .tabs__view:not([hidden]) .pane--notes .notes__form {
+  animation: unfold 0.65s var(--ease) both;
+  animation-delay: 90ms;
+}
+
+.tabs.is-armed .tabs__view:not([hidden]) .pane--notes .notes__wall {
+  animation: riseIn 0.6s var(--ease) both;
+  animation-delay: 220ms;
+}
+
 .tabs__view {
   display: flex;
   flex-direction: column;

@@ -82,6 +82,12 @@ function skills(ctx) {
     rect(ctx, x + 5, top + 5, 15, 3) // 踏面边线
   }
   rect(ctx, 9, 93, 82, 3)
+  // 扶手：沿阶梯外侧的一道斜线
+  ctx.lineWidth = 4
+  ctx.beginPath()
+  ctx.moveTo(13, 68)
+  ctx.lineTo(88, 8)
+  ctx.stroke()
   // 小旗：杆 + 旗面
   rect(ctx, 87, 6, 3, 18)
   ctx.beginPath()
@@ -102,6 +108,9 @@ function work(ctx) {
   for (const y of [42, 52, 62]) rect(ctx, 39, y, 12, 3) // 侧栏条目
   rect(ctx, 56, 42, 28, 22) // 内容区的图位
   rect(ctx, 56, 70, 28, 3) // 内容线
+  rect(ctx, 87, 38, 3, 40) // 滚动条
+  rect(ctx, 12, 76, 76, 3) // 底部状态栏
+  rect(ctx, 66, 56, 16, 3) // 再来一条内容线
   rect(ctx, 22, 50, 8, 4)
   rect(ctx, 22, 62, 8, 4)
 }
@@ -137,6 +146,27 @@ function journey(ctx) {
   ctx.arc(6, 72, 4, 0, Math.PI * 2)
   ctx.fill()
 
+  // 路中心：一条表示走向的虚线
+  ctx.beginPath()
+  for (const [x, y] of [
+    [18, 70],
+    [30, 60],
+    [44, 51],
+    [58, 41],
+    [72, 33],
+    [84, 29],
+  ]) {
+    ctx.moveTo(x - 3, y)
+    ctx.lineTo(x + 3, y)
+  }
+  ctx.stroke()
+
+  // 路边两粒小石子
+  ctx.beginPath()
+  ctx.arc(34, 78, 3, 0, Math.PI * 2)
+  ctx.arc(62, 22, 2.5, 0, Math.PI * 2)
+  ctx.fill()
+
   // 里程碑底座：杆下各一小段地面线
   for (const [x, y] of [
     [24, 58],
@@ -167,9 +197,12 @@ function contact(ctx) {
   // 邮票
   ctx.lineWidth = 3
   strokeRect(ctx, 70, 33, 13, 15)
-  // 收件人两行
+  // 收件人两行 + 寄件人一行
   rect(ctx, 18, 60, 24, 3)
   rect(ctx, 18, 66, 16, 3)
+  rect(ctx, 18, 36, 18, 3)
+  // 邮票齿孔
+  for (const y of [35, 41, 47]) rect(ctx, 84, y, 2, 2)
 }
 
 /** 留言便签：一张折了角的便签纸 + 一支斜放的铅笔（照参考图） */
@@ -189,6 +222,17 @@ function notes(ctx) {
   ctx.lineTo(64, 30)
   ctx.lineTo(82, 30)
   ctx.stroke()
+  // 顶部回形针
+  ctx.lineWidth = 3
+  ctx.beginPath()
+  ctx.moveTo(40, 12)
+  ctx.lineTo(40, 4)
+  ctx.lineTo(52, 4)
+  ctx.lineTo(52, 14)
+  ctx.stroke()
+  // 折角内侧的阴影线
+  rect(ctx, 67, 13, 13, 3)
+
   // 标题线 + 项目符 + 几行字
   rect(ctx, 28, 22, 22, 4)
   for (const [y, w] of [
