@@ -126,11 +126,10 @@
 /* 备案号行：公安网安备（带盾牌小图标）+ ICP */
 .foot__beian {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 0 var(--pad) 22px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  padding: 0 var(--pad) 20px;
   color: var(--muted);
   font-size: 12px;
   letter-spacing: 0.02em;
@@ -153,10 +152,6 @@
   width: 16px;
   height: 18px;
   display: block;
-}
-
-.foot__beianDot {
-  color: var(--line);
 }
 
 @media (max-width: 900px) {

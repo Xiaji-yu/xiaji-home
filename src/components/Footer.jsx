@@ -83,9 +83,6 @@ export default function Footer() {
           <img className="foot__beianIcon" src={beianIcon} alt="" width={16} height={18} />
           {footer.beian.gaNumber}
         </a>
-        <span className="foot__beianDot" aria-hidden="true">
-          ·
-        </span>
         <a
           className="foot__beianLink"
           href={footer.beian.icpUrl}
