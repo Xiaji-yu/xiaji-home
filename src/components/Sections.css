@@ -366,53 +366,53 @@
   align-self: center;
 }
 
-/* ② 技能栈 · 穴在右中 */
+/* ② 技能栈 · 穴在左上（六章左右交替：右 / 左 / 右 / 左 / 右 / 左）*/
 .tabs .pane--skills {
-  grid-template-columns: minmax(0, 1fr) var(--slot-w);
+  grid-template-columns: var(--slot-w) minmax(0, 1fr);
   grid-template-rows: auto 1fr;
 }
 
 .tabs .pane--skills > .sec-lead {
-  grid-column: 1;
+  grid-column: 2;
   grid-row: 1;
 }
 
-/* 删掉两条技能之后只剩 5 行：把行距拉开（拉长），整块再往下挪一点 */
+/* 只剩 5 条技能：行距拉开（拉长），整块再往下挪一点 */
 .tabs .pane--skills > .skills__list {
-  grid-column: 1;
+  grid-column: 2;
   grid-row: 2;
   margin-top: clamp(20px, 2.6vw, 44px);
 }
 
 .tabs .pane--skills > .pane__slot {
-  grid-column: 2;
+  grid-column: 1;
   grid-row: 1 / span 2;
-  align-self: start; /* 阶梯图形挪到右上角 */
+  align-self: start;
 }
 
-/* ③ 项目作品 · 图形在左上角：引导句与卡片在右栏，卡片整体下移一点点 */
+/* ③ 项目作品 · 穴在右上：引导句与卡片在左栏，卡片整体下移一点点 */
 .tabs .pane--work {
-  grid-template-columns: var(--slot-w) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) var(--slot-w);
 }
 
 .tabs .pane--work > .sec-lead {
-  grid-column: 2;
+  grid-column: 1;
   grid-row: 1;
 }
 
 .tabs .pane--work > .work__grid {
-  grid-column: 2;
+  grid-column: 1;
   grid-row: 2;
   margin-top: clamp(20px, 2.6vw, 44px);
 }
 
 .tabs .pane--work > .work__hint {
-  grid-column: 2;
+  grid-column: 1;
   grid-row: 3;
 }
 
 .tabs .pane--work > .pane__slot {
-  grid-column: 1;
+  grid-column: 2;
   grid-row: 1 / span 2;
   align-self: start;
 }
@@ -466,7 +466,8 @@
      引导句通栏 → 表单独占左边那一行、图形在同一行的右侧 → 便签墙在下面通铺整宽 */
 .tabs .pane--notes {
   --slot-w: clamp(230px, 33vh, 372px);
-  grid-template-columns: minmax(0, 1fr) var(--slot-w);
+  /* 图形在左、表单在右（六章左右交替的最后一块）*/
+  grid-template-columns: var(--slot-w) minmax(0, 1fr);
   grid-template-rows: auto auto auto;
 }
 
@@ -476,12 +477,12 @@
 }
 
 .tabs .pane--notes > .notes__form {
-  grid-column: 1;
+  grid-column: 2;
   grid-row: 2;
 }
 
 .tabs .pane--notes > .pane__slot {
-  grid-column: 2;
+  grid-column: 1;
   grid-row: 2;
   align-self: center;
 }

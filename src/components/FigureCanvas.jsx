@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { drawFigure } from '../lib/figures.js'
-import { makeParticles, planMorph, snap, step } from '../lib/figureParticles.js'
+import { MOUSE, makeParticles, planMorph, snap, step } from '../lib/figureParticles.js'
 import { INK } from '../lib/dither.js'
 import { prefersReducedMotion } from '../hooks/useCountUp.js'
 import './FigureCanvas.css'
@@ -15,6 +15,8 @@ import './FigureCanvas.css'
      ③ 换板块：粒子直接飞向新图形里离自己最近的格子（~780ms，带错峰）——
         看着像形状在变形/平移，而不是散开重聚
      ④ 第一次进入视野时先聚一次；系统开了「减少动态效果」就直接摆好、不动
+     ⑤ 鼠标移过来会按出一个坑（半径 26 / 深 16，比主页那座山的 38 / 26 小一档），
+        推开后慢慢流回 —— 和山那边同一套一阶滞后，不会过冲
 
    画布不是贴在右边一角，而是**铺在整块板块区上**：每个章节里留了一块空白
    （.pane__slot，六个章节位置各不相同），图形就嵌在那块空白里 —— 位置和大小
@@ -51,6 +53,8 @@ export default function FigureCanvas({ id }) {
 
     let cw = 0 // 画布（铺在板块区上的那条）的宽高
     let ch = 0
+    // 光标位置（画布坐标）。画布本身 pointer-events:none，所以监听挂在 window 上
+    const pointer = { x: 0, y: 0, active: false }
     let items = []
     let currentId = idRef.current
     let plan = MORPH
@@ -137,10 +141,12 @@ export default function FigureCanvas({ id }) {
       let x1 = -Infinity
       let y1 = -Infinity
       for (const it of items) {
-        if (it.x < x0) x0 = it.x
-        if (it.x > x1) x1 = it.x
-        if (it.y < y0) y0 = it.y
-        if (it.y > y1) y1 = it.y
+        const vx = it.x + it.ox
+        const vy = it.y + it.oy
+        if (vx < x0) x0 = vx
+        if (vx > x1) x1 = vx
+        if (vy < y0) y0 = vy
+        if (vy > y1) y1 = vy
       }
 
       const pad = (CELL * DOT) / 2 + 1
@@ -156,8 +162,8 @@ export default function FigureCanvas({ id }) {
       ctx.fillStyle = `rgb(${INK})`
       ctx.beginPath()
       for (const it of items) {
-        const x = it.x * dpr
-        const y = it.y * dpr
+        const x = (it.x + it.ox) * dpr
+        const y = (it.y + it.oy) * dpr
         ctx.moveTo(x + r, y)
         ctx.arc(x, y, r, 0, TAU)
       }
@@ -180,10 +186,13 @@ export default function FigureCanvas({ id }) {
 
     function frame(now) {
       raf = 0
-      const result = step(items, now, plan.duration, plan.stagger)
+      const mouse = pointer.active && !reduced ? pointer : null
+      const result = step(items, now, plan.duration, plan.stagger, mouse)
       draw()
 
-      if (!result.allDone) schedule() // 落定就停，不空转
+      // 落定、且按坑也静下来了才停 —— 光标停在坑里时粒子会停在"被推开"的位置，
+      // 这时候也不需要继续跑；下一次 mousemove 会把它唤醒
+      if (!result.allDone || result.maxMotion > 0.05) schedule()
     }
 
     /* ---------------- 尺寸与首次聚合 ---------------- */
@@ -263,6 +272,31 @@ export default function FigureCanvas({ id }) {
       resizeObserver.observe(wrap)
     }
 
+    /* 光标：画布 pointer-events:none，所以挂在 window 上，每帧换算成画布坐标 */
+    const onMove = (e) => {
+      if (reduced) return
+      const r = wrap.getBoundingClientRect()
+      pointer.x = e.clientX - r.left
+      pointer.y = e.clientY - r.top
+      const pad = MOUSE.radius
+      pointer.active =
+        pointer.x > -pad &&
+        pointer.y > -pad &&
+        pointer.x < r.width + pad &&
+        pointer.y < r.height + pad
+      // 任何一次移动都唤醒主循环：光标**离开**图形时也要跑（把点慢慢放回原位），
+      // 循环自己在"形变结束 + 按坑静下来"时停
+      schedule()
+    }
+    const onLeave = () => {
+      if (!pointer.active) return
+      pointer.active = false
+      schedule()
+    }
+    window.addEventListener('mousemove', onMove, { passive: true })
+    window.addEventListener('blur', onLeave)
+    document.addEventListener('mouseleave', onLeave)
+
     let io = null
     if (typeof IntersectionObserver !== 'undefined') {
       io = new IntersectionObserver(
@@ -280,6 +314,9 @@ export default function FigureCanvas({ id }) {
       cancelAnimationFrame(raf)
       raf = 0
       apiRef.current = null
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('blur', onLeave)
+      document.removeEventListener('mouseleave', onLeave)
       if (resizeObserver) resizeObserver.disconnect()
       if (io) io.disconnect()
     }

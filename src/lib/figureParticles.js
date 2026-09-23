@@ -4,6 +4,8 @@
    和首屏那座山是同一套思路，但这里的任务简单得多：
 
      fitToCells()   把"要点亮的格子"配成固定数量的粒子目标（多了抽稀、少了复制补齐）
+     MOUSE          光标按坑：跟主页那座山同一套做法，但半径与深度都小一档
+                     （图形本身比山小，坑大了会糊成一片）
      planMorph()    让每颗粒子直接飞向新图形里**离自己最近**的那颗格子（就近配对）
      snap()         不做动画，直接落到目标上（系统开了「减少动态效果」时用）
      step()         推进插值
@@ -14,6 +16,18 @@
    ========================================================================== */
 
 const ease = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2)
+
+/**
+ * 光标按坑：主页那座山是半径 38 / 深 26，图形比它小一圈，这里按小一档来
+ * （半径 30 / 深 20，主页是 38 / 26）—— 既按得出坑，又不至于把图形糊掉。
+ */
+export const MOUSE = {
+  radius: 30,
+  push: 20,
+  curl: 0.15, // 一点切向，让点旋着让开
+  follow: 0.5, // 推开时跟得快
+  back: 0.045, // 回位时慢慢流回去
+}
 
 const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v)
 
@@ -80,6 +94,11 @@ export function makeParticles(count, box) {
       toY: 0,
       start: 0,
       delay: 0,
+      // 光标按坑用：ox/oy 是"相对目标位置"的偏移
+      ox: 0,
+      oy: 0,
+      weight: 0.75 + hash(i, 47) * 0.55,
+      curl: hash(i, 53) * 2 - 1,
     })
   }
   return items
@@ -92,8 +111,12 @@ export function makeParticles(count, box) {
 function plan(items, targetAt, now, { duration, stagger }) {
   for (let i = 0; i < items.length; i++) {
     const it = items[i]
-    it.fromX = it.x
-    it.fromY = it.y
+    // 从"看得见的位置"起飞（含按坑偏移），并把偏移归零 ——
+    // 否则按坑的位移会被算两次
+    it.fromX = it.x + it.ox
+    it.fromY = it.y + it.oy
+    it.ox = 0
+    it.oy = 0
     const to = targetAt(i)
     it.toX = to.x
     it.toY = to.y
@@ -161,14 +184,23 @@ export function snap(items) {
   for (const it of items) {
     it.x = it.toX
     it.y = it.toY
+    it.ox = 0
+    it.oy = 0
   }
 }
 
-/** 推进一帧；返回 { allDone, maxMotion } */
-export function step(items, now, duration, stagger) {
+/**
+ * 推进一帧；返回 { allDone, maxMotion }。
+ * mouse 传 { x, y }（画布坐标）时，光标附近会按出一个坑：坑内快速推开、坑外缓慢流回。
+ * 和主页那座山同一套一阶滞后，永远不会过冲。
+ */
+export function step(items, now, duration, stagger, mouse) {
   let allDone = true
   let maxMotion = 0
-  const span = Math.max(1, duration + stagger)
+
+  const R2 = MOUSE.radius * MOUSE.radius
+  const back = MOUSE.back
+  const follow = MOUSE.follow
 
   for (const it of items) {
     const t = clamp01((now - it.start - it.delay) / Math.max(1, duration))
@@ -179,8 +211,36 @@ export function step(items, now, duration, stagger) {
 
     const remaining = Math.abs(1 - e) * Math.hypot(it.toX - it.fromX, it.toY - it.fromY)
     if (remaining > maxMotion) maxMotion = remaining
+
+    // ---- 光标按坑 ----
+    let targetX = 0
+    let targetY = 0
+    let rate = back
+    if (mouse) {
+      const px = it.x + it.ox
+      const py = it.y + it.oy
+      const dx = px - mouse.x
+      const dy = py - mouse.y
+      const d2 = dx * dx + dy * dy
+      if (d2 < R2) {
+        const d = Math.sqrt(d2) || 0.001
+        const nx = dx / d
+        const ny = dy / d
+        const power = (1 - d / MOUSE.radius) * MOUSE.push * it.weight
+        targetX = (nx - ny * MOUSE.curl * it.curl) * power
+        targetY = (ny + nx * MOUSE.curl * it.curl) * power
+        rate = follow
+      }
+    }
+
+    const dOx = (targetX - it.ox) * rate
+    const dOy = (targetY - it.oy) * rate
+    it.ox += dOx
+    it.oy += dOy
+
+    const motion = Math.hypot(dOx, dOy)
+    if (motion > maxMotion) maxMotion = motion
   }
 
-  void span
   return { allDone, maxMotion }
 }
