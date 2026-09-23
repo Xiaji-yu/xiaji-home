@@ -19,8 +19,8 @@ export const site = {
 
   /* ---- 首屏两颗按钮 ---- */
   heroCta: [
-    { label: 'See My Work', href: '#work', solid: true },
-    { label: 'Write to Me', href: 'mailto:variant305@gmail.com', solid: false },
+    { label: 'About Me', href: '#about', solid: true },
+    { label: 'See My Work', href: '#work', solid: false },
   ],
 
   /* ---- 首屏最下面那条状态栏 ---- */
