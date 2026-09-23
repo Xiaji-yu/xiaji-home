@@ -47,36 +47,76 @@ export default function Sections() {
   const [armed, setArmed] = useState(false)
   const blockRef = useRef(null)
 
+  /** 把整块精确对齐到"落点"（页眉/页脚/首屏那些锚点用）：
+      锚点是打在**面板**上的（view 的 id），比板块顶多出一个内边距；而且目标章节
+      还是隐藏的时候浏览器压根跳不过去。所以锚点这条路统一由这里算落点。 */
+  const alignBlock = useCallback((smooth) => {
+    const el = blockRef.current
+    if (!el) return
+    const target =
+      parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0
+    // 自己算目标 scrollY（不用 scrollIntoView）—— 免得跟"浏览器跳锚点"抢时序
+    const want = Math.max(0, el.getBoundingClientRect().top + window.scrollY - target)
+    if (Math.abs(window.scrollY - want) <= 2) return
+    window.scrollTo({
+      top: want,
+      behavior: smooth && !prefersReducedMotion() ? 'smooth' : 'auto',
+    })
+  }, [])
+
+  /** 切完之后保证这一块在视野里（用户可能已经滚到页脚去了）。
+      箭头与键盘走这里 —— 已经在视野里就不动，免得把用户正在看的位置拽走。 */
+  const ensureInView = useCallback(() => {
+    const el = blockRef.current
+    if (!el) return
+    const top = el.getBoundingClientRect().top
+    if (top < -8 || top > window.innerHeight * 0.5) alignBlock(true)
+  }, [alignBlock])
+
   /* 外部改 hash（页眉链接、浏览器前进后退）→ 切到对应面板 */
   useEffect(() => {
     const onHash = () => {
       const id = hashId()
       if (!id) return
       setActive((prev) => (prev === id ? prev : id))
-      // 点了页眉链接的话，用户可能还在页面下方 —— 把选项卡区带进视野，
-      // 否则内容变了却看不到
-      const el = blockRef.current
-      if (el) {
-        const top = el.getBoundingClientRect().top
-        if (top < -8 || top > window.innerHeight * 0.5) {
-          el.scrollIntoView({
-            behavior: prefersReducedMotion() ? 'auto' : 'smooth',
-            block: 'start',
-          })
-        }
-      }
+      alignBlock()
     }
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)
-  }, [])
+  }, [alignBlock])
+
+  /* 所有指向章节的锚点（页眉、页脚、首屏按钮）都由这里接管：
+     ① 目标章节常常是隐藏的，浏览器跳不过去；② 浏览器把这次跳转推迟到 React
+     更新之后，会和我们自己的对齐抢时序。所以直接拦掉默认行为，自己写 hash + 对齐。 */
+  useEffect(() => {
+    const onClick = (e) => {
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
+      const a = e.target?.closest?.('a[href^="#"]')
+      if (!a) return
+      const id = a.getAttribute('href').slice(1)
+      if (!sectionTabs.some((t) => t.id === id)) return
+      e.preventDefault()
+      if (window.location.hash !== `#${id}`) {
+        window.history.pushState(null, '', `#${id}`)
+      }
+      setActive((prev) => (prev === id ? prev : id))
+      alignBlock()
+    }
+    document.addEventListener('click', onClick)
+    return () => document.removeEventListener('click', onClick)
+  }, [alignBlock])
 
   /** 切面板 + 只改地址栏（replaceState 不触发 hashchange，免得重复滚动） */
-  const select = useCallback((id) => {
-    setActive(id)
-    if (typeof window !== 'undefined' && window.location.hash !== `#${id}`) {
-      window.history.replaceState(null, '', `#${id}`)
-    }
-  }, [])
+  const select = useCallback(
+    (id) => {
+      setActive(id)
+      if (typeof window !== 'undefined' && window.location.hash !== `#${id}`) {
+        window.history.replaceState(null, '', `#${id}`)
+      }
+      ensureInView()
+    },
+    [ensureInView],
+  )
 
   /** 左右箭头：在六章之间循环 */
   const step = useCallback(

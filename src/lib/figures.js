@@ -53,12 +53,17 @@ function strokeRect(ctx, x, y, w, h) {
   ctx.strokeRect(x, y, w, h)
 }
 
-/** 关于我：人像（头 + 肩），底下压一条地平线 */
+/** 关于我：人像（头 + 肩 + 脖颈），外面一圈证件照的那种细框，底下压一条地平线 */
 function about(ctx) {
+  // 证件照外框
+  ctx.lineWidth = 3
+  strokeRect(ctx, 7, 7, 86, 86)
   // 头
   ctx.beginPath()
   ctx.arc(50, 32, 15, 0, Math.PI * 2)
   ctx.fill()
+  // 脖颈
+  rect(ctx, 45, 45, 10, 13)
   // 肩：从两侧收上去的梯形，顶部带一点圆弧
   ctx.beginPath()
   ctx.moveTo(20, 88)
@@ -72,15 +77,24 @@ function about(ctx) {
   rect(ctx, 14, 93, 72, 4)
 }
 
-/** 技能栈：一段往上走的阶梯 */
+/** 技能栈：一段往上走的阶梯（每级踏面一条边线）+ 顶上插一面小旗 */
 function skills(ctx) {
   const base = 90
   for (let i = 0; i < 4; i++) {
     const x = 9 + i * 20.5
     const top = 76 - i * 18
     rect(ctx, x, top, 20, base - top)
+    rect(ctx, x + 5, top + 5, 15, 3) // 踏面边线
   }
   rect(ctx, 9, 93, 82, 3)
+  // 小旗：杆 + 旗面
+  rect(ctx, 87, 6, 3, 18)
+  ctx.beginPath()
+  ctx.moveTo(90, 6)
+  ctx.lineTo(99, 11)
+  ctx.lineTo(90, 16)
+  ctx.closePath()
+  ctx.fill()
 }
 
 /** 项目作品：一个浏览器窗口（三张卡片叠在一起在点阵尺度下会糊成一团，换成这个） */
@@ -89,8 +103,12 @@ function work(ctx) {
   strokeRect(ctx, 10, 20, 80, 62)
   rect(ctx, 10, 32, 80, 4) // 标题栏
   for (const x of [18, 26, 34]) rect(ctx, x, 24, 5, 5) // 窗口按钮
-  rect(ctx, 22, 50, 30, 4) // 内容两行
-  rect(ctx, 22, 64, 46, 4)
+  rect(ctx, 32, 36, 3, 46) // 侧栏分隔
+  for (const y of [42, 52, 62]) rect(ctx, 39, y, 12, 3) // 侧栏条目
+  rect(ctx, 56, 42, 28, 22) // 内容区的图位
+  rect(ctx, 56, 70, 28, 3) // 内容线
+  rect(ctx, 22, 50, 8, 4)
+  rect(ctx, 22, 62, 8, 4)
 }
 
 /** 经历：一条蜿蜒向前的路，路边插着三面里程碑小旗，尽头一个箭头 */
@@ -119,6 +137,20 @@ function journey(ctx) {
     ctx.fill()
   }
 
+  // 起点：一个圆点（路的开始）
+  ctx.beginPath()
+  ctx.arc(6, 72, 4, 0, Math.PI * 2)
+  ctx.fill()
+
+  // 里程碑底座：杆下各一小段地面线
+  for (const [x, y] of [
+    [24, 58],
+    [48, 44],
+    [70, 32],
+  ]) {
+    rect(ctx, x - 6, y + 1, 12, 3)
+  }
+
   // 尽头：一个指向右上的箭头
   ctx.beginPath()
   ctx.moveTo(96, 20)
@@ -137,6 +169,12 @@ function contact(ctx) {
   ctx.lineTo(50, 55)
   ctx.lineTo(89, 27)
   ctx.stroke()
+  // 邮票
+  ctx.lineWidth = 3
+  strokeRect(ctx, 70, 33, 13, 15)
+  // 收件人两行
+  rect(ctx, 18, 60, 24, 3)
+  rect(ctx, 18, 66, 16, 3)
 }
 
 /** 留言便签：一张折了角的便签纸 + 一支斜放的铅笔（照参考图） */
@@ -156,13 +194,16 @@ function notes(ctx) {
   ctx.lineTo(64, 30)
   ctx.lineTo(82, 30)
   ctx.stroke()
-  // 几行字
+  // 标题线 + 项目符 + 几行字
+  rect(ctx, 28, 22, 22, 4)
   for (const [y, w] of [
     [44, 34],
     [56, 42],
     [68, 24],
+    [78, 34],
   ]) {
-    rect(ctx, 28, y, w, 5)
+    rect(ctx, 34, y, w, 4)
+    rect(ctx, 26, y + 1, 4, 4) // 项目符
   }
 
   // 右上角斜放一支铅笔（照参考图 3 的手绘）：笔杆 + 金属箍 + 笔尖

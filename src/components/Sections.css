@@ -25,7 +25,7 @@
   /* 左右留白：板块在屏幕上居中，靠下面那条 max-width 卡住 */
   --pad-x: clamp(24px, 3.4vw, 56px);
   /* 留白穴的边长（六个章节各留一处，图形嵌在这里面）*/
-  --slot-w: clamp(260px, 46vh, 500px);
+  --slot-w: clamp(300px, 53vh, 575px);
   position: relative;
   display: grid;
   /* 只有一栏了：左栏那列选项整个取消（导航挪到屏幕两侧的箭头 + 底部那条线）*/
@@ -344,7 +344,7 @@
    拉到 900px 以上；而且段落是不透明纸色底（用来挡粒子），一环绕就会把照片切成几截。
    环绕只用在"块状内容天然避让"的章节（见下面的经历）。 */
 .tabs .pane--about {
-  --slot-w: clamp(280px, 55vh, 600px);
+  --slot-w: clamp(322px, 63vh, 690px);
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--slot-w);
   grid-template-rows: auto auto;
@@ -465,7 +465,7 @@
 /* ⑥ 留言便签 · 照参考图 3 的版面：
      引导句通栏 → 表单独占左边那一行、图形在同一行的右侧 → 便签墙在下面通铺整宽 */
 .tabs .pane--notes {
-  --slot-w: clamp(200px, 30vh, 340px);
+  --slot-w: clamp(230px, 33vh, 372px);
   grid-template-columns: minmax(0, 1fr) var(--slot-w);
   grid-template-rows: auto auto auto;
 }
@@ -496,7 +496,7 @@
 
 @media (max-height: 980px) {
   .tabs__inner {
-    --slot-w: clamp(180px, 30vh, 400px);
+    --slot-w: clamp(207px, 34vh, 460px);
     padding: clamp(18px, 3.2vh, 40px) var(--pad-x);
   }
 
@@ -514,11 +514,11 @@
   }
 
   .tabs .pane--about {
-    --slot-w: clamp(190px, 38vh, 480px);
+    --slot-w: clamp(218px, 44vh, 552px);
   }
 
   .tabs .pane--notes {
-    --slot-w: clamp(150px, 21vh, 280px);
+    --slot-w: clamp(172px, 24vh, 322px);
   }
 
   /* 文字类：行距与内边距都收，最占高度的是经历 4 条与便签墙 */
@@ -555,16 +555,16 @@
 
 @media (max-height: 820px) {
   .tabs__inner {
-    --slot-w: clamp(150px, 24vh, 320px);
+    --slot-w: clamp(172px, 28vh, 368px);
     padding: clamp(12px, 2.2vh, 28px) var(--pad-x);
   }
 
   .tabs .pane--about {
-    --slot-w: clamp(160px, 30vh, 380px);
+    --slot-w: clamp(184px, 34vh, 437px);
   }
 
   .tabs .pane--notes {
-    --slot-w: clamp(130px, 17vh, 240px);
+    --slot-w: clamp(150px, 20vh, 276px);
   }
 
   .tabs .sec-head {
