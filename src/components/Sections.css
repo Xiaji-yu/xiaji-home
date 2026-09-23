@@ -46,6 +46,7 @@
 /* ---- 左栏：选项 ---- */
 
 .tabs__rail {
+  position: relative; /* 选中那根竖线的定位基准 */
   display: flex;
   flex-direction: column;
 }
@@ -65,17 +66,26 @@
   transition: color 0.35s var(--ease);
 }
 
-/* 选中时左侧那条竖线 */
-.tab::before {
-  content: '';
+/* 选中时左侧那条竖线 —— 整栏只有一根，位置和尺寸由 JS 量出来写进 --ind-*
+   （见 Sections.jsx 的 useLayoutEffect），所以切换时它是滑过去的，不是跳过去的。
+   窄屏标签行是横排的，同一套变量会把它变成底下那条线。 */
+.tabs__ind {
   position: absolute;
-  left: calc(var(--pad) * -0.32);
-  top: 50%;
-  width: 2px;
-  height: 0;
+  top: 0;
+  left: 0;
+  width: var(--ind-w, 2px);
+  height: var(--ind-h, 0);
   background: var(--ink);
-  transform: translateY(-50%);
-  transition: height 0.35s var(--ease);
+  transform: translate3d(var(--ind-x, 0), var(--ind-y, 0), 0);
+  pointer-events: none;
+}
+
+/* 第一次定位不要演动画（不然会从左上角滑进来），定位完再加过渡 */
+.tabs__rail.is-ind-ready .tabs__ind {
+  transition:
+    transform 0.42s var(--ease),
+    width 0.42s var(--ease),
+    height 0.42s var(--ease);
 }
 
 .tab__cn {
@@ -174,6 +184,46 @@
   grid-template-columns: 1fr 240px;
 }
 
+/* ---- 面板内容的入场 ----
+   面板里的元素不再走"滚到自己才淡入"那套（0.85s / 26px，一块一块来）：
+   改成整块一起入场、逐条错落（--d 由组件给，间隔 55~65ms），快而克制。
+   触发条件是"这块面板正在显示"，所以每次切板块都会重放一遍；
+   但整块滚进视野之前先不放行，否则会在页面顶部就演完。 */
+
+/* 面板里的入场是"动画"驱动的，那条 0.85s 的 reveal 过渡在这里没用，反而会盖掉
+   元素自己的过渡（技能行的 hover 底色）—— 所以关掉，再把技能行那条补回来。
+   其余组件的小过渡都挂在子元素上（进度条、卡片、箭头），不受这里影响。 */
+.tabs .reveal {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+.tabs .skill.reveal {
+  transition: background-color 0.4s var(--ease);
+}
+
+.tabs:not(.is-armed) .tabs__view:not([hidden]) .reveal {
+  opacity: 0;
+}
+
+.tabs.is-armed .tabs__view:not([hidden]) .reveal {
+  animation: panelIn 0.45s var(--ease) both;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes panelIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .tabs__view {
   display: flex;
   flex-direction: column;
@@ -213,6 +263,7 @@
   position: absolute;
   left: 0;
   bottom: -0.18em;
+  display: grid; /* 两个名字叠在同一格里做交叉淡入 */
   z-index: 0;
   pointer-events: none;
   user-select: none;
@@ -223,6 +274,47 @@
   text-transform: uppercase;
   color: rgba(17, 17, 17, 0.045);
   -webkit-text-stroke: 1px rgba(17, 17, 17, 0.07);
+}
+
+/* 幽灵字：换板块时旧的淡出、新的淡入（都占同一格，所以是叠着交接的） */
+.tabs__mark-i {
+  grid-area: 1 / 1;
+}
+
+.tabs:not(.is-armed) .tabs__mark-i {
+  opacity: 0;
+}
+
+.tabs.is-armed .tabs__mark-i {
+  animation: markIn 0.42s var(--ease) both;
+}
+
+.tabs.is-armed .tabs__mark-i.is-out {
+  animation: markOut 0.3s var(--ease) both;
+}
+
+@keyframes markIn {
+  from {
+    opacity: 0;
+    transform: translateX(-18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes markOut {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(22px);
+  }
 }
 
 /* ---- 粒子图形：绝对定位垫在右侧，当背景层 ---- */
@@ -283,20 +375,6 @@
     flex: none;
     padding: 8px 0 12px;
     white-space: nowrap;
-  }
-
-  .tab::before {
-    top: auto;
-    bottom: 0;
-    left: 0;
-    width: 0;
-    height: 2px;
-    transform: none;
-  }
-
-  .tab.is-on::before {
-    width: 100%;
-    height: 2px;
   }
 
   .tabs__view {

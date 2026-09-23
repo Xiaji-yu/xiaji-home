@@ -164,22 +164,6 @@ ol {
   line-height: 1.9;
 }
 
-/* 板块里那种"一句很大的话" */
-.section-headline {
-  font-size: clamp(26px, 4.2vw, 54px);
-  font-weight: 600;
-  letter-spacing: -0.035em;
-  line-height: 1.05;
-  max-width: 16em;
-}
-
-.section-sub {
-  margin-top: 14px;
-  color: var(--ink-soft);
-  font-size: 14px;
-  max-width: 720px;
-}
-
 /* --------------------------------------------------------------------------
    斜线阴影条（参考图里分隔区块的那种 hatching）
    -------------------------------------------------------------------------- */

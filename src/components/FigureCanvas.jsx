@@ -24,6 +24,8 @@ const CELL = 5
 /** 点的直径 = 格子 × 它；留出缝，才看得出一颗颗分明的点（参考图那种点阵） */
 const DOT = 0.52
 const MORPH = { duration: 780, stagger: 260 }
+/** 换板块时图形比内容晚一点动：内容先入场，粒子随后跟上，层次更分明 */
+const SWITCH_DELAY_MS = 160
 
 export default function FigureCanvas({ id }) {
   const wrapRef = useRef(null)
@@ -207,10 +209,18 @@ export default function FigureCanvas({ id }) {
     }
   }, [])
 
-  /* 换板块：先散开、再聚成新图形（挂载那一次会因为 id 相同直接跳过） */
+  /* 换板块：粒子直接变形到新图形（挂载那一次会因为 id 相同直接跳过）。
+     延后 SWITCH_DELAY_MS 起步 —— 让左边的正文先入场，粒子随后跟上；连点两下时
+     前一次会被取消，只有最后选中的那个图形会动。 */
   useEffect(() => {
+    if (idRef.current === id) return
     idRef.current = id
-    apiRef.current?.switchTo(id)
+    if (prefersReducedMotion()) {
+      apiRef.current?.switchTo(id)
+      return
+    }
+    const t = setTimeout(() => apiRef.current?.switchTo(id), SWITCH_DELAY_MS)
+    return () => clearTimeout(t)
   }, [id])
 
   return (

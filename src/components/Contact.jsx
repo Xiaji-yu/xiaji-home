@@ -49,16 +49,15 @@ export default function Contact() {
           <span className="sec-head__en mono">Contact</span>
         </Reveal>
 
-        <Reveal as="h3" className="section-headline">
+        {/* 头部统一成"一句引导"（跟关于我 / 技能栈 / 作品 / 经历 一个语法）*/}
+        <Reveal as="p" className="sec-lead">
           {contact.headline}
-        </Reveal>
-        <Reveal as="p" className="section-sub" delay={80}>
           {contact.sub}
         </Reveal>
 
         <div className="contact__grid">
           {contact.channels.map((channel, i) => (
-            <Reveal key={channel.label} delay={i * 90} className="grid-cell">
+            <Reveal key={channel.label} delay={70 + i * 60} className="grid-cell">
               <ChannelCard channel={channel} />
             </Reveal>
           ))}

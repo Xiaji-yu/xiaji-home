@@ -9,7 +9,7 @@ function SkillRow({ skill, index }) {
   const count = useCountUp(skill.value, inView)
 
   return (
-    <div className="skill" ref={ref}>
+    <div className="skill reveal" ref={ref} style={{ '--d': `${70 + index * 55}ms` }}>
       <span className="skill__idx mono">{String(index + 1).padStart(2, '0')}</span>
 
       <span className="skill__name">

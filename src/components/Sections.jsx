@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import About from './About.jsx'
 import Skills from './Skills.jsx'
 import Projects from './Projects.jsx'
@@ -18,6 +18,8 @@ import './Sections.css'
    · 地址栏和选项联动：#about / #skills … 直接进对应面板，页眉那几个链接
      点一下也是切面板（它们本来就是 <a href="#about">，不用改页眉）
    · 按下方向键 / Home / End 可以在选项间移动（标准的 tablist 键盘操作）
+   · 选中那条竖线只有一根，位置由 JS 量出来写成 CSS 变量 —— 切换时是滑过去的
+   · 面板里的内容在"整块滚进视野"那一刻开始错落入场，之后每次切板块都重放一次
    ========================================================================== */
 
 const PANELS = {
@@ -38,6 +40,10 @@ function hashId() {
 
 export default function Sections() {
   const [active, setActive] = useState(() => hashId() || sectionTabs[0].id)
+  /* 幽灵字交叉淡入：留住上一个名字，让它淡出的同时新的淡入 */
+  const [mark, setMark] = useState({ cur: '', prev: '' })
+  /* 整块入场动画的"保险栓"：整块滚进视野之前先别演，滚到了才放行 */
+  const [armed, setArmed] = useState(false)
   const blockRef = useRef(null)
   const railRef = useRef(null)
 
@@ -96,8 +102,71 @@ export default function Sections() {
 
   const activeEn = sectionTabs.find((t) => t.id === active)?.en || ''
 
+  /* 幽灵字换名字：把当前这个名字挪到 prev，新的成为 cur */
+  useEffect(() => {
+    setMark((m) => (m.cur === activeEn ? m : { cur: activeEn, prev: m.cur }))
+  }, [activeEn])
+
+  /* 整块第一次滚进视野 → 放行入场动画（只放一次，之后就靠切板块自己重放） */
+  useEffect(() => {
+    const el = blockRef.current
+    if (!el) return
+    if (typeof IntersectionObserver === 'undefined') {
+      setArmed(true)
+      return
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setArmed(true)
+          io.disconnect()
+        }
+      },
+      { threshold: 0.15, rootMargin: '0px 0px -8% 0px' },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
+  /* 选中竖线：量出当前那一项的位置，写成 --ind-* 变量，让那一根线滑过去。
+     横向（窄屏标签行）时线在底下，纵向时线在左边 —— 两边用同一套变量。 */
+  useLayoutEffect(() => {
+    const rail = railRef.current
+    if (!rail) return
+
+    let ready = false
+    const place = () => {
+      const on = rail.querySelector('.tab.is-on')
+      if (!on) return
+      const row = window.matchMedia('(max-width: 860px)').matches
+      const x = row ? on.offsetLeft : on.offsetLeft - 15
+      const y = row
+        ? on.offsetTop + on.offsetHeight - 2
+        : on.offsetTop + (on.offsetHeight - 26) / 2
+      rail.style.setProperty('--ind-x', `${x}px`)
+      rail.style.setProperty('--ind-y', `${y}px`)
+      rail.style.setProperty('--ind-w', row ? `${on.offsetWidth}px` : '2px')
+      rail.style.setProperty('--ind-h', row ? '2px' : '26px')
+      // 第一次定位不要有滑动动画（否则会从 0,0 滑过去）
+      if (!ready) {
+        ready = true
+        rail.classList.add('is-ind-ready')
+      }
+    }
+
+    place()
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(place)
+    ro?.observe(rail)
+    window.addEventListener('resize', place)
+    document.fonts?.ready?.then(place).catch(() => {})
+    return () => {
+      ro?.disconnect()
+      window.removeEventListener('resize', place)
+    }
+  }, [active])
+
   return (
-    <section className="tabs" ref={blockRef} aria-label="板块">
+    <section className={`tabs${armed ? ' is-armed' : ''}`} ref={blockRef} aria-label="板块">
       <div className="tabs__inner">
         <div
           className="tabs__rail"
@@ -125,6 +194,9 @@ export default function Sections() {
               </button>
             )
           })}
+
+          {/* 选中那条竖线（横向标签行时是底下那条线）：只有一根，切换时滑过去 */}
+          <span className="tabs__ind" aria-hidden="true" />
         </div>
 
         <div className="tabs__panel">
@@ -153,7 +225,14 @@ export default function Sections() {
         {/* 当前板块的名字，压成大号幽灵字（参考图左下那个 WORLD）。
             挂在整块上而不是面板里：位置不随面板高度变，切标签时不会跳 */}
         <span className="tabs__mark" aria-hidden="true">
-          {activeEn}
+          {mark.prev ? (
+            <span key={`out-${mark.prev}`} className="tabs__mark-i is-out">
+              {mark.prev}
+            </span>
+          ) : null}
+          <span key={`in-${mark.cur}`} className="tabs__mark-i">
+            {mark.cur}
+          </span>
         </span>
       </div>
     </section>

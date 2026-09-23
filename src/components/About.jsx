@@ -21,13 +21,13 @@ export default function About() {
             </Reveal>
 
             {about.paragraphs.map((text, i) => (
-              <Reveal as="p" key={text} delay={80 + i * 70}>
+              <Reveal as="p" key={text} delay={70 + i * 60}>
                 {text}
               </Reveal>
             ))}
           </div>
 
-          <Reveal className="about__facts" delay={120}>
+          <Reveal className="about__facts" delay={250}>
             <dl style={{ margin: 0 }}>
               {about.facts.map(([label, value]) => (
                 <div className="about__fact" key={label}>

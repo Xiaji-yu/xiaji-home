@@ -90,7 +90,7 @@ export default function Projects() {
 
         <div className="work__grid">
           {site.projects.map((project, i) => (
-            <Reveal key={project.id} delay={i * 90} className="grid-cell">
+            <Reveal key={project.id} delay={70 + i * 60} className="grid-cell">
               <ProjectCard project={project} />
             </Reveal>
           ))}

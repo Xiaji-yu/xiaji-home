@@ -3,11 +3,11 @@ import Reveal from './Reveal.jsx'
 import { site } from '../data/site.js'
 import './Timeline.css'
 
-function TimelineItem({ item }) {
+function TimelineItem({ item, index }) {
   const ref = useReveal({ threshold: 0.3 })
 
   return (
-    <div className="tl__item reveal" ref={ref}>
+    <div className="tl__item reveal" ref={ref} style={{ '--d': `${70 + index * 55}ms` }}>
       <span className="tl__marker" aria-hidden="true" />
       <span className="tl__year">{item.year}</span>
       <div>
@@ -34,8 +34,8 @@ export default function Timeline() {
         </Reveal>
 
         <div className="tl">
-          {site.timeline.map((item) => (
-            <TimelineItem key={item.year} item={item} />
+          {site.timeline.map((item, i) => (
+            <TimelineItem key={item.year} item={item} index={i} />
           ))}
         </div>
       </div>
