@@ -15,12 +15,16 @@
 }
 
 .tabs__inner {
+  /* 正文栏宽度、图形宽度（跟 .tabs__figure 同一份值）*/
+  --col-w: clamp(620px, 46vw, 900px);
+  --fig-w: min(58vh, 720px);
+  --fig-gap: clamp(20px, 2.4vw, 44px);
   position: relative;
   display: grid;
-  /* 两栏：左（选项卡）· 内容（正常宽度）。
-     粒子图形不在栅格里 —— 它绝对定位垫在右侧当背景层（见 .tabs__figure），
-     主内容比它高一层，所以内容可以是正常宽度、需要时把图形压在底下。 */
-  grid-template-columns: clamp(140px, 12vw, 186px) minmax(0, 620px);
+  /* 两栏：左（选项卡）· 内容（居中，宽度跟屏幕长）。
+     粒子图形不在栅格里 —— 它绝对定位垫在右侧当背景层（见 .tabs__figure）；
+     内容比它高一层，所以内容能压到它身上，但"有富余时"会主动避开它。 */
+  grid-template-columns: clamp(140px, 12vw, 186px) minmax(0, 1fr);
   gap: clamp(20px, 2.6vw, 48px);
   align-items: center;
   width: 100%;
@@ -103,29 +107,50 @@
 .tabs__panel {
   position: relative;
   min-width: 0; /* grid 子项默认 min-width:auto，会被宽内容顶破 */
-  width: 100%;
-  max-width: 620px; /* 主内容正常宽度；右边让给图形 */
-  margin: 0;
+  width: var(--col-w);
+  justify-self: center;
+  /* 居中时先把右侧那块"图形位"让出来：
+       · 地方够 → 右边留出图形宽度，正文在"左栏~图形"之间真正居中；
+       · 地方不够（窄屏）→ 让到贴住左栏为止，剩下的宽度就压在图形上（图形是背景层，本来就该被压）。
+     100% 是这一格栅格的宽度，所以 min() 的第二个值就是"还有多少富余"。 */
+  margin-inline-end: min(calc(var(--fig-w) + var(--fig-gap)), calc(100% - var(--col-w)));
   /* 纸色底 + 比图形高一层：图形需要时可以压在它底下，而文字区域始终干净 */
-  position: relative;
   z-index: 1;
   background: var(--paper);
 }
 
-/* 主内容变窄了，板块内部原来的多列排版跟着收一收 */
+/* 面板自己就是"栏"，里面的 .wrap 再收一次 --pad 就白窄了（883 → 755，
+   三张卡片会被挤成两张）。这里把内边距还回去，宽度全交给上面那一栏管 */
+.tabs .wrap {
+  max-width: none;
+  padding-inline: 0;
+}
+
+/* 栏宽了，板块内部跟着重排：正文一行压到舒服的长度，多出来的宽度给"信息表并排" */
 .tabs .about__grid {
   grid-template-columns: 1fr;
   gap: clamp(22px, 3vw, 32px);
 }
 
-/* 卡片按栏宽自适应：宽的时候两列，窄到一定程度自动变一列 */
-.tabs .work__grid,
+@media (min-width: 1600px) {
+  .tabs .about__grid {
+    /* 正文 1fr（实际每行 ~35em）+ 信息表 280px，两块并排 */
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: clamp(40px, 4vw, 72px);
+  }
+}
+
+/* 卡片按栏宽自适应：窄了自动变少列，宽了自动变三列（900px 栏宽刚好放三张 300px 的卡） */
+.tabs .work__grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
 .tabs .contact__grid {
-  grid-template-columns: repeat(auto-fit, minmax(228px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
 .tabs .notes__form {
-  grid-template-columns: 1fr 200px;
+  grid-template-columns: 1fr 240px;
 }
 
 .tabs__view {
@@ -186,12 +211,26 @@
   right: 0;
   top: 50%;
   z-index: 0;
-  width: min(58vh, 720px); /* 比上一版小约四分之一 */
+  width: var(--fig-w, min(58vh, 720px)); /* 比上一版小约四分之一 */
   transform: translateY(-50%);
   pointer-events: none; /* 纯装饰，别挡住内容的点击 */
 }
 
-/* ---- 窄屏：左栏变成顶部一条可横滑的标签；三栏挤不下，图形藏起来 ---- */
+/* ---- 窄一点的桌面（≤1249px）：正文至少 620，图形再贴着右边就只剩一条"残影"了，
+       与其露半张不如整块藏起来；同时把给图形留的位子归零，正文回到这一栏的正中 ---- */
+
+@media (max-width: 1249px) {
+  .tabs__inner {
+    --fig-w: 0px;
+    --fig-gap: 0px;
+  }
+
+  .tabs__figure {
+    display: none;
+  }
+}
+
+/* ---- 窄屏：左栏变成顶部一条可横滑的标签 ---- */
 
 @media (max-width: 860px) {
   .tabs__inner {
@@ -250,8 +289,15 @@
   }
 
   .tabs__panel {
-    max-width: none;
+    width: 100%;
+    justify-self: stretch;
+    margin-inline-end: 0;
     background: none;
+  }
+
+  /* 窄屏"正文+信息表并排"那条规则要撤掉，回到单列 */
+  .tabs .about__grid {
+    grid-template-columns: 1fr;
   }
 
   /* 窄屏内容占满整宽，上面那几条单列/两列的收窄就不需要了 */
