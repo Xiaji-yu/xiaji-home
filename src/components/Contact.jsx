@@ -49,18 +49,22 @@ export default function Contact() {
           <span className="sec-head__en mono">Contact</span>
         </Reveal>
 
-        {/* 头部统一成"一句引导"（跟关于我 / 技能栈 / 作品 / 经历 一个语法）*/}
-        <Reveal as="p" className="sec-lead">
-          {contact.headline}
-          {contact.sub}
-        </Reveal>
+        <div className="pane pane--contact">
+          <div className="pane__slot" aria-hidden="true" data-fig-scale="0.82" />
 
-        <div className="contact__grid">
-          {contact.channels.map((channel, i) => (
-            <Reveal key={channel.label} delay={70 + i * 60} className="grid-cell">
-              <ChannelCard channel={channel} />
-            </Reveal>
-          ))}
+          {/* 头部统一成"一句引导"（跟关于我 / 技能栈 / 作品 / 经历 一个语法）*/}
+          <Reveal as="p" className="sec-lead">
+            {contact.headline}
+            {contact.sub}
+          </Reveal>
+
+          <div className="contact__grid">
+            {contact.channels.map((channel, i) => (
+              <Reveal key={channel.label} delay={70 + i * 60} className="grid-cell">
+                <ChannelCard channel={channel} />
+              </Reveal>
+            ))}
+          </div>
         </div>
       </div>
     </section>

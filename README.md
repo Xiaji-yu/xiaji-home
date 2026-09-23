@@ -77,7 +77,7 @@
 - 🖱 **自定义圆圈光标** —— 跟手小黑点 + 带惯性拖尾的圆环，悬停时放大
 - ⬆ **回到顶部** —— 右下角一颗圆形箭头，滚过一段距离才出现，点一下平滑滚回顶部；并且**刷新一律从顶部开始**（不这样做的话，停在页面中间刷新会把开场那团点被滚动进度整片淡掉，加载界面上就一颗点都没有）
 - 🎭 **加载条长成页眉** —— 开场时页眉就是屏幕底部那根加载条（左边品牌、右边 `000 → 100%`、底下一条进度线，粒子云飘在它周围），进度满的那一刻它**不滑走，而是整体上移停进页眉的位置**，随后进度条向两端延伸成通栏细线、百分比淡出、导航链接淡入；之后就是普通吸顶页眉。整个过程用的是同一个 DOM 元素，所以交接那一帧没有任何跳动
-- 🗂 **三栏板块选项卡** —— 左侧竖排选项（中文大字 + 小号英文 + 细线，选中项加粗并带一条竖线）+ 中间主内容（宽度跟屏幕长，620 → 1000px，紧贴左栏）+ 右侧一块**粒子图形**；图形是背景层、贴在右边，窄一点的桌面（≤1450px）干脆只留内容。点页眉链接、键盘方向键、`#about` 这类锚点都能切，地址栏跟着变（刷新/分享能直达某一栏）
+- 🗂 **板块选项卡 + 嵌进章节的粒子图形** —— 左侧竖排选项（中文大字 + 小号英文 + 细线，选中项加粗并带一条竖线）+ 主内容（宽度跟屏幕长，最宽 1560px，紧贴左栏）。**每个章节里留了一块空白（留白穴），位置各不相同**（右上 / 右中 / 右下 / 左中 / 左上 / 左下），粒子图形就嵌在那块空白里；切板块时图形从一个穴飞到另一个穴（`≤1279px` 放不下就不留空白、图形也藏起来）。点页眉链接、键盘方向键、`#about` 这类锚点都能切，地址栏跟着变（刷新/分享能直达某一栏）
 - ✨ **图形由粒子聚出来** —— 每个板块有自己的几何图形（人像 / 阶梯 / 浏览器窗口 / 时间轴 / 信封 / 便签），全部用代码画、再按点阵采样成 6000 颗点；**换板块时这些点直接"挪"成新形状**（约 1 秒，不先散开再重聚），形状看着是在流动变形。它和首屏那座山互不干扰，落定后同样不占帧
 - ✨ **滚动揭示** —— 进入视口淡入上浮，逐条错落出现
 - 📊 **技能条生长 + 数字滚动**、**卡片悬停 3D 倾斜**、**按钮从左侧填充**
@@ -172,7 +172,8 @@ xiaji-home/
 - 想让某个板块换个样子：改对应的那个函数即可（比如 `contact` 现在是信封）；想调它在画布里的落点，改同一个文件里的 `PLACEMENT`（`scale` 是占画布的比例，`dx/dy` 是偏移 —— 六个位置刻意错开，换板块时才有平移感）
 - 想调点阵粗细：`components/FigureCanvas.jsx` 顶部的 `CELL`（格子边长）、`DOT`（点直径 = 格子 × 它）、`COUNT`（粒子数）、`MORPH`（位移时长与错峰）
 - 想调它的大小/位置：`components/Sections.css` 里 `.tabs__inner` 的 `--fig-w`（默认 `min(58vh, 720px)`，`.tabs__figure` 直接用它）和 `.tabs__figure` 的 `right`（默认往右挪出画布宽的 7%，挪的是图形右边那圈空白，不会切到墨点）；它是**背景层**，正文压在它上面
-- 想调正文栏宽：同一个文件里的 `--col-w`（默认 `clamp(620px, 52vw, 1000px)`）；想调它离左栏多远：同一处的 `--pull`（默认 `1` = 紧贴左栏，改成 `0` 就回到栅格中间，也可以用 `0.5` 这种中间值）
+- 想调板块宽度：`components/Sections.css` 的 `--col-w`（默认 `clamp(620px, 78vw, 1560px)`）；想调它离左栏多远：同一处的 `--pull`（默认 `1` = 紧贴左栏，`0` 就回到栅格中间）
+- 想挪某一块的留白穴：同一个文件里找 `.pane--about` / `--skills` / `--work` / `--journey` / `--contact` / `--notes`，改那几行的 `grid-column` / `grid-row` 即可（穴的大小是 `--slot-w`）；想让某一块的图形大一点小一点：改那个面板里的 `data-fig-scale`（0.82~1.0）
 - `lib/figureParticles.js` 里的配对用的是**空间填充曲线（Morton 序）**：两边按同一套序号排一遍再一一对应 —— 别改成"每颗点找最近的格子"，那样会让新图形大半格子分不到粒子（详见 CHANGELOG）
 
 ### 换配色 / 字体
@@ -240,27 +241,27 @@ xiaji-home/
 
 ## 动效清单
 
-| 动效                                           | 在哪实现                                                                                                        |
-| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| **加载条上移、长成页眉**                       | `components/Header.jsx`（sticky 元素 + 加载期间的 translateY）                                                  |
-| 纸色遮罩上滑离场                               | 同上（`.load-bg`）                                                                                              |
-| **开场那团点无序漂浮**                         | `components/ParticleMountain.jsx` + `lib/particles.js`                                                          |
-| **加载结束瞬间开始归位（1.5 秒内成山）**       | 同上（错峰 + `easeOutBack` 在 `lib/particles.js`）                                                              |
-| **光标按坑 + 慢慢流回（不过冲）**              | 同上（一阶滞后在 `lib/particles.js` 的 `stepParticles()`）                                                      |
-| **滚动时按山层逐层反向散开（可逆）**           | 同上（方向在 `lib/particles.js` 的 `buildParticles()` 里定）                                                    |
-| **换板块时右侧粒子变形、挪成新图形**           | `components/FigureCanvas.jsx` + `lib/figureParticles.js`                                                        |
-| **换板块时正文逐条入场（内容先到、粒子后到）** | `components/Sections.css` 的 `.tabs.is-armed` + `panelIn`（图形延后在 `FigureCanvas.jsx` 的 `SWITCH_DELAY_MS`） |
-| **左侧选中竖线滑到下一项**                     | `components/Sections.jsx` 的 `useLayoutEffect` + `Sections.css` 的 `.tabs__ind`                                 |
-| **左下角大号幽灵字交叉淡入**                   | `components/Sections.jsx` 的 `mark` 状态 + `Sections.css` 的 `.tabs__mark-i`                                    |
-| 自定义圆圈光标                                 | `components/Cursor.jsx`                                                                                         |
-| 右下角回到顶部按钮                             | `components/BackToTop.jsx`（滚过 420px 才出现）                                                                 |
-| 首屏大标题逐行推入                             | `Hero.css` 的 `@keyframes heroLine`                                                                             |
-| 山景与标题的鼠标视差                           | `components/Hero.jsx`（rAF + 插值 → CSS 变量 → `.mountain`）                                                    |
-| 滚动淡入上浮                                   | `components/Reveal.jsx` + `hooks/useReveal.js`                                                                  |
-| 按钮 / 联系方式卡片左侧填充                    | `base.css` 的 `.btn::before`、`Contact.css`                                                                     |
-| 技能条生长 + 数字滚动                          | `components/Skills.jsx` + `hooks/useCountUp.js`                                                                 |
-| 项目卡片 3D 倾斜                               | `components/Projects.jsx`                                                                                       |
-| 页脚斜线阴影条流动                             | `base.css` 的 `@keyframes hatchFlow`                                                                            |
+| 动效                                           | 在哪实现                                                                                                                           |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **加载条上移、长成页眉**                       | `components/Header.jsx`（sticky 元素 + 加载期间的 translateY）                                                                     |
+| 纸色遮罩上滑离场                               | 同上（`.load-bg`）                                                                                                                 |
+| **开场那团点无序漂浮**                         | `components/ParticleMountain.jsx` + `lib/particles.js`                                                                             |
+| **加载结束瞬间开始归位（1.5 秒内成山）**       | 同上（错峰 + `easeOutBack` 在 `lib/particles.js`）                                                                                 |
+| **光标按坑 + 慢慢流回（不过冲）**              | 同上（一阶滞后在 `lib/particles.js` 的 `stepParticles()`）                                                                         |
+| **滚动时按山层逐层反向散开（可逆）**           | 同上（方向在 `lib/particles.js` 的 `buildParticles()` 里定）                                                                       |
+| **换板块时图形从一个留白穴飞到另一个穴**       | `components/FigureCanvas.jsx`（`slotBox()` 量穴）+ `lib/figureParticles.js`（配对与插值）；穴的位置在 `Sections.css` 的 `.pane--*` |
+| **换板块时正文逐条入场（内容先到、粒子后到）** | `components/Sections.css` 的 `.tabs.is-armed` + `panelIn`（图形延后在 `FigureCanvas.jsx` 的 `SWITCH_DELAY_MS`）                    |
+| **左侧选中竖线滑到下一项**                     | `components/Sections.jsx` 的 `useLayoutEffect` + `Sections.css` 的 `.tabs__ind`                                                    |
+| **左下角大号幽灵字交叉淡入**                   | `components/Sections.jsx` 的 `mark` 状态 + `Sections.css` 的 `.tabs__mark-i`                                                       |
+| 自定义圆圈光标                                 | `components/Cursor.jsx`                                                                                                            |
+| 右下角回到顶部按钮                             | `components/BackToTop.jsx`（滚过 420px 才出现）                                                                                    |
+| 首屏大标题逐行推入                             | `Hero.css` 的 `@keyframes heroLine`                                                                                                |
+| 山景与标题的鼠标视差                           | `components/Hero.jsx`（rAF + 插值 → CSS 变量 → `.mountain`）                                                                       |
+| 滚动淡入上浮                                   | `components/Reveal.jsx` + `hooks/useReveal.js`                                                                                     |
+| 按钮 / 联系方式卡片左侧填充                    | `base.css` 的 `.btn::before`、`Contact.css`                                                                                        |
+| 技能条生长 + 数字滚动                          | `components/Skills.jsx` + `hooks/useCountUp.js`                                                                                    |
+| 项目卡片 3D 倾斜                               | `components/Projects.jsx`                                                                                                          |
+| 页脚斜线阴影条流动                             | `base.css` 的 `@keyframes hatchFlow`                                                                                               |
 
 ## 关于留言便签
 

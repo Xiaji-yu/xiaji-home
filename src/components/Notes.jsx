@@ -112,81 +112,85 @@ export default function Notes() {
           <span className="sec-head__en mono">Notes</span>
         </Reveal>
 
-        {/* 头部统一成"一句引导"（跟关于我 / 技能栈 / 作品 / 经历 一个语法）*/}
-        <Reveal as="p" className="sec-lead">
-          {config.headline}
-          {config.sub}
-        </Reveal>
+        <div className="pane pane--notes">
+          {/* 头部统一成"一句引导"（跟关于我 / 技能栈 / 作品 / 经历 一个语法）*/}
+          <Reveal as="p" className="sec-lead">
+            {config.headline}
+            {config.sub}
+          </Reveal>
 
-        <Reveal as="form" className="notes__form" delay={120} onSubmit={submit}>
-          <div className="notes__field">
-            <label className="mono" htmlFor="note-text">
-              便签内容 · 最多 {max} 字
-            </label>
-            <textarea
-              id="note-text"
-              className="notes__textarea"
-              maxLength={max}
-              placeholder={config.placeholder}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={onKeyDown}
-            />
-          </div>
-
-          <div className="notes__side">
-            <input
-              className="notes__name"
-              type="text"
-              maxLength={18}
-              placeholder="署名（不填就是匿名）"
-              value={who}
-              onChange={(e) => setWho(e.target.value)}
-              onKeyDown={onKeyDown}
-            />
-
-            <div className={`notes__meta mono${remaining <= 10 ? ' is-over' : ''}`}>
-              <span>{remaining} 字剩余</span>
-              <span>⌘/Ctrl + ↵</span>
+          <Reveal as="form" className="notes__form" delay={120} onSubmit={submit}>
+            <div className="notes__field">
+              <label className="mono" htmlFor="note-text">
+                便签内容 · 最多 {max} 字
+              </label>
+              <textarea
+                id="note-text"
+                className="notes__textarea"
+                maxLength={max}
+                placeholder={config.placeholder}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={onKeyDown}
+              />
             </div>
 
-            <button
-              className="btn btn--solid notes__submit"
-              type="submit"
-              disabled={!text.trim()}
-            >
-              <span>贴上去</span>
-            </button>
-          </div>
-        </Reveal>
+            <div className="notes__side">
+              <input
+                className="notes__name"
+                type="text"
+                maxLength={18}
+                placeholder="署名（不填就是匿名）"
+                value={who}
+                onChange={(e) => setWho(e.target.value)}
+                onKeyDown={onKeyDown}
+              />
 
-        <div className="notes__wall">
-          {ready && items.length === 0 && (
-            <div className="notes__empty">
-              <div className="notes__ghost">这里是空的</div>
-              <div className="notes__ghost">第一张便签，留给你</div>
-              <div className="notes__ghost">最多 {max} 字</div>
-            </div>
-          )}
+              <div className={`notes__meta mono${remaining <= 10 ? ' is-over' : ''}`}>
+                <span>{remaining} 字剩余</span>
+                <span>⌘/Ctrl + ↵</span>
+              </div>
 
-          {items.map((note) => (
-            <article className="note" key={note.id}>
-              <header className="note__head">
-                <span className="note__who">{note.name}</span>
-                <span className="note__when">{formatTime(note.time)}</span>
-              </header>
-              <p className="note__text">{note.text}</p>
               <button
-                className="note__del"
-                type="button"
-                aria-label="撕掉这张便签"
-                title="撕掉这张便签"
-                onClick={() => remove(note.id)}
+                className="btn btn--solid notes__submit"
+                type="submit"
+                disabled={!text.trim()}
               >
-                ×
+                <span>贴上去</span>
               </button>
-            </article>
-          ))}
+            </div>
+          </Reveal>
+
+          <div className="notes__wall">
+            {ready && items.length === 0 && (
+              <div className="notes__empty">
+                <div className="notes__ghost">这里是空的</div>
+                <div className="notes__ghost">第一张便签，留给你</div>
+                <div className="notes__ghost">最多 {max} 字</div>
+              </div>
+            )}
+
+            {items.map((note) => (
+              <article className="note" key={note.id}>
+                <header className="note__head">
+                  <span className="note__who">{note.name}</span>
+                  <span className="note__when">{formatTime(note.time)}</span>
+                </header>
+                <p className="note__text">{note.text}</p>
+                <button
+                  className="note__del"
+                  type="button"
+                  aria-label="撕掉这张便签"
+                  title="撕掉这张便签"
+                  onClick={() => remove(note.id)}
+                >
+                  ×
+                </button>
+              </article>
+            ))}
+          </div>
+
+          <div className="pane__slot" aria-hidden="true" data-fig-scale="0.88" />
         </div>
       </div>
     </section>

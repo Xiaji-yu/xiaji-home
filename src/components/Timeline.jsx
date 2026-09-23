@@ -28,15 +28,19 @@ export default function Timeline() {
           <span className="sec-head__en mono">Journey</span>
         </Reveal>
 
-        <Reveal as="p" className="sec-lead">
-          时间线是我自己记的，条目也都是占位 ——
-          换成你真实的时间点就行。我觉得比起"做了多厉害的事"，"什么时候开始做"往往更值得记住。
-        </Reveal>
+        <div className="pane pane--journey">
+          <div className="pane__slot" aria-hidden="true" data-fig-scale="0.9" />
 
-        <div className="tl">
-          {site.timeline.map((item, i) => (
-            <TimelineItem key={item.year} item={item} index={i} />
-          ))}
+          <Reveal as="p" className="sec-lead">
+            时间线是我自己记的，条目也都是占位 ——
+            换成你真实的时间点就行。我觉得比起"做了多厉害的事"，"什么时候开始做"往往更值得记住。
+          </Reveal>
+
+          <div className="tl">
+            {site.timeline.map((item, i) => (
+              <TimelineItem key={item.year} item={item} index={i} />
+            ))}
+          </div>
         </div>
       </div>
     </section>

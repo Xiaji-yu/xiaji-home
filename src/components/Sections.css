@@ -22,10 +22,11 @@
   /* 正文栏宽、左栏宽、栏间距、图形宽。
      前三个都要参与"屏幕居中"的换算（见 .tabs__panel），所以抽成变量。
      图形宽跟 .tabs__figure 共用同一份值。 */
-  --col-w: clamp(620px, 52vw, 1000px);
+  --col-w: clamp(620px, 78vw, 1560px);
   --rail-w: clamp(140px, 12vw, 186px);
   --gap-x: clamp(20px, 2.6vw, 48px);
-  --fig-w: min(58vh, 720px);
+  /* 留白穴的边长（六个章节各留一处，图形嵌在这里面）*/
+  --slot-w: clamp(320px, 27vw, 500px);
   /* 正文栏贴左栏的程度：1 = 紧贴左栏（默认，跟选项卡耦合最强）；调小就往右挪回栅格中间 */
   --pull: 1;
   position: relative;
@@ -135,9 +136,10 @@
      一半，实际位移恰好是一半 —— 取满时就正好落到栏的起点。
      --pull 是拉的比例：1 = 贴住左栏（默认），0 = 在栅格里居中。 */
   margin-inline-start: calc(-1 * var(--pull) * max(0px, calc(100% - var(--col-w))));
-  /* 纸色底 + 比图形高一层：图形需要时可以压在它底下，而文字区域始终干净 */
+  /* 比图形高一层；自己不要底色 —— 图形要能从留白穴里透出来。
+     文字区域干净是靠"每个内容块自己垫纸色"（见 .pane > *）*/
   z-index: 1;
-  background: var(--paper);
+  background: none;
 }
 
 /* 面板自己就是"栏"，里面的 .wrap 再收一次 --pad 就白窄了（883 → 755，
@@ -155,20 +157,6 @@
 
 .tabs .about__lead {
   max-width: 30em;
-}
-
-/* 栏宽了，板块内部跟着重排：多出来的宽度给"信息表并排" */
-.tabs .about__grid {
-  grid-template-columns: 1fr;
-  gap: clamp(22px, 3vw, 32px);
-}
-
-@media (min-width: 1600px) {
-  .tabs .about__grid {
-    /* 正文 1fr（实际每行 ~35em）+ 信息表 280px，两块并排 */
-    grid-template-columns: minmax(0, 1fr) 280px;
-    gap: clamp(40px, 4vw, 72px);
-  }
 }
 
 /* 卡片按栏宽自适应：窄了自动变少列，宽了自动变三列（900px 栏宽刚好放三张 300px 的卡） */
@@ -321,22 +309,221 @@
 
 .tabs__figure {
   position: absolute;
-  /* 往右挪出去一点：画布右边本来就有 8~24% 的空白（最少的"技能/联系"是 8%），
-     所以挪画布宽的 7% 不会切到任何一颗墨点，又能少被正文压一点、更贴边。
-     再往右就会开始切图形了（切掉的都是墨点）。 */
-  right: calc(var(--fig-w, min(58vh, 720px)) * -0.07);
-  top: 50%;
+  /* 画布不再贴着右边一角：它铺在整块板块区上（宽度 = 板块宽），
+     图形画在哪由"当前章节的留白穴"决定（FigureCanvas 量出来）。 */
+  left: calc(var(--rail-w) + var(--gap-x));
+  top: 0;
+  bottom: 0;
   z-index: 0;
-  width: var(--fig-w, min(58vh, 720px)); /* 比上一版小约四分之一 */
-  transform: translateY(-50%);
+  width: var(--col-w);
   pointer-events: none; /* 纯装饰，别挡住内容的点击 */
+}
+
+/* ---- 每个章节：内容 + 一块留白穴（六个章节的位置各不相同）----
+   穴是一块真的空白（不是背景层），图形就嵌在里面；
+   邻居章节的穴互不重叠，所以切板块时图形是大幅平移（还带一点缩放）。 */
+
+.tabs .pane {
+  display: grid;
+  gap: clamp(26px, 2.4vw, 44px);
+  align-items: start;
+}
+
+/* 内容块自己垫纸色：粒子从底下载过去的时候不会糊在字上 */
+.tabs .pane > *:not(.pane__slot) {
+  background: var(--paper);
+}
+
+.pane__slot {
+  width: var(--slot-w);
+  height: var(--slot-w);
+  background: none;
+}
+
+/* ① 关于我 · 穴在右上：正文 | 信息表 | 穴 */
+.tabs .pane--about {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 320px) var(--slot-w);
+}
+
+.tabs .pane--about > .about__body {
+  grid-column: 1;
+}
+
+.tabs .pane--about > .about__facts {
+  grid-column: 2;
+}
+
+.tabs .pane--about > .pane__slot {
+  grid-column: 3;
+}
+
+/* 关于我这一块是三栏（正文 | 信息表 | 穴），窄一点的桌面上正文会被挤成
+   20 来个字一行；所以下面 1700px 以内改成两栏：正文 | 穴，信息表落到正文下面。
+   穴仍然在右上，没有换位置。 */
+@media (max-width: 1699px) {
+  .tabs .pane--about {
+    grid-template-columns: minmax(0, 1fr) var(--slot-w);
+    grid-template-rows: auto auto;
+  }
+
+  .tabs .pane--about > .about__body {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .tabs .pane--about > .about__facts {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .tabs .pane--about > .pane__slot {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+}
+
+/* ② 技能栈 · 穴在右中 */
+.tabs .pane--skills {
+  grid-template-columns: minmax(0, 1fr) var(--slot-w);
+  grid-template-rows: auto 1fr;
+}
+
+.tabs .pane--skills > .sec-lead {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.tabs .pane--skills > .skills__list {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.tabs .pane--skills > .pane__slot {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+}
+
+/* ③ 项目作品 · 穴在右下：引导句和卡片占左半边，穴落在右下 */
+.tabs .pane--work {
+  grid-template-columns: minmax(0, 1fr) var(--slot-w);
+  grid-template-rows: auto 1fr;
+}
+
+.tabs .pane--work > .sec-lead {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.tabs .pane--work > .work__grid {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.tabs .pane--work > .work__hint {
+  grid-column: 1;
+  grid-row: 3;
+}
+
+.tabs .pane--work > .pane__slot {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: end;
+}
+
+/* ④ 经历 · 穴在左中 */
+.tabs .pane--journey {
+  grid-template-columns: var(--slot-w) minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+}
+
+.tabs .pane--journey > .pane__slot {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  align-self: center;
+}
+
+.tabs .pane--journey > .sec-lead {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.tabs .pane--journey > .tl {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+/* ⑤ 联系方式 · 穴在左上：引导句挪到穴右边，渠道卡在下面通铺 */
+.tabs .pane--contact {
+  grid-template-columns: var(--slot-w) minmax(0, 1fr);
+  grid-template-rows: auto auto;
+}
+
+.tabs .pane--contact > .pane__slot {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.tabs .pane--contact > .sec-lead {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.tabs .pane--contact > .contact__grid {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+/* ⑥ 留言便签 · 穴在左下：表单在左上，穴在它下面，便签墙占右半边两行 */
+.tabs .pane--notes {
+  /* 便签这一章内容本来就多（引导句 + 表单 + 便签墙），穴收一档才塞得进一屏 */
+  --slot-w: clamp(260px, 22vw, 400px);
+  grid-template-columns: var(--slot-w) minmax(0, 1fr);
+  grid-template-rows: auto auto auto;
+}
+
+.tabs .pane--notes > .sec-lead {
+  grid-column: 1 / -1;
+}
+
+.tabs .pane--notes > .notes__form {
+  /* 表单通铺一行（穴那一列太窄，塞进去输入框会挤成一条）*/
+  grid-column: 1 / -1;
+  grid-row: 2;
+  max-width: min(1100px, 100%);
+}
+
+.tabs .pane--notes > .pane__slot {
+  grid-column: 1;
+  grid-row: 3;
+}
+
+.tabs .pane--notes > .notes__wall {
+  grid-column: 2;
+  grid-row: 3;
 }
 
 /* ---- 窄一点的桌面（≤1450px）：正文放大后，右边再挤一块 522~626 的图形就只剩一条
        "残影"了（1366 上实测图形被盖住 31%），与其露半张不如整块藏起来 ---- */
 
-@media (max-width: 1450px) {
+@media (max-width: 1279px) {
   .tabs__figure {
+    display: none;
+  }
+
+  /* 放不下"内容 + 穴"：穴收起、每个章节摊回一列（!important 是为了压掉上面
+     按章节写死的 grid-column / grid-row —— 那些都是桌面专属的排布）*/
+  .tabs .pane {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+  }
+
+  .tabs .pane > * {
+    grid-column: auto !important;
+    grid-row: auto !important;
+  }
+
+  .tabs .pane__slot {
     display: none;
   }
 }

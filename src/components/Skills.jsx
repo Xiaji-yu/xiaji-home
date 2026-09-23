@@ -45,15 +45,19 @@ export default function Skills() {
           <span className="sec-head__en mono">Skills</span>
         </Reveal>
 
-        <Reveal as="p" className="sec-lead">
-          下面的百分比是我自己的诚实估计，不是考试分数 ——
-          数字会随着我学到的东西一直变。把鼠标放到某一行上，可以看到它对应的方向。
-        </Reveal>
+        <div className="pane pane--skills">
+          <Reveal as="p" className="sec-lead">
+            下面的百分比是我自己的诚实估计，不是考试分数 ——
+            数字会随着我学到的东西一直变。把鼠标放到某一行上，可以看到它对应的方向。
+          </Reveal>
 
-        <div className="skills__list">
-          {site.skills.map((skill, i) => (
-            <SkillRow key={skill.name} skill={skill} index={i} />
-          ))}
+          <div className="skills__list">
+            {site.skills.map((skill, i) => (
+              <SkillRow key={skill.name} skill={skill} index={i} />
+            ))}
+          </div>
+
+          <div className="pane__slot" aria-hidden="true" data-fig-scale="0.95" />
         </div>
       </div>
     </section>

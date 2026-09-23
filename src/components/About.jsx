@@ -14,7 +14,7 @@ export default function About() {
           <span className="sec-head__en mono">About</span>
         </Reveal>
 
-        <div className="about__grid">
+        <div className="pane pane--about">
           <div className="about__body">
             <Reveal as="p" className="about__lead">
               {about.lead}
@@ -39,6 +39,9 @@ export default function About() {
               ))}
             </dl>
           </Reveal>
+
+          {/* 留白穴：粒子图形嵌在这里（位置由 Sections.css 的 .pane--about 定）*/}
+          <div className="pane__slot" aria-hidden="true" data-fig-scale="1" />
         </div>
       </div>
     </section>

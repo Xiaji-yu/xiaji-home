@@ -1,14 +1,12 @@
 /* ==========================================================================
-   右侧的粒子图形：一块正方形画布，里面是当前板块的几何图形（粒子聚出来的）
-   窄屏放不下三栏，整块藏起来（见 Sections.css）
+   粒子图形：一块铺在板块区上的画布，图形画在"当前章节的留白穴"里
+   （位置和大小由 Sections.css 的 .pane__slot 决定，FigureCanvas 量出来画）
+   窄屏放不下，整块藏起来（见 Sections.css 的 ≤1279px）
    ========================================================================== */
 
 .figure {
-  position: relative;
   width: 100%;
-  aspect-ratio: 1;
-  /* 不要 margin:0 auto：auto 外边距会盖掉父层的 justify-content，
-     图形就没法靠右站了（父层 Sections.css 的 .tabs__figure 用 flex-end） */
+  height: 100%;
 }
 
 .figure__canvas {

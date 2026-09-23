@@ -83,20 +83,24 @@ export default function Projects() {
           <span className="sec-head__en mono">Work</span>
         </Reveal>
 
-        <Reveal as="p" className="sec-lead">
-          下面三张卡片是占位内容 —— 换成你自己的项目就行，改 src/data/site.js 里 projects
-          那一段。填上 link 之后，卡片右下角会自动变成可点击的链接。
-        </Reveal>
+        <div className="pane pane--work">
+          <Reveal as="p" className="sec-lead">
+            下面三张卡片是占位内容 —— 换成你自己的项目就行，改 src/data/site.js 里 projects
+            那一段。填上 link 之后，卡片右下角会自动变成可点击的链接。
+          </Reveal>
 
-        <div className="work__grid">
-          {site.projects.map((project, i) => (
-            <Reveal key={project.id} delay={70 + i * 60} className="grid-cell">
-              <ProjectCard project={project} />
-            </Reveal>
-          ))}
+          <div className="work__grid">
+            {site.projects.map((project, i) => (
+              <Reveal key={project.id} delay={70 + i * 60} className="grid-cell">
+                <ProjectCard project={project} />
+              </Reveal>
+            ))}
+          </div>
+
+          <p className="work__hint mono">Hover / 悬停卡片试试 · 它们会跟着鼠标微微倾斜</p>
+
+          <div className="pane__slot" aria-hidden="true" data-fig-scale="0.86" />
         </div>
-
-        <p className="work__hint mono">Hover / 悬停卡片试试 · 它们会跟着鼠标微微倾斜</p>
       </div>
     </section>
   )
