@@ -131,36 +131,55 @@ function work(ctx) {
   rect(ctx, 26, 78, 46, 3) // 页脚
 }
 
-/** 经历：一条时间轴（跟这一页那四条同一种语法）：轴 + 刻度 + 节点 + 上行折线 + 旗 */
+/** 经历：一座山 + 一条之字形登顶路线 + 山顶一面旗（呼应首屏那座点阵山） */
 function journey(ctx) {
-  // 主轴
-  rect(ctx, 12, 62, 76, 4)
-  // 刻度 + 节点（越往后越大）
-  const xs = [26, 42, 58, 74]
-  xs.forEach((x, k) => {
-    rect(ctx, x, 56, 2, 16) // 刻度
-    ctx.beginPath()
-    ctx.arc(x, 64, 5 + k * 1.4, 0, Math.PI * 2)
-    ctx.fill()
-  })
-  // 上行折线：从第一个节点爬到最后一个
-  ctx.lineWidth = 3
+  // 山的外轮廓：双峰，粗线点阵化之后是一条清楚的山脊
+  ctx.lineWidth = 6
+  ctx.lineJoin = 'round'
   ctx.beginPath()
-  xs.forEach((x, k) => {
-    const y = 46 - k * 8
-    k === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
-  })
+  ctx.moveTo(4, 88)
+  ctx.lineTo(34, 24)
+  ctx.lineTo(50, 50)
+  ctx.lineTo(66, 30)
+  ctx.lineTo(96, 88)
   ctx.stroke()
-  // 尽头一面旗
-  rect(ctx, 74, 6, 3, 14)
+
+  // 等高线：三条跟着山势走的横线
+  ctx.lineWidth = 4
+  for (const [x, y, w] of [
+    [18, 62, 46],
+    [28, 74, 30],
+    [14, 84, 72],
+  ]) {
+    rect(ctx, x, y, w, 4)
+  }
+
+  // 登顶路线：一串小方块（虚线脚印），从山脚盘到峰顶 —— 用方块而不是线，
+  // 免得跟等高线糊在一起
+  const route = [
+    [8, 86],
+    [16, 80],
+    [24, 74],
+    [18, 68],
+    [22, 62],
+    [30, 56],
+    [26, 50],
+    [30, 44],
+    [34, 38],
+  ]
+  for (const [x, y] of route) rect(ctx, x, y, 6, 4)
+
+  // 山顶的旗
+  rect(ctx, 31, 8, 3, 18)
   ctx.beginPath()
-  ctx.moveTo(77, 6)
-  ctx.lineTo(90, 11)
-  ctx.lineTo(77, 16)
+  ctx.moveTo(34, 8)
+  ctx.lineTo(48, 14)
+  ctx.lineTo(34, 20)
   ctx.closePath()
   ctx.fill()
-  // 底部年份位
-  for (const x of xs) rect(ctx, x - 4, 74, 9, 4)
+
+  // 山脚
+  rect(ctx, 4, 90, 92, 3)
 }
 
 /** 联系方式：一个对话气泡 + 从里面飞出去的纸飞机（带虚线航迹） */
