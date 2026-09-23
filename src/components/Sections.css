@@ -9,8 +9,12 @@
   position: relative;
   min-height: 100vh;
   /* 用 clip-path 而不是 overflow:hidden 把左下角那行幽灵字裁在版面里 ——
-     overflow 会把这里变成滚动容器，窄屏上那排吸顶标签就粘不住了 */
+     overflow:hidden 会把这里变成滚动容器，窄屏上那排吸顶标签就粘不住了。
+     overflow:clip 只裁不滚（不产生滚动容器），所以吸顶照样粘得住 ——
+     右边那块图形故意移出去了一截（见 .tabs__figure 的 right），全靠它兜住，
+     否则那截会算进可滚动区域、整页多出一条横向滚动。 */
   clip-path: inset(0);
+  overflow: clip;
   background: var(--paper);
 }
 
@@ -225,7 +229,10 @@
 
 .tabs__figure {
   position: absolute;
-  right: 0;
+  /* 往右挪出去一点：画布右边本来就有 8~24% 的空白（最少的"技能/联系"是 8%），
+     所以挪画布宽的 7% 不会切到任何一颗墨点，又能少被正文压一点、更贴边。
+     再往右就会开始切图形了（切掉的都是墨点）。 */
+  right: calc(var(--fig-w, min(58vh, 720px)) * -0.07);
   top: 50%;
   z-index: 0;
   width: var(--fig-w, min(58vh, 720px)); /* 比上一版小约四分之一 */

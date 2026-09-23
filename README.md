@@ -171,7 +171,7 @@ xiaji-home/
 
 - 想让某个板块换个样子：改对应的那个函数即可（比如 `contact` 现在是信封）；想调它在画布里的落点，改同一个文件里的 `PLACEMENT`（`scale` 是占画布的比例，`dx/dy` 是偏移 —— 六个位置刻意错开，换板块时才有平移感）
 - 想调点阵粗细：`components/FigureCanvas.jsx` 顶部的 `CELL`（格子边长）、`DOT`（点直径 = 格子 × 它）、`COUNT`（粒子数）、`MORPH`（位移时长与错峰）
-- 想调它的大小/位置：`components/Sections.css` 里 `.tabs__inner` 的 `--fig-w`（默认 `min(58vh, 720px)`，`.tabs__figure` 直接用它）和 `.tabs__figure` 的 `right`；它是**背景层**，正文压在它上面
+- 想调它的大小/位置：`components/Sections.css` 里 `.tabs__inner` 的 `--fig-w`（默认 `min(58vh, 720px)`，`.tabs__figure` 直接用它）和 `.tabs__figure` 的 `right`（默认往右挪出画布宽的 7%，挪的是图形右边那圈空白，不会切到墨点）；它是**背景层**，正文压在它上面
 - 想调正文栏宽：同一个文件里的 `--col-w`（默认 `clamp(620px, 52vw, 1000px)`）。它按**屏幕**居中，靠 `margin-inline-start` 补掉左栏那半格；空间不够时会自动贴住左栏
 - `lib/figureParticles.js` 里的配对用的是**空间填充曲线（Morton 序）**：两边按同一套序号排一遍再一一对应 —— 别改成"每颗点找最近的格子"，那样会让新图形大半格子分不到粒子（详见 CHANGELOG）
 
