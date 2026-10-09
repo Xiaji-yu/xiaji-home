@@ -62,6 +62,9 @@
   .to-top {
     width: 42px;
     height: 42px;
+    /* 手机上右下角同一列还有章节切换的"下一章"纸片箭头（14 + 56 = 70px 高），
+       抬到它上方，两个按钮不打架 */
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
   }
 }
 

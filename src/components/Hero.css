@@ -13,6 +13,14 @@
   background: var(--paper);
 }
 
+/* 手机浏览器的地址栏收起 / 展开会让 100vh 偏大一截（比可见区域高），
+   首屏底部那条状态栏就会被顶出屏幕。有 dvh 就用 dvh（=当前可见高度）。 */
+@supports (height: 100dvh) {
+  .hero {
+    min-height: calc(100dvh - var(--header-h));
+  }
+}
+
 /* ---- 上半部分：文字 ---- */
 
 .hero__inner {
@@ -67,7 +75,7 @@
   max-width: 640px;
   margin: clamp(18px, 2.4vw, 30px) auto 0;
   color: var(--ink-soft);
-  font-size: clamp(13px, 1.1vw, 15px);
+  font-size: clamp(14px, 1.1vw, 15px);
   line-height: 1.95;
   opacity: 0;
   transform: translateY(14px);
@@ -160,5 +168,26 @@
   .hero__status {
     font-size: 10px;
     letter-spacing: 0.1em;
+  }
+}
+
+/* 手机横屏 / 矮视口：纵向放不下"标题 + 按钮 + 山 + 状态栏"，
+   把上边距和山的最小高度一起收，尽量不出现首屏内滚动 */
+@media (max-height: 560px) {
+  .hero__inner {
+    padding-top: 44px;
+  }
+
+  .hero__sub {
+    margin-top: 12px;
+  }
+
+  .hero__cta {
+    margin-top: 16px;
+  }
+
+  .hero__stage {
+    min-height: 110px;
+    margin-top: 12px;
   }
 }

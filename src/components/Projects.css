@@ -96,6 +96,22 @@
   color: var(--ink);
 }
 
+/* 触屏：悬停底色会粘在最后点过的卡片上，撤掉；按压时给一点更轻的反馈 */
+@media (hover: none) {
+  .card:hover {
+    background: transparent;
+  }
+
+  .card:hover .card__tag {
+    border-color: var(--line-soft);
+    color: var(--ink-soft);
+  }
+
+  .card:active {
+    background: rgba(17, 17, 17, 0.045);
+  }
+}
+
 .card__foot {
   display: flex;
   align-items: center;

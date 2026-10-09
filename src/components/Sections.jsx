@@ -48,6 +48,9 @@ export default function Sections() {
   /* 箭头和底部条只在**板块区在视野里**的时候出现 —— 它们是 fixed 的，
      不然滚回首屏那座山、滚到页脚时也跟着飘在那里 */
   const [inView, setInView] = useState(false)
+  /* 页脚进入视野就一并收掉：平板上章节的尾巴常和页脚同屏，
+     不收的话两侧箭头正好压在页脚的链接上（实测盖住 foot__link） */
+  const [footInView, setFootInView] = useState(false)
   const blockRef = useRef(null)
 
   /** 把整块精确对齐到"落点"（页眉/页脚/首屏那些锚点用）：
@@ -86,6 +89,42 @@ export default function Sections() {
     }
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)
+  }, [alignBlock])
+
+  /* 直接带 #锚点 打开页面（分享出去的链接）：开场 2.9s 里 body 被 is-locked
+     锁住（overflow:hidden），浏览器的原生锚点跳转在那之前就放弃了，解锁后
+     不会再重试 —— 实测停在首屏不动。所以挂载时自己对齐：解锁那一刻的下一轮
+     尝试正好落位；用户先滚了就立刻收手，绝不跟人抢滚动条。 */
+  useEffect(() => {
+    if (!hashId()) return undefined
+    let landed = false
+    let timer = 0
+    const abort = () => {
+      landed = true
+    }
+    const check = () => {
+      if (!landed) {
+        const el = blockRef.current
+        if (el) {
+          const pad =
+            parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0
+          const want = Math.max(0, el.getBoundingClientRect().top + window.scrollY - pad)
+          if (Math.abs(window.scrollY - want) <= 2) landed = true
+        }
+      }
+      if (!landed) {
+        alignBlock(false)
+        timer = window.setTimeout(check, 250)
+      }
+    }
+    window.addEventListener('wheel', abort, { passive: true, once: true })
+    window.addEventListener('touchstart', abort, { passive: true, once: true })
+    timer = window.setTimeout(check, 60)
+    return () => {
+      window.removeEventListener('wheel', abort)
+      window.removeEventListener('touchstart', abort)
+      window.clearTimeout(timer)
+    }
   }, [alignBlock])
 
   /* 所有指向章节的锚点（页眉、页脚、首屏按钮）都由这里接管：
@@ -187,6 +226,19 @@ export default function Sections() {
     return () => io.disconnect()
   }, [])
 
+  /* 页脚一露头就收导航：平板上滚到页脚时章节尾巴常常还占着小半屏，
+     上面的 inView 仍旧为真 —— 不加这条，箭头会一直压在页脚链接上 */
+  useEffect(() => {
+    const foot = document.querySelector('footer')
+    if (!foot || typeof IntersectionObserver === 'undefined') return
+    const io = new IntersectionObserver(
+      (entries) => setFootInView(entries.some((e) => e.isIntersecting)),
+      { threshold: 0.18 },
+    )
+    io.observe(foot)
+    return () => io.disconnect()
+  }, [])
+
   const index = Math.max(
     0,
     sectionTabs.findIndex((t) => t.id === active),
@@ -248,10 +300,11 @@ export default function Sections() {
         </div>
       </section>
 
-      {/* 左右箭头：贴在屏幕两侧、竖直居中（照参考图），到头循环。
-          放在 section 外面 —— .tabs 上有 clip-path，fixed 子元素会被它裁掉 */}
+      {/* 左右箭头：贴在屏幕两侧（窄屏在底部两角）、到头循环。
+          放在 section 外面 —— .tabs 上有 clip-path，fixed 子元素会被它裁掉。
+          板块区不在视野、或页脚已经露头（is-away）时整体淡出。 */}
       {armed ? (
-        <div className={`tabs__nav${inView ? '' : ' is-away'}`}>
+        <div className={`tabs__nav${inView && !footInView ? '' : ' is-away'}`}>
           <button
             className="tabs__arrow tabs__arrow--prev"
             type="button"

@@ -19,7 +19,8 @@
 
 .about__body p {
   color: var(--ink-soft);
-  font-size: clamp(13.5px, 1.05vw, 15px);
+  /* 下限 14.5：手机上 13.5px 的段落读着费劲（桌面走 1.05vw，不受影响） */
+  font-size: clamp(14.5px, 1.05vw, 15px);
   line-height: 1.95;
   margin-bottom: 14px;
 }

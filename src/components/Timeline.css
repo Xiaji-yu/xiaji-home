@@ -55,7 +55,8 @@
 
 .tl__text {
   color: var(--ink-soft);
-  font-size: 13.5px;
+  /* 14.5：和关于我的段落同一个下限，手机上不至字太小 */
+  font-size: 14.5px;
   line-height: 1.9;
   max-width: 640px;
 }

@@ -134,14 +134,15 @@
   color: var(--muted);
 }
 
-/* 备案号行：公安网安备（带盾牌小图标）+ ICP，一行显示、靠左下角 */
+/* 备案号行：公安网安备（带盾牌小图标）+ ICP，一行显示、靠左下角。
+   底部让开 iOS 的 home 指示条（没开 viewport-fit=cover 时恒为 0） */
 .foot__beian {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px 16px;
-  padding: 0 var(--pad) 20px;
+  padding: 0 var(--pad) calc(20px + env(safe-area-inset-bottom, 0px));
   color: var(--muted);
   font-size: 12px;
   letter-spacing: 0.02em;
@@ -182,5 +183,18 @@
   }
   .foot__col {
     border-right: 0;
+  }
+}
+
+/* 触屏：悬停翻黑会粘在最后点过的条目上，撤掉 */
+@media (hover: none) {
+  .foot__link:hover {
+    background: transparent;
+    color: var(--ink-soft);
+  }
+
+  .foot__social:hover {
+    background: transparent;
+    color: inherit;
   }
 }

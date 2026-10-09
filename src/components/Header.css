@@ -231,12 +231,35 @@
   transform: translateY(-101%);
 }
 
-@media (max-width: 860px) {
+/* ---- 手机上导航收起，只留一个写信入口 ----
+   断点取 620 而不是更宽：768 的平板竖屏（iPad）放得下六个链接，
+   不能跟手机一起把导航整个藏掉。 */
+
+@media (max-width: 620px) {
   .header__links {
     display: none;
   }
 
   .header__mail {
     display: block;
+    /* 触控目标放大到 44px 高：页眉行本身 56px，这里再扩一点点击区 */
+    padding: 10px 0 10px 12px;
+    margin: -10px 0 -10px -12px;
+  }
+}
+
+/* 触屏：悬停态会粘住（品牌方块翻黑、链接下划线停着不走），一并撤掉 */
+@media (hover: none) {
+  .header__brand:hover .header__mark {
+    background: transparent;
+    color: inherit;
+  }
+
+  .header__links a:hover {
+    color: var(--ink-soft);
+  }
+
+  .header__links a:hover::after {
+    transform: scaleX(0);
   }
 }

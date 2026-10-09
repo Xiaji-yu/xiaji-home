@@ -109,3 +109,51 @@
 .channel:hover .channel__arrow {
   transform: translateX(6px);
 }
+
+/* 触屏设备没有"移开鼠标"：点过的卡片会一直停在翻黑的状态。
+   悬停填充只留给有指针的设备；触屏改用按压(:active)瞬时报答一下。 */
+@media (hover: none) {
+  .channel:hover {
+    color: var(--ink);
+  }
+
+  .channel:hover::before {
+    transform: translateX(-101%);
+  }
+
+  .channel:hover .channel__label {
+    color: var(--muted);
+  }
+
+  .channel:hover .channel__row {
+    border-color: var(--line-soft);
+  }
+
+  .channel:hover .channel__note {
+    color: var(--muted);
+  }
+
+  .channel:hover .channel__arrow {
+    transform: none;
+  }
+
+  .channel:active {
+    color: var(--paper);
+  }
+
+  .channel:active::before {
+    transform: translateX(0);
+  }
+
+  .channel:active .channel__label {
+    color: rgba(245, 244, 241, 0.6);
+  }
+
+  .channel:active .channel__row {
+    border-color: rgba(245, 244, 241, 0.28);
+  }
+
+  .channel:active .channel__note {
+    color: rgba(245, 244, 241, 0.65);
+  }
+}

@@ -19,6 +19,18 @@
   background: var(--paper);
 }
 
+/* 手机浏览器地址栏收展会让 100vh 比可见区域高，"一章一屏"的落点就错位
+   —— 有 dvh 就用 dvh（=当前真正可见的高度），和 Hero 的处理一致 */
+@supports (height: 100dvh) {
+  .tabs {
+    min-height: calc(100dvh - var(--header-h) - var(--status-h));
+  }
+
+  .tabs__inner {
+    min-height: calc(100dvh - var(--header-h) - var(--status-h));
+  }
+}
+
 .tabs__inner {
   /* 板块宽度 */
   --col-w: clamp(620px, 82vw, 1680px);
@@ -102,11 +114,12 @@
   }
 }
 
-/* 底部条：一条通栏细线 + 一段"当前位置"，里面不写字 */
+/* 底部条：一条通栏细线 + 一段"当前位置"，里面不写字。
+   bottom 让开 iOS 的 home 指示条（没开 viewport-fit=cover 时恒为 0）*/
 .tabs__bar {
   position: fixed;
   right: 0;
-  bottom: 0;
+  bottom: env(safe-area-inset-bottom, 0px);
   left: 0;
   z-index: 6;
   height: 3px;
@@ -776,26 +789,51 @@
   }
 }
 
-/* ---- 窄屏：左栏没有了，箭头也收小一点、往边靠 ---- */
+/* ---- 窄屏：左栏没有了，导航改成"底部两角的纸片箭头" ---- */
 
 @media (max-width: 860px) {
   .tabs__inner {
     grid-template-columns: 1fr;
     align-content: center;
-    padding: clamp(72px, 12vh, 110px) var(--pad) clamp(56px, 9vh, 90px);
+    /* 底部留白要比箭头纸片（14 + 56 = 70px 高）再多一截：
+       章节滚到底时，最后一行文字不能垫在箭头底下 */
+    padding: clamp(72px, 12vh, 110px) var(--pad) clamp(96px, 15vh, 136px);
   }
 
+  /* 箭头从"屏幕两侧竖直居中"改成"底部两角"：
+     手机上章节比一屏长，竖直居中的箭头永远飘在正文上（探测实测盖住段落
+     起始行），而拇指最够得着的本来就是屏幕下缘。垫一层纸色 + 描边，
+     盖到内容也不花；不透明度提到 0.9 —— 它们是手机上唯一的章节导航。 */
   .tabs__arrow {
-    width: 40px;
+    top: auto;
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    width: 48px;
     height: 56px;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    opacity: 0.9;
+    transform: none;
   }
 
   .tabs__arrow--prev {
-    left: 2px;
+    left: 14px;
   }
 
   .tabs__arrow--next {
-    right: 2px;
+    right: 14px;
+  }
+
+  /* 桌面的悬停位移带着 -50% 的垂直居中，触屏布局里必须一起改掉 */
+  .tabs__arrow--prev:hover {
+    transform: translate(-3px, 0);
+  }
+
+  .tabs__arrow--next:hover {
+    transform: translate(3px, 0);
+  }
+
+  .tabs__arrow:active {
+    transform: scale(0.94);
   }
 
   .tabs__view {
@@ -822,5 +860,13 @@
 
   .tabs__mark {
     bottom: -0.12em;
+  }
+
+  /* 矮屏紧凑模式（max-height: 980px）在手机竖屏上也会命中，把字号压到 13.5px
+     —— 那档是为"矮桌面"一屏放下设计的，手机反正要滚动，字号还回去 */
+  .tabs .tl__text,
+  .tabs .sec-lead,
+  .tabs .about__body p {
+    font-size: 14.5px;
   }
 }

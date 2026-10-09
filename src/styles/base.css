@@ -265,6 +265,36 @@ ol {
   color: var(--ink);
 }
 
+/* 触屏设备没有"移开鼠标"：悬停态会一直粘在最后点过的按钮上。
+   悬停填充只留给有指针的设备；触屏改用按压(:active)给反馈。 */
+@media (hover: none) {
+  .btn:hover {
+    color: var(--ink);
+  }
+
+  .btn:hover::before {
+    transform: translateX(-101%);
+  }
+
+  .btn--solid:hover {
+    color: var(--paper);
+  }
+
+  .btn--solid:hover::before {
+    transform: translateX(0);
+  }
+
+  .btn:active,
+  .btn--solid:active {
+    color: var(--paper);
+  }
+
+  .btn:active::before,
+  .btn--solid:active::before {
+    transform: translateX(0);
+  }
+}
+
 /* --------------------------------------------------------------------------
    滚动揭示：进入视口时淡入 + 上浮
    -------------------------------------------------------------------------- */

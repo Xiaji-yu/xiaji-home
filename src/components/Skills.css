@@ -22,6 +22,13 @@
   background: rgba(17, 17, 17, 0.028);
 }
 
+/* 触屏上悬停会粘住（最后碰过的那行一直灰着），撤掉 */
+@media (hover: none) {
+  .skill:hover {
+    background: transparent;
+  }
+}
+
 .skill__idx {
   color: var(--muted);
 }

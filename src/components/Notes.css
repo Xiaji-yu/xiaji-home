@@ -208,6 +208,19 @@
   text-transform: uppercase;
 }
 
+/* 触屏设备没有悬停：删除按钮如果只在 hover 时显形，手机上就永远看不见。
+   触屏上常驻半透明，按压时再全量。 */
+@media (hover: none) {
+  .note__del {
+    opacity: 0.5;
+  }
+
+  .note__del:active {
+    opacity: 1;
+    color: var(--ink);
+  }
+}
+
 @media (max-width: 760px) {
   .notes__form {
     grid-template-columns: 1fr;
@@ -215,5 +228,14 @@
   .notes__field {
     border-right: 0;
     border-bottom: 1px solid var(--line);
+  }
+}
+
+/* iOS Safari：聚焦字号小于 16px 的输入框会自动把页面放大。
+   手机上把两个输入框提到 16px，聚焦时不再触发缩放。 */
+@media (max-width: 860px) {
+  .notes__textarea,
+  .notes__name {
+    font-size: 16px;
   }
 }
