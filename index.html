@@ -9,6 +9,21 @@
     <meta name="theme-color" content="#F5F4F1" />
     <!-- 整站只有浅色一套：声明一下，免得系统开了暗色时表单控件、滚动条被 UA 涂成深色 -->
     <meta name="color-scheme" content="light" />
+    <!-- PWA：可以"安装"到桌面 / 主屏（manifest 与图标在 public/，路径用相对地址，
+         放子路径部署也不会指错）-->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
+    <!-- 社交分享预览：分享到微信 / Telegram / Twitter 时带标题、描述和图。
+         og:image 必须是绝对地址 —— 换成你的实际域名（图在 public/og-cover.png，
+         1200×630，就是首屏那张点阵山的实拍）-->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="夏祭 · 个人主页" />
+    <meta
+      property="og:description"
+      content="真理会过时，构石永恒。黑白点阵风格的个人主页 —— 首屏那座山是浏览器现场算出来的。"
+    />
+    <meta property="og:image" content="https://xiaji.xin/og-cover.png" />
+    <meta name="twitter:card" content="summary_large_image" />
     <title>夏祭 · 个人主页</title>
     <meta
       name="description"
@@ -34,25 +49,9 @@
       会被"滚动进度"整片淡掉 —— 加载界面上就一颗点都看不见。
       所以刷新一律从顶部开始。（只认刷新：前进 / 后退仍然保留浏览器的位置恢复，
       用带 #锚点 的地址打开也照常跳到锚点。）
+      脚本在 public/scroll-restoration.js：CSP（script-src 'self'）不允许内联。
     -->
-    <script>
-      ;(function () {
-        var type = 'reload'
-        try {
-          var nav = performance.getEntriesByType('navigation')
-          if (nav && nav[0] && nav[0].type) type = nav[0].type
-        } catch (e) {
-          /* 取不到就按刷新处理 */
-        }
-        if (type !== 'reload') return
-        try {
-          if ('scrollRestoration' in history) history.scrollRestoration = 'manual'
-          window.scrollTo(0, 0)
-        } catch (e) {
-          /* 不支持也没关系，ParticleMountain.jsx 里还有一道兜底 */
-        }
-      })()
-    </script>
+    <script src="scroll-restoration.js"></script>
   </head>
   <body>
     <div id="root"></div>
