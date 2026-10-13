@@ -218,6 +218,6 @@ PORT=4173 node server/index.cjs    # 或 npm run preview（vite 自带）
 - [x] 防火墙只放行 `22/80/443`
 - [x] 站点是纯静态，仓库里无密钥；`.env*` 已被 `.gitignore`（真需要环境变量走 PM2 的 `env`，别进仓库）
 - [x] Nginx 强制 HTTPS；HTTP 只留 ACME 验证与跳转
-- [x] `x-content-type-options` / `referrer-policy` 由应用统一下发（需要 CSP 之类新安全头，加在 `server/index.cjs` 的 `headers` 里即可）
+- [x] `x-content-type-options` / `referrer-policy` / `content-security-policy` 由应用统一下发（部署在 GitHub Pages 之类拿不到响应头的平台时 CSP 不生效，属已知取舍 —— 站点本身也没有用户输入出口）
 
 要上监控（多机/告警）可以再 `pm2 plus` 接入 PM2 Plus，纯自用 `pm2 monit` 够看。

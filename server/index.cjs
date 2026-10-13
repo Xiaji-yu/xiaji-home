@@ -134,6 +134,22 @@ function handle(req, res) {
       'cache-control': cacheControlFor(pathname, file.ext),
       'x-content-type-options': 'nosniff',
       'referrer-policy': 'strict-origin-when-cross-origin',
+      /* 内容安全策略：这个站没有任何用户输入出口（便签只存本地、不渲染给别人），
+         CSP 属于纵深防御。script-src 落到 default-src 'self' —— 构建产物里没有
+         内联脚本（scrollRestoration 那段已外置到 public/）；style-src 放行
+         'unsafe-inline' 是给 React 的 style 属性和 Google Fonts 的样式表。
+         部署在 GitHub Pages 之类拿不到响应头的地方时这一条不生效，属已知取舍。 */
+      'content-security-policy': [
+        "default-src 'self'",
+        "base-uri 'self'",
+        "object-src 'none'",
+        "frame-ancestors 'none'",
+        "img-src 'self' data:",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        "font-src 'self' https://fonts.gstatic.com",
+        "connect-src 'self'",
+        "manifest-src 'self'",
+      ].join('; '),
     }
     // 压缩结果首次访问时算好并驻留内存（整站 ~1 MB，之后零 CPU）
     let body = entry.raw
