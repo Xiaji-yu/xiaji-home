@@ -171,23 +171,44 @@
   }
 }
 
-/* 手机横屏 / 矮视口：纵向放不下"标题 + 按钮 + 山 + 状态栏"，
-   把上边距和山的最小高度一起收，尽量不出现首屏内滚动 */
+/* 手机横屏 / 矮视口：纵向放不下"标题 + 按钮 + 山 + 状态栏"。
+   只收边距和山高不够 —— 实测 844×390 下标题仍是 54px 字号、副标题占 3 行，
+   hero 会被顶到约 470px 高（屏幕只有 390px），山还是被拦腰截断。
+   所以这一档连标题字号一起收、副标题让位给山（同一句话的短版就在底部
+   状态栏里），整屏才真的装得下。 */
 @media (max-height: 560px) {
   .hero__inner {
-    padding-top: 44px;
+    padding-top: 40px;
   }
 
+  .hero__title {
+    font-size: clamp(22px, 5.2vh, 38px);
+  }
+
+  /* 副标题让位给山（同一句话的短版就在底部状态栏里）*/
   .hero__sub {
-    margin-top: 12px;
+    display: none;
   }
 
   .hero__cta {
-    margin-top: 16px;
+    margin-top: 14px;
   }
 
   .hero__stage {
-    min-height: 110px;
-    margin-top: 12px;
+    min-height: 84px;
+    margin-top: 10px;
+  }
+
+  .hero__status {
+    padding: 8px var(--pad);
+  }
+}
+
+/* ---- 320px 小屏：状态栏左右两句话会挤到换行，字号/字距再收一档 ---- */
+@media (max-width: 360px) {
+  .hero__status {
+    gap: 8px;
+    font-size: 9px;
+    letter-spacing: 0.05em;
   }
 }
