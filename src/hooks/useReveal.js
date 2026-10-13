@@ -22,6 +22,9 @@ export function useReveal(options) {
           if (entry.isIntersecting) {
             entry.target.classList.add('is-in')
             obs.unobserve(entry.target)
+            // will-change 只是过渡期间的提升提示，过渡一结束就还回去（见 base.css）。
+            // 不监听 transitionend：超时兜底更简单，且 reduced-motion 下也照样走到
+            window.setTimeout(() => entry.target.classList.add('is-done'), 1500)
           }
         })
       },

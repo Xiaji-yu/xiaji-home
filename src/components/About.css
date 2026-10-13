@@ -2,13 +2,6 @@
    关于我：左边一段大字号自述，右边一张细边框信息表
    ========================================================================== */
 
-.about__grid {
-  display: grid;
-  grid-template-columns: 1.25fr 1fr;
-  gap: clamp(28px, 5vw, 72px);
-  align-items: start;
-}
-
 .about__lead {
   font-size: clamp(18px, 2.05vw, 27px);
   font-weight: 500;

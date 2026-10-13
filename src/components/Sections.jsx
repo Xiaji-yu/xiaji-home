@@ -266,16 +266,15 @@ export default function Sections() {
             {sectionTabs.map((t) => {
               const Panel = PANELS[t.id]
               return (
-                <div
+                <section
                   key={t.id}
                   id={t.id}
-                  role="tabpanel"
                   aria-label={t.cn}
                   hidden={t.id !== active}
                   className="tabs__view"
                 >
                   <Panel />
-                </div>
+                </section>
               )
             })}
           </div>

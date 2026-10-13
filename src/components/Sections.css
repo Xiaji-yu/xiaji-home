@@ -377,7 +377,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-height: min(64vh, 560px);
+  min-height: min(calc(var(--vh) * 0.64), 560px);
 }
 
 /* hidden 的面板必须真的消失（下面的 display:flex 会盖掉 UA 的 [hidden]） */
