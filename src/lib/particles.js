@@ -44,10 +44,13 @@ const CELL_MAX = 4
 /**
  * 挑一个格子边长。它同时决定了三件事：
  * 点阵的疏密、每颗点的直径（= cell × DOT_FACTOR）、以及计算量。
+ *
+ * @param boost 低端机的降密度系数（>1 = 格子放大 = 粒子变少）。上下限跟着一起
+ *              放大，否则 clamp 会把降级吃掉；1.4 ≈ 粒子数减半。
  */
-export function pickCell(width, height) {
-  const raw = Math.sqrt((width * height) / AREA_PER_CELL)
-  return Math.min(CELL_MAX, Math.max(CELL_MIN, Math.round(raw)))
+export function pickCell(width, height, boost = 1) {
+  const raw = Math.sqrt((width * height) / AREA_PER_CELL) * boost
+  return Math.round(Math.min(CELL_MAX * boost, Math.max(CELL_MIN * boost, raw)))
 }
 
 /* ---------------- 鼠标 ---------------- */

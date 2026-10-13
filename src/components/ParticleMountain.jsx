@@ -88,6 +88,12 @@ export default function ParticleMountain() {
     const reduced = prefersReducedMotion()
     const dpr = Math.min(window.devicePixelRatio || 1, 2)
 
+    /* 低端机（老手机 / 低内存平板）：格子放大 40% ≈ 粒子数减半。
+       这片山开场时要占满视口画一遍，1.5 万颗在低端 GPU 上会掉帧；
+       格子大一点外观几乎看不出，帧率换回来。 */
+    const lowPower =
+      (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 4) <= 2
+
     const heroEl = wrap.closest('.hero')
     // 开场的计时起点。刻意不在 mount 时取时间，而是在**第一帧**再取：
     // 万一首屏被字体或脚本卡住几百毫秒，无序云也不会还没画出来就被跳过。
@@ -257,7 +263,7 @@ export default function ParticleMountain() {
       lastW = stageW
       lastH = stageH
 
-      const cell = pickCell(stageW, stageH)
+      const cell = pickCell(stageW, stageH, lowPower ? 1.4 : 1)
       const cols = Math.max(2, Math.round(stageW / cell))
       const rows = Math.max(2, Math.round(stageH / cell))
 
