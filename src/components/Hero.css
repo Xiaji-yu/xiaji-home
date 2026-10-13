@@ -42,9 +42,11 @@
 }
 
 /* 每行外面套一个 overflow:hidden，文字从下方推上来。
-   延时跟着开场走：遮罩 2s 结束 → 整块上滑、页眉上移各 0.9s（2.9s 落位），
-   于是文字从 2.9s 起一行行推入，正好浮在刚就位的页眉和正在归位的山景之间。
-   （开场时长见 lib/particles.js 的 INTRO_MS） */
+   延时跟着开场走：遮罩 INTRO_MS 结束 → 整块上滑、页眉上移各 RISE_MS 落位，
+   于是文字从那一刻起一行行推入，正好浮在刚就位的页眉和正在归位的山景之间。
+   两个时长由 components/Header.jsx 以 CSS 变量写进 <html>（useLayoutEffect，
+   首帧绘制前就写好），这里只引用 —— 调开场时长只改 Header.jsx 一处；
+   var() 里的 2000ms / 900ms 是 JS 挂载失败时的兜底，与变量同值。 */
 .hero__line {
   display: block;
   overflow: hidden;
@@ -58,11 +60,11 @@
 }
 
 .hero__line:nth-child(1) > span {
-  animation-delay: 2.9s;
+  animation-delay: calc(var(--intro-ms, 2000ms) + var(--rise-ms, 900ms));
 }
 
 .hero__line:nth-child(2) > span {
-  animation-delay: 3.07s;
+  animation-delay: calc(var(--intro-ms, 2000ms) + var(--rise-ms, 900ms) + 170ms);
 }
 
 @keyframes heroLine {
@@ -79,7 +81,8 @@
   line-height: 1.95;
   opacity: 0;
   transform: translateY(14px);
-  animation: heroFade 0.9s var(--ease) 3.25s forwards;
+  animation: heroFade 0.9s var(--ease)
+    calc(var(--intro-ms, 2000ms) + var(--rise-ms, 900ms) + 350ms) forwards;
 }
 
 .hero__cta {
@@ -90,7 +93,8 @@
   margin-top: clamp(24px, 3vw, 38px);
   opacity: 0;
   transform: translateY(14px);
-  animation: heroFade 0.9s var(--ease) 3.43s forwards;
+  animation: heroFade 0.9s var(--ease)
+    calc(var(--intro-ms, 2000ms) + var(--rise-ms, 900ms) + 530ms) forwards;
 }
 
 @keyframes heroFade {

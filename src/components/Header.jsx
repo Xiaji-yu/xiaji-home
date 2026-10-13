@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
 import { navLinks, site } from '../data/site.js'
 import { INTRO_MS } from '../lib/particles.js'
 import { prefersReducedMotion } from '../hooks/useCountUp.js'
@@ -32,6 +32,16 @@ export default function Header() {
   const [pct, setPct] = useState(reduced ? 100 : 0)
   const [phase, setPhase] = useState(reduced ? 'extended' : 'loading')
   const [curtain, setCurtain] = useState(!reduced)
+
+  /* 把开场时长写给 CSS：首屏文字（标题逐行推入、副标题、按钮）的入场延时
+     由它们算出来（见 Hero.css 的 calc）。用 useLayoutEffect 而不是 useEffect ——
+     要在浏览器首帧绘制之前写好，否则文字会先用兜底值演一遍再修正。
+     reduced 时也写：反正 base.css 会把动画延时清零，写了不碍事。 */
+  useLayoutEffect(() => {
+    const root = document.documentElement
+    root.style.setProperty('--intro-ms', `${INTRO_MS}ms`)
+    root.style.setProperty('--rise-ms', `${RISE_MS}ms`)
+  }, [])
 
   useEffect(() => {
     if (reduced) return
