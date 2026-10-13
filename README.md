@@ -106,16 +106,17 @@ npm run dev
 
 ## 可用命令
 
-| 命令                   | 作用                                                  |
-| ---------------------- | ----------------------------------------------------- |
-| `npm run dev`          | 启动开发服务器（热更新）                              |
-| `npm run build`        | 生产构建，产物在 `dist/`                              |
-| `npm run preview`      | 本地预览构建产物                                      |
-| `npm run lint`         | ESLint 检查                                           |
-| `npm run lint:fix`     | ESLint 自动修复                                       |
-| `npm run format`       | Prettier 格式化全仓库                                 |
-| `npm run format:check` | 只检查格式，不改文件（CI 用）                         |
-| `npm run check`        | `lint` + `format:check` + `build`，**提 PR 前跑这个** |
+| 命令                   | 作用                                                           |
+| ---------------------- | -------------------------------------------------------------- |
+| `npm run dev`          | 启动开发服务器（热更新）                                       |
+| `npm run build`        | 生产构建，产物在 `dist/`                                       |
+| `npm run preview`      | 本地预览构建产物                                               |
+| `npm run lint`         | ESLint 检查                                                    |
+| `npm run lint:fix`     | ESLint 自动修复                                                |
+| `npm run format`       | Prettier 格式化全仓库                                          |
+| `npm run format:check` | 只检查格式，不改文件（CI 用）                                  |
+| `npm run test`         | 跑 `lib/` 纯函数的单元测试（vitest，35 个）                    |
+| `npm run check`        | `lint` + `format:check` + `test` + `build`，**提 PR 前跑这个** |
 
 ## 项目结构
 
@@ -134,6 +135,8 @@ xiaji-home/
 │  ├─ preview-mountain.png       静止时的点阵山
 │  ├─ preview-assemble.png       载入汇聚
 │  ├─ preview-mouse.png          光标按坑与慢慢流回 + 滚动逐层错开
+├─ public/                     不经构建、原样拷贝的资源：PWA manifest、应用图标、
+│                              og 分享图、scrollRestoration 脚本（CSP 不许内联，只能外置）
 └─ src/
    ├─ main.jsx                 入口
    ├─ App.jsx                  板块顺序，想调整页面结构就改这里
