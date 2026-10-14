@@ -85,6 +85,26 @@ describe('planMorph / step / snap', () => {
     }
   })
 
+  it('cells 为空时冻结在原地：不抛错、不乱跑', () => {
+    const items = makeParticles(30, box)
+    const before = items.map((it) => ({ x: it.x, y: it.y }))
+    // 模拟被光标推开的状态：冻结时偏移要收回、形状不动
+    for (const it of items) {
+      it.ox = 3
+      it.oy = -2
+    }
+    const total = planMorph(items, [], box, 0, { duration: 100, stagger: 50, cell: 4 })
+    expect(total).toBe(150)
+    const r = step(items, total + 10, 100, 50, null)
+    expect(r.allDone).toBe(true)
+    items.forEach((it, i) => {
+      expect(it.x).toBeCloseTo(before[i].x, 6)
+      expect(it.y).toBeCloseTo(before[i].y, 6)
+      expect(it.ox).toBe(0)
+      expect(it.oy).toBe(0)
+    })
+  })
+
   it('snap 直接落到目标上', () => {
     const items = makeParticles(50, box)
     planMorph(items, cells(60), box, 0, { duration: 100, stagger: 50, cell: 4 })

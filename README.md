@@ -115,7 +115,7 @@ npm run dev
 | `npm run lint:fix`     | ESLint 自动修复                                                |
 | `npm run format`       | Prettier 格式化全仓库                                          |
 | `npm run format:check` | 只检查格式，不改文件（CI 用）                                  |
-| `npm run test`         | 跑 `lib/` 纯函数的单元测试（vitest，35 个）                    |
+| `npm run test`         | 跑 `lib/` 纯函数的单元测试（vitest，36 个）                    |
 | `npm run check`        | `lint` + `format:check` + `test` + `build`，**提 PR 前跑这个** |
 
 ## 项目结构

@@ -29,6 +29,10 @@
   .tabs__inner {
     min-height: calc(100dvh - var(--header-h) - var(--status-h));
   }
+
+  .tabs__view {
+    min-height: min(64dvh, 560px);
+  }
 }
 
 .tabs__inner {
@@ -377,7 +381,11 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-height: min(calc(var(--vh) * 0.64), 560px);
+  /* 面板自己的高度下限：内容更矮时也撑住，居中才有参照。
+     这里曾经写成 var(--vh) —— 全站没有任何地方定义它，整条声明
+     invalid at computed-value time、min-height 回落 auto，等于没写。
+     dvh 版本在上面那个 @supports 块里，和 .tabs 保持同一套路 */
+  min-height: min(64vh, 560px);
 }
 
 /* hidden 的面板必须真的消失（下面的 display:flex 会盖掉 UA 的 [hidden]） */

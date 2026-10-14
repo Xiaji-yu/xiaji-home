@@ -174,6 +174,16 @@ function matchTargets(items, targets) {
  */
 export function planMorph(items, cells, box, now, opts = {}) {
   const { duration = 780, stagger = 260, cell = 5 } = opts
+  // 没有格子可配时（离屏画布取不到 context、或某个图形连一颗格子都没采到）
+  // 就地冻结：每颗点以"此刻的位置"为目标，不乱跑也不崩。
+  // 否则 matchTargets 会配出 undefined，plan() 里 to.x 直接抛 TypeError，
+  // 而异常是从 rAF / IntersectionObserver 回调里跑出来的，图形会永久死掉
+  if (!cells.length) {
+    return plan(items, (i) => ({ x: items[i].x, y: items[i].y }), now, {
+      duration,
+      stagger,
+    })
+  }
   const targets = fitToCells(cells, items.length, cell)
   const paired = matchTargets(items, targets)
   return plan(items, (i) => paired[i], now, { duration, stagger })

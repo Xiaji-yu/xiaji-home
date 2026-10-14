@@ -55,7 +55,7 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  height: 56px;
+  height: var(--header-h, 56px);
   max-width: var(--maxw);
   margin: 0 auto;
   padding: 0 var(--pad);
@@ -261,5 +261,21 @@
 
   .header__links a:hover::after {
     transform: scaleX(0);
+  }
+}
+
+/* ---- PWA 安装态：让出 iOS 状态栏 ---- */
+/* viewport-fit=cover 让页面伸到状态栏底下，而 iOS 把页面装到主屏后
+   （display-mode: standalone）不会自动让出状态栏 —— sticky 页眉会整块压在
+   状态栏上，品牌和导航全部看不见。这里按顶部安全区把页眉垫高，
+   --header-h 一起放大，"一章一屏"和锚点落点才不会差出一个状态栏。
+   env() 在普通浏览器 / Android 安装态下为 0，外观与现在完全一致。 */
+@media (display-mode: standalone) {
+  :root {
+    --header-h: calc(56px + env(safe-area-inset-top, 0px));
+  }
+
+  .header__inner {
+    padding-top: env(safe-area-inset-top, 0px);
   }
 }
