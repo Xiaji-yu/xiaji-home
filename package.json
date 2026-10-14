@@ -1,9 +1,9 @@
 {
-  "name": "xiaji-home",
+  "name": "my-homepage",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "夏祭的个人主页 — 黑白点阵（dither）风格的 React + Vite 单页作品集",
+  "description": "个人主页 — 黑白点阵（dither）风格的 React + Vite 单页作品集",
   "keywords": [
     "personal-website",
     "portfolio",
@@ -15,15 +15,15 @@
     "brutalism",
     "minimal"
   ],
-  "author": "夏祭 (Xiaji) <variant305@gmail.com>",
+  "author": "Your Name <your-name@example.com>",
   "license": "MIT",
-  "homepage": "https://github.com/Xiaji-yu/xiaji-home",
+  "homepage": "https://github.com/your-name/my-homepage",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Xiaji-yu/xiaji-home.git"
+    "url": "git+https://github.com/your-name/my-homepage.git"
   },
   "bugs": {
-    "url": "https://github.com/Xiaji-yu/xiaji-home/issues"
+    "url": "https://github.com/your-name/my-homepage/issues"
   },
   "engines": {
     "node": ">=20.19.0"

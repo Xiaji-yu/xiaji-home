@@ -1,6 +1,6 @@
 # 自托管部署：PM2 + Nginx
 
-这份文档把 `xiaji-home` 部署到自己的服务器上，用 **PM2 看守一个零依赖的静态服务器**，
+这份文档把 `my-homepage` 部署到自己的服务器上，用 **PM2 看守一个零依赖的静态服务器**，
 前面再套一层 **Nginx 反代 + TLS**。和 Cloudflare Workers（当前托管）二选一即可，
 互不影响，切哪个只是改 DNS 的事。
 
@@ -35,7 +35,7 @@
 
 ```bash
 # 1) 代码就位（二选一）
-git clone <仓库地址> ~/apps/xiaji-home && cd ~/apps/xiaji-home
+git clone <仓库地址> ~/apps/my-homepage && cd ~/apps/my-homepage
 # 或者直接把现有仓库拷过来；已在本机就 cd 到仓库根目录
 
 # 2) 严格按锁文件装依赖，构建
@@ -73,31 +73,31 @@ pm2 startup            # 按它打印的命令执行（通常是 sudo env PATH=$
 pm2 save               # 必须 save：startup 只保证 PM2 醒来，save 保证它记得你的应用
 ```
 
-验证：`sudo reboot` 后 `pm2 ls` 应能看到 `xiaji-home` 处于 `online`。
+验证：`sudo reboot` 后 `pm2 ls` 应能看到 `my-homepage` 处于 `online`。
 
 ## 3. Nginx 反代 + TLS
 
-`/etc/nginx/conf.d/xiaji-home.conf`（域名换成自己的，示例 `xiaji.xin`）：
+`/etc/nginx/conf.d/my-homepage.conf`（域名换成自己的，示例 `example.com`）：
 
 ```nginx
 # 80 只干两件事：证书续期验证、其他一律跳 https
 server {
   listen 80;
-  server_name xiaji.xin www.xiaji.xin;
+  server_name example.com www.example.com;
   location /.well-known/acme-challenge/ { root /var/www/html; }
-  location / { return 301 https://xiaji.xin$request_uri; }
+  location / { return 301 https://example.com$request_uri; }
 }
 
 server {
   listen 443 ssl;
   http2 on;
-  server_name xiaji.xin;
+  server_name example.com;
 
-  ssl_certificate     /etc/letsencrypt/live/xiaji.xin/fullchain.pem;
-  ssl_certificate_key /etc/letsencrypt/live/xiaji.xin/privkey.pem;
+  ssl_certificate     /etc/letsencrypt/live/example.com/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
 
-  access_log /var/log/nginx/xiaji-home.access.log;
-  error_log  /var/log/nginx/xiaji-home.error.log;
+  access_log /var/log/nginx/my-homepage.access.log;
+  error_log  /var/log/nginx/my-homepage.error.log;
 
   location / {
     proxy_pass http://127.0.0.1:4173;
@@ -116,7 +116,7 @@ server {
 sudo nginx -t && sudo systemctl reload nginx
 
 # 证书：先拿到证再放开 443（用 webroot 模式，80 的验证路径已配好）
-sudo certbot certonly --webroot -w /var/www/html -d xiaji.xin -d www.xiaji.xin
+sudo certbot certonly --webroot -w /var/www/html -d example.com -d www.example.com
 sudo nginx -t && sudo systemctl reload nginx
 sudo certbot renew --dry-run   # 确认自动续期没问题（certbot 自带 timer）
 ```
@@ -143,7 +143,7 @@ bash scripts/deploy.sh
 2. `git pull --ff-only`
 3. `npm ci`
 4. `npm run build`，并确认 `dist/index.html` 真的在
-5. `pm2 reload xiaji-home --update-env`（进程不存在时首次 `pm2 start` + `save`）
+5. `pm2 reload my-homepage --update-env`（进程不存在时首次 `pm2 start` + `save`）
 6. 轮询 `http://127.0.0.1:4173/healthz`，20 次内不 OK 就打印最近 30 行日志并失败退出
 
 > PM2 的 fork 模式下 `reload` = 带优雅退出的重启：新进程通过
@@ -174,21 +174,21 @@ pm2 set pm2-logrotate:rotateModule true   # 连模块自身的日志也一起转
 pm2 save                                  # 模块设置随之落盘
 ```
 
-看日志：`pm2 logs xiaji-home`（实时）、`pm2 logs xiaji-home --lines 100 --nostream`。
+看日志：`pm2 logs my-homepage`（实时）、`pm2 logs my-homepage --lines 100 --nostream`。
 
 ## 6. 常用命令
 
 | 操作         | 命令                                               |
 | ------------ | -------------------------------------------------- |
 | 启动         | `pm2 start ecosystem.config.cjs`                   |
-| 重载（更新） | `pm2 reload xiaji-home --update-env`               |
-| 重启         | `pm2 restart xiaji-home`                           |
-| 停止         | `pm2 stop xiaji-home`                              |
-| 删除定义     | `pm2 delete xiaji-home`                            |
+| 重载（更新） | `pm2 reload my-homepage --update-env`              |
+| 重启         | `pm2 restart my-homepage`                          |
+| 停止         | `pm2 stop my-homepage`                             |
+| 删除定义     | `pm2 delete my-homepage`                           |
 | 进程列表     | `pm2 ls`                                           |
-| 详情         | `pm2 describe xiaji-home`                          |
+| 详情         | `pm2 describe my-homepage`                         |
 | 资源监控     | `pm2 monit`                                        |
-| 日志         | `pm2 logs xiaji-home`                              |
+| 日志         | `pm2 logs my-homepage`                             |
 | 落盘/自启    | `pm2 save` / `pm2 startup`                         |
 | 本地预览     | `npm run build && PORT=4173 node server/index.cjs` |
 
@@ -207,7 +207,7 @@ PORT=4173 node server/index.cjs    # 或 npm run preview（vite 自带）
 | 刷新子路由 404（别人不 404） | 说明回源的把请求打到了别的服务器；本站的设计本就是 SPA 回退，见 `server/index.cjs`          |
 | `EADDRINUSE`                 | `lsof -i:4173` 找到占用者；`vite preview` 默认也占这个端口                                  |
 | 页面还是旧版                 | 看 `curl -sI /` 的 `cache-control` 是否 `no-cache`；CDN/Cloudflare 代理也要清缓存           |
-| pm2 reload 后不变化          | 确认 deploy.sh 真的重建了：`pm2 describe xiaji-home` 看 uptime 和 script 路径               |
+| pm2 reload 后不变化          | 确认 deploy.sh 真的重建了：`pm2 describe my-homepage` 看 uptime 和 script 路径              |
 | 日志涨满磁盘                 | 第 5 节的 pm2-logrotate 没配；`logs/` 已被 `.gitignore` 忽略                                |
 | 证书过期                     | `sudo certbot renew --dry-run`；systemd timer 坏了就 `sudo systemctl restart certbot.timer` |
 

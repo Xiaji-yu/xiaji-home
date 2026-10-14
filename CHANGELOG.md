@@ -72,11 +72,11 @@
 
 - **备案行改成两行、放左下角**：`Footer.css` 的 `.foot__beian` 从"一行居中"改成 `flex-direction: column` + `align-items: flex-start`，左边与页脚其它内容对齐（`padding-left` 用同一个 `--pad`），中间那个分隔点去掉（换行后没意义）；两行各带自己的链接，行距 5px。
 
-- **页脚加上备案号**（数据取自同工作区的 fts-blog 项目）：公安网安备 `沪公网安备31011202022181号`（指向 beian.gov.cn，带盾牌小图标）+ 工信部 ICP `沪ICP备2026007186号`（指向 beian.miit.gov.cn）。图标从 fts-blog 的 `icon/备案图标.png`（36×40）复制到 `src/assets/beian-icon.png`，走 Vite 打包（带 hash、跟着 `base` 前缀）。文案与链接都收在 `site.js` 的 `footer.beian` 里，要改只改那一处；页脚布局是".foot__beian"一行居中，窄屏自动换行。
+- **页脚加上备案号**（数据取自另一个项目）：公安网安备 `你的公网安备备案号`（指向 beian.gov.cn，带盾牌小图标）+ 工信部 ICP `你的ICP备案号`（指向 beian.miit.gov.cn）。图标从另一个项目的 `icon/备案图标.png`（36×40）复制到 `src/assets/beian-icon.png`，走 Vite 打包（带 hash、跟着 `base` 前缀）。文案与链接都收在 `site.js` 的 `footer.beian` 里，要改只改那一处；页脚布局是".foot__beian"一行居中，窄屏自动换行。
 
 - **修：滚回首屏时左右箭头（和底部条）还飘在那里**。它们原来是"进过一次板块区（`armed`）就一直渲染"的 `fixed` 元素。现在多一个 `inView`（IntersectionObserver 盯着板块区），把箭头和底部条包进 `.tabs__nav`，板块区不在视野里就整体淡出（`opacity/visibility/pointer-events` 一起收）。实测：首屏未滚动不渲染、进了板块区显示、滚回首屏淡出、页脚（板块区还有约 76% 在视野里）照常显示。
 
-- **关于我的信息区加"博客"字段**（`https://xiaji.xin`，排在邮箱后面）：`site.js` 的 `about.facts` 加一行；`About.jsx` 把渲染逻辑从"只认邮箱"改成通用 —— 值以 `http/https` 开头就渲染成新窗口打开的链接（显示时去掉协议头，所以看到的是 `xiaji.xin`）。顺带把邮箱那格不再单独通栏，于是"邮箱 | 博客"和"坐标 | 建站于"正好各占一行，四行两列对齐。
+- **关于我的信息区加"博客"字段**（`https://example.com`，排在邮箱后面）：`site.js` 的 `about.facts` 加一行；`About.jsx` 把渲染逻辑从"只认邮箱"改成通用 —— 值以 `http/https` 开头就渲染成新窗口打开的链接（显示时去掉协议头，所以看到的是 `example.com`）。顺带把邮箱那格不再单独通栏，于是"邮箱 | 博客"和"坐标 | 建站于"正好各占一行，四行两列对齐。
 
 - **经历的图形重做**：换成**一座双峰点阵山**（呼应首屏那座山）+ **山顶一面旗** + 三条跟着山势走的**等高线** + 从山脚盘到峰顶的**之字形登顶脚印**（小方块，刻意不用线 —— 否则跟等高线糊在一起）+ 山脚线。
 
@@ -131,7 +131,7 @@
 
 - **"一章一屏"做成硬约束，并让首屏状态栏那条线跟页眉线重合**：
   - 新增两个基准量：`--header-h: 56px`（页眉）与 `--status-h`（首屏底下那条状态栏的高度，由 `App.jsx` 量出来写回，随字号/换行自适应）。
-  - **滚动落点**：`html { scroll-padding-top: calc(var(--header-h) + var(--status-h)) }`（1080p 上是 101px）—— 于是跳到任意章节时，**首屏状态栏那条线正好落在页眉线上（两线重合）**，"真理会过时，构石永恒 / 向下滚动 · SCROLL"紧贴页眉下方。实测箭头、页眉链接(hash)、键盘三种入口落点完全一致（状态栏线 56 = 页眉线 56，板块顶 101）。
+  - **滚动落点**：`html { scroll-padding-top: calc(var(--header-h) + var(--status-h)) }`（1080p 上是 101px）—— 于是跳到任意章节时，**首屏状态栏那条线正好落在页眉线上（两线重合）**，"保持好奇，持续构建 / 向下滚动 · SCROLL"紧贴页眉下方。实测箭头、页眉链接(hash)、键盘三种入口落点完全一致（状态栏线 56 = 页眉线 56，板块顶 101）。
   - **首屏**改成 `min-height: calc(100vh - var(--header-h))`（原来 100vh，底部状态栏会被折线切掉 56px）；**每一章**改成 `calc(100vh - var(--header-h) - var(--status-h))` —— 一章正好填满"状态栏以下那一屏"。
   - **不许章内滚动**：穴、间距、标题、行高全部改成跟视口高挂钩（`vh` 段），并加了两档矮屏模式（`max-height: 980px` / `820px`）逐级收紧。实测 1920×1080 / 1440×900 / 1366×768 三种尺寸、六章全部"面板高 ≤ 可用高"，**零溢出**（改之前 1440×900 上经历那章要滚 158px）。
 
@@ -197,7 +197,7 @@
   - 地址栏与选项联动：`#about` / `#skills` … 刷新或分享都能直达；**页眉那几个链接点一下就是切面板**（它们本来就是 `#锚点`，所以页眉一行代码没改），并且会把选项卡区带回视野。键盘 ↑↓←→ / Home / End 也能切（标准 tablist 操作）。
   - 窄屏（≤860px）左栏收成顶部一条可横滑的标签行，并吸在页眉下面。
   - 顺便：区块级的「每节一屏」不再需要了（面板由选项卡那一屏来管），`base.css` 的 `.section` 因此瘦成一行；新增 `components/Sections.jsx` + `Sections.css`，`App.jsx` 里六个板块换成 `<Sections />`。
-- **仓库转为私有，站点托管在 Cloudflare Workers**：线上地址 `https://xiaji-home.variant305.workers.dev`（免费版支持私有仓库；构建在 Cloudflare 侧跑，推 `main` 自动发布）。GitHub Pages 那条工作流已停用，旧地址随之退役。
+- **仓库转为私有，站点托管在 Cloudflare Workers**：线上地址 `https://your-home.your-account.workers.dev`（免费版支持私有仓库；构建在 Cloudflare 侧跑，推 `main` 自动发布）。GitHub Pages 那条工作流已停用，旧地址随之退役。
 - **托管准备迁到 Cloudflare Pages**（仓库要转私有）：`.github/workflows/deploy-pages.yml` 改名为 `.yml.disabled` —— 公开仓库转私有时 GitHub 会**自动下线**已发布的 Pages 站点（Free 账号），那条工作流随后每次推都会报错。README 的部署章节改成以 Cloudflare（Workers 静态资源，免费版支持私有仓库、构建在 Cloudflare 侧跑、不需要任何工作流）为主线，Cloudflare Pages / Vercel / Netlify 作为备选，GitHub Pages 退为"公开仓库 / Pro 以上"的备选。
 - **滚动散开改成"逐层错开"**：原来是从画面中线往两边裂开（中线左边的往左飞、右边往右飞），现在改成按粒子**所属的山层**反向飞 —— 最前面那层往左、往后依次右 / 左 / 右，同一层里再按各自的 `speed` 有快有慢。于是下滑时整座山像几张纸片错开滑走，而不是从中间裂开。为此 `computeShade()` 现在一并返回 `layer`（每个格子属于哪一层山），`buildParticles()` 拿它给每颗粒子定下 `dir`。（顺带一提：这四层的点数是极不均的 —— 最前那层占 80.8%，所以视觉上主要是"前山往左、远山往右"。）
 - **章节统一高度**：六个正文章节（关于我 / 技能 / 项目 / 经历 / 联系 / 便签）现在**每节都至少占满一屏、内容垂直居中** —— 改之前是 0.67~1.10 屏不等，节奏不齐。桌面端 1440×900 与 1920×1080 实测六节都是整一屏、上下留白相等；窄屏上内容多的那几节（技能 / 项目 / 便签）会自然变高，不裁切也不压缩。上下留白同时从 `clamp(64px,9vw,132px)` 收到 `clamp(48px,5.5vw,88px)`（多余的空间交给居中分配）。首屏与页脚不参与统一。
@@ -240,5 +240,5 @@
 - GitHub Actions：CI（lint + 格式 + 构建）与 GitHub Pages 自动部署
 - Issue / PR 模板、Dependabot、EditorConfig、Git 属性、VS Code 推荐配置
 
-[Unreleased]: https://github.com/Xiaji-yu/xiaji-home/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/Xiaji-yu/xiaji-home/releases/tag/v1.0.0
+[Unreleased]: https://github.com/your-name/my-homepage/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/your-name/my-homepage/releases/tag/v1.0.0

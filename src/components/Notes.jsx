@@ -12,7 +12,7 @@ import './Notes.css'
    想做成真的多人共享留言板，就需要后端服务，那是另一个工程了。
    ========================================================================== */
 
-const STORAGE_KEY = 'xiaji-notes-v1'
+const STORAGE_KEY = 'my-homepage-notes-v1'
 const MAX_NOTES = 60
 
 function readStored() {

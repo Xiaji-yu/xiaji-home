@@ -166,7 +166,7 @@ function handle(req, res) {
     if (req.method === 'HEAD') return res.end()
     res.end(body)
   } catch (error) {
-    console.error('[xiaji-home]', error)
+    console.error('[my-homepage]', error)
     res.writeHead(500)
     res.end()
   }
@@ -179,19 +179,19 @@ server.on('connection', (socket) => {
   socket.on('close', () => sockets.delete(socket))
 })
 server.on('error', (error) => {
-  console.error(`[xiaji-home] listen failed: ${error.message}`)
+  console.error(`[my-homepage] listen failed: ${error.message}`)
   process.exit(1)
 })
 
 server.listen(PORT, HOST, () => {
-  console.log(`[xiaji-home] serving ${ROOT} on http://${HOST}:${PORT}`)
+  console.log(`[my-homepage] serving ${ROOT} on http://${HOST}:${PORT}`)
 })
 
 // 优雅退出（PM2 reload / stop 会先发 SIGTERM）：先停止接收新连接、
 // 立刻折断 keep-alive 连接让 res.end 触发，5s 兜底强退。
 for (const signal of ['SIGTERM', 'SIGINT']) {
   process.on(signal, () => {
-    console.log(`[xiaji-home] ${signal} received, draining…`)
+    console.log(`[my-homepage] ${signal} received, draining…`)
     server.close(() => process.exit(0))
     for (const socket of sockets) socket.destroy()
     setTimeout(() => process.exit(0), 5000).unref()

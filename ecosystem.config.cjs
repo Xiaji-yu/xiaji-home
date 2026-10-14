@@ -6,7 +6,7 @@
 module.exports = {
   apps: [
     {
-      name: 'xiaji-home',
+      name: 'my-homepage',
       script: 'server/index.cjs',
       cwd: __dirname,
       // 纯静态站单实例就够；cluster 对本地 localhost 通信反而多一层损耗

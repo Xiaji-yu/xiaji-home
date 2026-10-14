@@ -15,10 +15,10 @@ export default function Footer() {
         <div className="foot__brand">
           <div>
             <div className="foot__brandTop">
-              <span className="foot__mark">夏</span>
+              <span className="foot__mark">{site.name.slice(0, 1)}</span>
               <span className="foot__name">
-                夏祭
-                <em>XIAJI</em>
+                {site.name}
+                <em>{site.nameEn}</em>
               </span>
             </div>
             <p className="foot__tagline" style={{ marginTop: 16 }}>

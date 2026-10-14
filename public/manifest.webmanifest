@@ -1,7 +1,7 @@
 {
-  "name": "夏祭 · 个人主页",
-  "short_name": "夏祭",
-  "description": "夏祭的个人主页 —— 编程爱好者。真理会过时，构石永恒。",
+  "name": "Your Name · 个人主页",
+  "short_name": "Your Name",
+  "description": "Your Name 的个人主页 —— 黑白点阵风格，首屏那座山由算法现场算出。",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",

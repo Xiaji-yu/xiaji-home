@@ -13,7 +13,7 @@
 请**不要**用公开 issue 报告安全问题。
 
 - 首选：GitHub 的私有漏洞报告 —— 仓库页 → Security → Report a vulnerability
-- 备选：发邮件到 **variant305@gmail.com**，标题带上 `[SECURITY]`
+- 备选：发邮件到 **your-name@example.com**，标题带上 `[SECURITY]`
 
 请尽量包含：问题描述、复现步骤、受影响的浏览器与版本、以及你能想到的影响范围。我会在 **7 天内**回复，确认修复后会在 `CHANGELOG.md` 里注明（如果你希望被致谢，请告诉我怎么署名）。
 
@@ -21,7 +21,7 @@
 
 这些是刻意的设计决定，报告前请先看一眼：
 
-- **留言便签存在浏览器的 localStorage 里**，键名 `xiaji-notes-v1`。这意味着：便签内容对同设备的其他使用者可见，且不会被服务端清理。请不要在便签里填敏感信息 —— 这是页面自己的文案里也写明的。
+- **留言便签存在浏览器的 localStorage 里**，键名 `my-homepage-notes-v1`。这意味着：便签内容对同设备的其他使用者可见，且不会被服务端清理。请不要在便签里填敏感信息 —— 这是页面自己的文案里也写明的。
 - **第三方字体**：`index.html` 里引用了 Google Fonts。这会让浏览器向 Google 发起一次请求（会暴露 IP）。介意的话把那三行 `<link>` 删掉即可，页面会回退到系统字体。
 - **没有 CSP**：因为托管在 GitHub Pages 上，无法自定义响应头。如果你要自建托管，建议加上 `Content-Security-Policy`。
 

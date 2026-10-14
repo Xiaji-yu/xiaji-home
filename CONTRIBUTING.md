@@ -20,8 +20,8 @@
 
 ```bash
 # 1. Fork 之后克隆你自己的仓库
-git clone https://github.com/<你的用户名>/xiaji-home.git
-cd xiaji-home
+git clone https://github.com/your-name/my-homepage.git
+cd my-homepage
 
 # 2. 安装依赖
 npm install

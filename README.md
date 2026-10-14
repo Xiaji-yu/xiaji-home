@@ -1,6 +1,6 @@
 <div align="center">
 
-# 夏祭 · 个人主页
+# Your Name · 个人主页
 
 **黑白点阵（dither）风格的极简个人主页 —— 没有一张图片素材，首屏那座山是浏览器现场算出来的。**
 
@@ -92,8 +92,8 @@
 
 ```bash
 # 克隆
-git clone https://github.com/Xiaji-yu/xiaji-home.git
-cd xiaji-home
+git clone https://github.com/your-name/my-homepage.git
+cd my-homepage
 
 # 安装依赖
 npm install
@@ -121,7 +121,7 @@ npm run dev
 ## 项目结构
 
 ```
-xiaji-home/
+my-homepage/
 ├─ index.html                  页面外壳、字体引入、浏览器标签图标（内联 SVG）
 ├─ vite.config.js              Vite 配置（含 GitHub Pages 的 BASE_PATH 支持）
 ├─ eslint.config.js            ESLint 扁平配置
@@ -270,13 +270,13 @@ xiaji-home/
 
 ## 关于留言便签
 
-便签存在**访问者自己的浏览器**里（`localStorage`，键名 `xiaji-notes-v1`）：
+便签存在**访问者自己的浏览器**里（`localStorage`，键名 `my-homepage-notes-v1`）：
 
 - 刷新、关闭重开都还在；单条最多 100 字；最多存 60 张；点 `×` 可撕掉
 - **别人看不到你写的，你也看不到别人写的** —— 因为这是纯静态页面，没有服务器
 - 想做成真正多人共享的留言板，需要加一个后端（Supabase / Cloudflare Workers 等），那是另一个工程
 
-清空全部便签：浏览器 F12 → Application → Local Storage → 删掉 `xiaji-notes-v1`。
+清空全部便签：浏览器 F12 → Application → Local Storage → 删掉 `my-homepage-notes-v1`。
 
 ## 部署
 
@@ -286,7 +286,7 @@ xiaji-home/
 > GitHub 会**自动下线**已发布的 Pages 站点，所以 `.github/workflows/deploy-pages.yml`
 > 已改名成 `.yml.disabled`（留着备查，升了 Pro 想切回来，把后缀改回 `.yml` 即可）。
 
-**当前线上地址**：<https://xiaji-home.variant305.workers.dev>
+**当前线上地址**：<https://your-home.your-account.workers.dev>
 
 ### Cloudflare Workers（当前使用）
 
@@ -359,7 +359,7 @@ PM2 进程定义 `ecosystem.config.cjs`、一键更新脚本 `scripts/deploy.sh`
 
 ## 许可证
 
-[MIT](./LICENSE) © 2026 夏祭 (Xiaji)
+[MIT](./LICENSE) © 2026 Your Name
 
 代码可以随意使用、修改、商用，保留版权声明即可。
 页面里的**个人文案、姓名、联系方式不属于授权范围**，请替换成你自己的内容再发布。

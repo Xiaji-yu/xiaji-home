@@ -92,10 +92,10 @@ export default function Header() {
       <header className={`header is-${phase}`}>
         <div className="header__inner">
           <a className="header__brand" href="#top" aria-label="回到顶部">
-            <span className="header__mark">夏</span>
+            <span className="header__mark">{site.name.slice(0, 1)}</span>
             <span className="header__name">
-              夏祭
-              <em>XIAJI</em>
+              {site.name}
+              <em>{site.nameEn}</em>
             </span>
           </a>
 

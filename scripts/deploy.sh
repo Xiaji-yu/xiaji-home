@@ -12,7 +12,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-APP_NAME="xiaji-home"
+APP_NAME="my-homepage"
 PORT="${PORT:-4173}"
 HEALTH_URL="http://127.0.0.1:${PORT}/healthz"
 
