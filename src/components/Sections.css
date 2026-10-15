@@ -505,9 +505,11 @@
   pointer-events: none; /* 纯装饰，别挡住内容的点击 */
 }
 
-/* ---- 每个章节：内容 + 一块留白穴（六个章节的位置各不相同）----
-   穴是一块真的空白（不是背景层），图形就嵌在里面；
-   邻居章节的穴互不重叠，所以切板块时图形是大幅平移（还带一点缩放）。 */
+/* ---- 每个章节：内容在左、一块留白穴在右 ----
+   穴是一块真的空白（不是背景层），图形就嵌在里面。六章的穴**统一在右侧、
+   垂直居中**（早年六章左右交替、垂直位置也各异，切板块时图形满屏横飞，已改掉）
+   —— 所以切板块时只有形状在变形，位置不动。各章穴的大小仍可不同
+   （--slot-w），图形也就保留 about 大一档、notes 小一档的节奏。 */
 
 .tabs .pane {
   display: grid;
@@ -556,31 +558,31 @@
   align-self: center;
 }
 
-/* ② 技能栈 · 穴在左上（六章左右交替：右 / 左 / 右 / 左 / 右 / 左）*/
+/* ② 技能栈 · 穴在右侧垂直居中（六章统一位置）*/
 .tabs .pane--skills {
-  grid-template-columns: var(--slot-w) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) var(--slot-w);
   grid-template-rows: auto 1fr;
 }
 
 .tabs .pane--skills > .sec-lead {
-  grid-column: 2;
+  grid-column: 1;
   grid-row: 1;
 }
 
 /* 只剩 5 条技能：行距拉开（拉长），整块再往下挪一点 */
 .tabs .pane--skills > .skills__list {
-  grid-column: 2;
+  grid-column: 1;
   grid-row: 2;
   margin-top: clamp(20px, 2.6vw, 44px);
 }
 
 .tabs .pane--skills > .pane__slot {
-  grid-column: 1;
-  grid-row: 1 / span 2;
-  align-self: start;
+  grid-column: 2;
+  grid-row: 1 / -1;
+  align-self: center;
 }
 
-/* ③ 项目作品 · 穴在右上：引导句与卡片在左栏，卡片整体下移一点点。
+/* ③ 项目作品 · 穴在右侧垂直居中：引导句与卡片在左栏，卡片整体下移一点点。
    这一章的图形单独放大一档（那一叠卡片要多露几张才看得出是"一叠"）*/
 .tabs .pane--work {
   grid-template-columns: minmax(0, 1fr) var(--slot-w);
@@ -604,34 +606,33 @@
 
 .tabs .pane--work > .pane__slot {
   grid-column: 2;
-  grid-row: 1 / span 2;
-  align-self: start;
+  grid-row: 1 / -1;
+  align-self: center;
 }
 
-/* ④ 经历 · 穴在左中 */
+/* ④ 经历 · 穴在右侧垂直居中（六章统一位置）*/
 .tabs .pane--journey {
-  grid-template-columns: var(--slot-w) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) var(--slot-w);
   grid-template-rows: auto 1fr;
 }
 
 .tabs .pane--journey > .pane__slot {
-  grid-column: 1;
-  grid-row: 1 / span 2;
+  grid-column: 2;
+  grid-row: 1 / -1;
   align-self: center;
 }
 
 .tabs .pane--journey > .sec-lead {
-  grid-column: 2;
+  grid-column: 1;
   grid-row: 1;
 }
 
 .tabs .pane--journey > .tl {
-  grid-column: 2;
+  grid-column: 1;
   grid-row: 2;
 }
 
-/* ⑤ 联系方式 · 穴在左上：引导句挪到穴右边，渠道卡在下面通铺 */
-/* 穴让给项目作品（左上）之后，联系方式改到右下角 */
+/* ⑤ 联系方式 · 穴在右侧垂直居中（六章统一位置）：引导句通栏，渠道卡在左栏 */
 .tabs .pane--contact {
   grid-template-columns: minmax(0, 1fr) var(--slot-w);
   grid-template-rows: auto 1fr;
@@ -649,16 +650,17 @@
 
 .tabs .pane--contact > .pane__slot {
   grid-column: 2;
+  /* 留在第 2 行：引导语是通栏的（row 1），穴不上去压它；
+     行高由穴自己撑开（grid 行自适应 item 高），不会溢出到别的行 */
   grid-row: 2;
-  align-self: end;
+  align-self: center;
 }
 
 /* ⑥ 留言便签 · 照参考图 3 的版面：
-     引导句通栏 → 表单独占左边那一行、图形在同一行的右侧 → 便签墙在下面通铺整宽 */
+     引导句通栏 → 表单在左、图形在右侧垂直居中 → 便签墙在下面通铺整宽 */
 .tabs .pane--notes {
   --slot-w: clamp(253px, 32vh, 360px);
-  /* 图形在左、表单在右（六章左右交替的最后一块）*/
-  grid-template-columns: var(--slot-w) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) var(--slot-w);
   grid-template-rows: auto auto auto;
 }
 
@@ -668,12 +670,14 @@
 }
 
 .tabs .pane--notes > .notes__form {
-  grid-column: 2;
+  grid-column: 1;
   grid-row: 2;
 }
 
 .tabs .pane--notes > .pane__slot {
-  grid-column: 1;
+  grid-column: 2;
+  /* 留在第 2 行：引导语（row 1）和便签墙（row 3）都是通栏的，
+     穴不上去压它们；行高由穴自己撑开，不会溢出 */
   grid-row: 2;
   align-self: center;
 }
@@ -777,8 +781,10 @@
    原来这里（≤1279px）会把 .tabs__figure 整块 display:none：早先的内容块垫的是
    不透明纸色，1366 上实测图形被盖住 31%，"与其露半张不如整块藏起来"。
    现在内容块全是透明底（粒子直接从字缝里透过去），遮挡的顾虑没有了 ——
-   画布保持全尺寸常驻，图形改由 FigureCanvas 的兜底目标框摆放（穴仍收起，
-   单列布局不变，不占版面高度）。 */
+   画布保持全尺寸常驻，图形改由 FigureCanvas 的兜底目标框摆放：**固定右侧、
+   缩小、低透明度当背景**（穴仍收起，单列布局不变，不占版面高度）。
+   实测过小米平板 7 Pro（竖屏 / 横屏都落在这一档）：文字全宽可读，
+   图形在右后方 35% 透明度跟着变形，不抢视线。 */
 @media (max-width: 1279px) {
   /* 放不下"内容 + 穴"：穴收起、每个章节摊回一列（!important 是为了压掉上面
      按章节写死的 grid-column / grid-row —— 那些都是桌面专属的排布）*/
@@ -794,6 +800,13 @@
 
   .tabs .pane__slot {
     display: none;
+  }
+
+  /* 穴没了，但图形不撤：固定右侧、缩小、低透明度当背景（FigureCanvas 的兜底
+     目标框同步改成右侧）—— 平板（iPad / 小米平板）上文字铺满全宽，图形在
+     右后方淡淡地跟着形状变，不挡阅读。≤860px 的手机端才整块藏掉。 */
+  .tabs__figure {
+    opacity: 0.35;
   }
 }
 

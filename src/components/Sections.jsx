@@ -279,7 +279,8 @@ export default function Sections() {
             })}
           </div>
 
-          {/* 粒子画布：铺在整块板块区上，图形落在当前章节的留白穴里 */}
+          {/* 粒子画布：铺在整块板块区上，图形落在右侧的留白穴里
+              （六章统一位置，切板块只变形、不挪窝） */}
           <div className="tabs__figure">
             <FigureCanvas id={active} />
           </div>
