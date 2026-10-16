@@ -41,3 +41,6 @@ pnpm-debug.log*
 .vite/
 .cache/
 *.tsbuildinfo
+
+# ---- OpenChamber 浏览器面板缓存 ----
+.openchamber/
