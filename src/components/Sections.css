@@ -586,6 +586,10 @@
    这一章的图形单独放大一档（那一叠卡片要多露几张才看得出是"一叠"）*/
 .tabs .pane--work {
   grid-template-columns: minmax(0, 1fr) var(--slot-w);
+  /* 显式声明三行（引导句 / 卡片 / 提示）：没有它，下面的穴写 1 / -1 时
+     -1 会退化成第 1 根行线（隐式网格里没有显式行可反推），穴掉进第 1 行、
+     把行高撑爆，卡片就被顶到最底下 */
+  grid-template-rows: auto auto auto;
 }
 
 .tabs .pane--work > .sec-lead {

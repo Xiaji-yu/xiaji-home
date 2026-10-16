@@ -19,10 +19,10 @@ import './FigureCanvas.css'
         推开后慢慢流回 —— 和山那边同一套一阶滞后，不会过冲
 
    画布不是贴在右边一角，而是**铺在整块板块区上**：每个章节里留了一块空白
-    （.pane__slot，六章统一在右侧、垂直居中），图形就嵌在那块空白里 —— 位置和
-    大小都由"当前章节那个穴"量出来。六章同位置，所以切板块时只有形状在变形、
-    图形不挪窝（早年六章左右交替、粒子满屏横飞，已改掉）。平板段穴被收起，
-    图形改到固定右侧、缩小、低透明度当背景（见 Sections.css 的 ≤1279 档）。
+    （.pane__slot，六章统一在右侧、垂直居中）。图形的**位置固定不动**：
+    贴画布右边缘、垂直居中在第一屏里（大小仍读当前章那个穴 —— 各章节奏不同）——
+    所以切板块时只有形状在变形、图形不挪窝（早年六章左右交替、粒子满屏横飞，已改掉）。
+    平板段穴被收起，图形改到固定右侧、缩小、低透明度当背景（见 Sections.css 的 ≤1279 档）。
    ========================================================================== */
 
 /** 粒子总数：固定值（10000 颗，格子 4px） —— 切板块时不会有粒子凭空出现或消失 */
@@ -64,40 +64,45 @@ export default function FigureCanvas({ id }) {
     let raf = 0
     let seen = false // 是否已经进过视野
 
-    /* ---------------- 量出"当前章节的留白穴" ---------------- */
+    /* ---------------- 图形的目标框：位置固定，大小按章节 ---------------- */
 
-    /* 桌面（≥1280px）：穴量得出来，图形嵌在穴里。六章的穴在 Sections.css 里
-       统一为"右侧一列、垂直居中"（见 .pane--* 的 grid），所以切板块时图形
-       不挪窝、只有形状在变；各章穴的大小仍可不同（--slot-w），图形也就保留
-       about 大一档、notes 小一档的节奏。
-       平板段（≤1279px）：穴被 Sections.css 的响应式规则收起了（display:none），
-       但画布是全尺寸常驻的、内容又是透明的 —— 兜底目标框**固定右侧、缩小、
-       低透明度当背景**（透明度在 Sections.css 的 ≤1279 档里设）：大小随画布
-       收敛（宽、高两个方向都留余量，最小 160px），贴画布右边缘、垂直居中。
-       格子比粒子少也没关系：fitToCells 会把多出的粒子匀到既有格子上，像素重合。 */
+    /* 位置**永远固定**：贴画布右边缘、垂直居中在"第一屏"里 —— 六章同一个位置，
+       切板块时粒子只在原地点变形，不上下漂。（早先穴在各章 pane 里居中，pane
+       高度各不相同，图形会跟着漂；contact/notes 的穴还在第 2 行，漂得更明显。）
+       "第一屏" = 视口高 − 页眉 − 首屏状态栏，正好是 --header-h / --status-h 两个
+       CSS 变量（现成的），pane 比一屏高时也不跑偏。
+       大小按章节：桌面读当前章那个穴的边长（--slot-w 各章不同：about 大一档、
+       notes 小一档，节奏保留，配 data-fig-scale 的缩放）；平板段穴被收起
+       （display:none），用兜底大小。 */
     function slotBox(figureId) {
       const view = document.querySelector(`#${figureId}`)
       const slot = view?.querySelector('.pane__slot')
       const r = slot ? slot.getBoundingClientRect() : null
       const box = wrap.getBoundingClientRect()
-      if (r && r.width >= 40 && r.height >= 40) {
-        return {
-          x: r.left - box.left,
-          y: r.top - box.top,
-          w: r.width,
-          h: r.height,
-          // 每个章节的图形略大略小（见各面板里的 data-fig-scale），切过去带一点缩放
-          scale: Number(slot.dataset.figScale || 1),
-        }
-      }
-      const size = Math.max(160, Math.min(box.width * 0.4, box.height * 0.45))
-      return {
+      const cs = getComputedStyle(document.documentElement)
+      const headerH = parseFloat(cs.getPropertyValue('--header-h')) || 56
+      const statusH = parseFloat(cs.getPropertyValue('--status-h')) || 45
+      const firstScreen = Math.max(
+        240,
+        Math.min(box.height, window.innerHeight - headerH - statusH),
+      )
+      // 位置固定 + 给定大小；y 夹住 0（极端矮屏下 size 可能超过第一屏）
+      const place = (size, scale) => ({
         x: box.width - size,
-        y: (box.height - size) / 2,
+        y: Math.max(0, (firstScreen - size) / 2),
         w: size,
         h: size,
-        scale: 1,
+        scale,
+      })
+      if (r && r.width >= 40 && r.height >= 40) {
+        return place(Math.min(r.width, r.height), Number(slot.dataset.figScale || 1))
       }
+      /* 平板段（≤1279px）：穴被 Sections.css 的响应式规则收起了，但画布是全尺寸
+         常驻的、内容又是透明的 —— 固定右侧、缩小、低透明度当背景（透明度在
+         Sections.css 的 ≤1279 档里设）。格子比粒子少没关系：fitToCells 会把
+         多出的粒子匀到既有格子上，像素重合。 */
+      const size = Math.max(160, Math.min(box.width * 0.4, box.height * 0.45))
+      return place(size, 1)
     }
 
     /* ---------------- 图形 → 要点亮的格子 ---------------- */
