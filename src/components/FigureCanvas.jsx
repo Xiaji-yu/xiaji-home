@@ -71,9 +71,9 @@ export default function FigureCanvas({ id }) {
        高度各不相同，图形会跟着漂；contact/notes 的穴还在第 2 行，漂得更明显。）
        "第一屏" = 视口高 − 页眉 − 首屏状态栏，正好是 --header-h / --status-h 两个
        CSS 变量（现成的），pane 比一屏高时也不跑偏。
-       大小按章节：桌面读当前章那个穴的边长（--slot-w 各章不同：about 大一档、
-       notes 小一档，节奏保留，配 data-fig-scale 的缩放）；平板段穴被收起
-       （display:none），用兜底大小。 */
+       大小按章节：桌面读当前章那个穴的边长（--slot-w 默认同一节奏，只有
+       about 大一档；notes 早年小一档已拉齐），配 data-fig-scale 的缩放；
+       平板段穴被收起（display:none），用兜底大小。 */
     function slotBox(figureId) {
       const view = document.querySelector(`#${figureId}`)
       const slot = view?.querySelector('.pane__slot')
