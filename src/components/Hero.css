@@ -4,6 +4,8 @@
 
 .hero {
   position: relative;
+  /* 滚动吸附点：向下滚过首屏时吸住它（配合 html 的 scroll-snap-type） */
+  scroll-snap-align: start;
   display: flex;
   flex-direction: column;
   /* 页眉是吸顶的，首屏只占"它下面那一屏" —— 这样底部那条状态栏

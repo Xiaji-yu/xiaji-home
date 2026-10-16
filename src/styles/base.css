@@ -14,6 +14,11 @@ html {
   /* 跳转到某一章时的落点：页眉 + 首屏状态栏 —— 这样首屏状态栏那条线
      正好落在页眉线下面（两者重合），座右铭/SCROLL 紧贴页眉 */
   scroll-padding-top: calc(var(--header-h) + var(--status-h));
+  /* 向下滚动时在"一整章"的边界上轻轻吸附（首屏 / 板块区 / 页脚三处，
+     各自带 scroll-snap-align: start）。用 proximity 不用 mandatory：
+     proximity 只在快吸上的时候吸，notes 那种比一屏高的章节照常能滚完，
+     mandatory 会把高章节的上半截卡成陷阱。 */
+  scroll-snap-type: y proximity;
 }
 
 body {

@@ -6,9 +6,11 @@
  * 里还有一道兜底，但地址栏这一侧先处理掉最干净）。
  *
  * 只认刷新：前进 / 后退仍然保留浏览器的位置恢复，用带 #锚点 的地址打开也照常跳锚点。
- * （注意 scrollRestoration 是**文档级**开关，设成 manual 后对本文档一直有效，
- *   并不会只作用于刷新那一次 —— 所以离开页面时要在 pagehide 里还原成 auto，
- *   把控制权还给浏览器，否则被刷新过的这一页将来 Back 回来也不恢复位置。）
+ * （scrollRestoration 是**文档级**开关，但**不要**在 pagehide 里还原成 auto：
+ *   浏览器是在页面卸载时读这个值来决定"刷新后要不要恢复滚动"的，卸载时还原
+ *   等于把下一次刷新的保护也关掉。而前进/后退本来就不受影响 —— 那走的是新
+ *   文档（navigation.type 是 back_forward，脚本直接 return，不碰这个开关），
+ *   恢复照旧；bfcache 更是不读这个值，原样带回滚动位置。所以设了就设着。）
  *
  * 这段刻意放在 public/ 而不是 index.html 里内联：server/index.cjs 下发了
  * CSP（script-src 'self'），内联脚本会被拦。
@@ -23,13 +25,7 @@
   }
   if (type !== 'reload') return
   try {
-    if ('scrollRestoration' in history) {
-      history.scrollRestoration = 'manual'
-      // 文档级开关不会自己复位：卸载时还回去，别把前进/后退的位置恢复一起关掉
-      window.addEventListener('pagehide', function () {
-        history.scrollRestoration = 'auto'
-      })
-    }
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual'
     window.scrollTo(0, 0)
   } catch (e) {
     /* 不支持也没关系，ParticleMountain.jsx 里还有一道兜底 */

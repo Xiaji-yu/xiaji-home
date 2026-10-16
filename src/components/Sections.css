@@ -7,6 +7,8 @@
 
 .tabs {
   position: relative;
+  /* 滚动吸附点：向下滚过一章时吸住它（配合 html 的 scroll-snap-type） */
+  scroll-snap-align: start;
   /* 一章一屏：正好填满"页眉 + 首屏状态栏"以下的那块 */
   min-height: calc(100vh - var(--header-h) - var(--status-h));
   /* 用 clip-path 而不是 overflow:hidden 把左下角那行幽灵字裁在版面里 ——
