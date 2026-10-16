@@ -2,11 +2,6 @@
    页脚：参考图那种表格状网格（左边品牌区 + 右边三列链接）
    ========================================================================== */
 
-/* 滚动吸附点：滚到底时吸住页脚顶（配合 html 的 scroll-snap-type） */
-footer {
-  scroll-snap-align: start;
-}
-
 .foot__grid {
   display: grid;
   grid-template-columns: 1.5fr 1fr 1fr 1fr;
