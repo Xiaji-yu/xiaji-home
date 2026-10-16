@@ -497,14 +497,24 @@
 
 .tabs__figure {
   position: absolute;
-  /* 铺满整块板块区：左边从 padding 之外开始（跟板块对齐）、宽度 = 板块宽。
-     图形画在哪由"当前章节的留白穴"决定（FigureCanvas 量出来）*/
+  /* 铺在板块区上：左边从 padding 之外开始（跟板块对齐）、宽度 = 板块宽。
+     图形画在哪由 slotBox() 算（固定右侧 + 第一屏垂直居中，见 FigureCanvas）*/
   left: var(--pad-x);
   top: 0;
-  bottom: 0;
   z-index: 0;
   width: var(--col-w);
   pointer-events: none; /* 纯装饰，别挡住内容的点击 */
+  /* 高度**固定一屏**，不跟着章节内容涨：便签章那种比一屏高的章节会把画布
+     撑高，ResizeObserver 误以为"尺寸变了"就把全部粒子重建、图形溶解重聚
+     —— 切章就该是纯变形。图形反正只画在第一屏里（slotBox 按第一屏居中），
+     下面那截不需要画布。 */
+  height: calc(100vh - var(--header-h) - var(--status-h));
+}
+
+@supports (height: 100dvh) {
+  .tabs__figure {
+    height: calc(100dvh - var(--header-h) - var(--status-h));
+  }
 }
 
 /* ---- 每个章节：内容在左、一块留白穴在右 ----

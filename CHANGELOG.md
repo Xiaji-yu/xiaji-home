@@ -245,6 +245,10 @@
   - 上一版给 `scroll-restoration.js` 加的“pagehide 时还原 scrollRestoration”把刷新回顶部搞坏了 —— 浏览器是在页面卸载时读这个值来决定刷新后是否恢复滚动的，卸载时还原等于把下一次刷好的保护关掉。删掉该还原（前进/后退不受影响：那走新文档、脚本直接 return；bfcache 不读这个值），刷新恢复一律从顶部开始；
   - 新增滚动吸附：`html` 加 `scroll-snap-type: y proximity`，首屏 / 板块区 / 页脚三处 `scroll-snap-align: start`。用 proximity 不用 mandatory —— notes 那种比一屏高的章节不会被卡住上半截，只在快吸上时轻轻吸住。
 
+- **修复切章节时图形“溶解重聚”+ 刷新带回章节 hash**：
+  - `.tabs__figure` 画布原是 `top:0; bottom:0`、跟着章节内容高度变 —— 便签章比一屏高，切到/切出它时画布尺寸变化触发 ResizeObserver，`layout()` 把全部粒子重建再聚合，图形直接溶解重聚（关于我→技能栈流畅只因那两章都刚好一屏高）。画布改成**固定一屏高**（`100dvh − 页眉 − 状态栏`，图形本来就只画在第一屏里），章节高度变化不再触发重建，所有切换都是纯原地变形；
+  - 刷新不再被地址栏里的 `#章节` 拽回那一章：`scroll-restoration.js` 在 reload 时先把 hash 抹掉再关滚动恢复 —— 刷新一律从首屏开始（分享链接首次打开不受影响，那不是 reload）。
+
 ### 计划中
 
 - 便签墙支持排序与搜索

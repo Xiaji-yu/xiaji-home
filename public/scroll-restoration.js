@@ -25,6 +25,16 @@
   }
   if (type !== 'reload') return
   try {
+    /* 地址栏里要是有 #章节（切章节时写进去的），刷新会被它拽回那一章 ——
+       刷新就该从头开始，先把 hash 抹掉。（分享链接首次打开不受影响：
+       那不是 reload，脚本直接 return，hash 照常跳转。） */
+    if (window.location.hash) {
+      window.history.replaceState(
+        null,
+        '',
+        window.location.pathname + window.location.search,
+      )
+    }
     if ('scrollRestoration' in history) history.scrollRestoration = 'manual'
     window.scrollTo(0, 0)
   } catch (e) {
