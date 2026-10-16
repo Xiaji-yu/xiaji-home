@@ -6,16 +6,26 @@
 
    风格照着参考图来：实心 + 粗线的几何形，没有描边细节堆砌，
    点阵化之后轮廓依然清楚（细于两格的线在低网格里会断掉，所以线宽都给到 6）。
+
+   两个自动处理（drawFigure 里做）：
+   ① **墨量重心对齐**：六章图形的重心本就不一样（人像下坠、纸飞机上飘、
+      便签别着铅笔），不居中的话即使目标框位置固定，切章节时视觉重心还是会
+      跳。所以绘制时先把图画一遍量出墨量包围盒，把包围盒的中心平移到画布
+      中心 —— 偏移按画布比例缓存，与尺寸无关，每个图形只量一次。
+   ② scale 统一 0.94（留 6% 内缩，描边不会被切）；想整体缩放改各面板的
+      data-fig-scale。
    ========================================================================== */
 
 const INK = '#111111'
 
+/** 各图形的墨量包围盒中心相对画布中心的偏移（画布边长的比例，与尺寸无关） */
+const centerFix = {}
+
 /**
- * 每个图形在画布里的落点：scale 是占画布的比例，dx/dy 是相对中心的偏移（画布比例）。
- *
- * 六个图形的"落点差异"现在由章节里的留白穴负责（每个穴位置不同），所以这里统一：
- * 居中、留 6% 内缩（保证描边不会被画布切掉）。想让某一块的图形大一点小一点，
- * 改那个面板里的 data-fig-scale。
+ * 每个图形在画布里的落点：scale 是占画布的比例，dx/dy 是相对中心的偏移
+ * （画布比例）。六章现在统一：居中、留 6% 内缩（保证描边不会被画布切掉）；
+ * 重心的细微差别由 drawFigure 自动量出来对齐，不用在这里手写。
+ * 想让某一块的图形大一点小一点，改那个面板里的 data-fig-scale。
  */
 const PLACEMENT = {
   about: { scale: 0.94, dx: 0, dy: 0 },
@@ -32,19 +42,52 @@ export function drawFigure(id, ctx, size) {
   if (!shape || size <= 0) return
   const p = PLACEMENT[id] || { scale: 1, dx: 0, dy: 0 }
 
-  ctx.save()
-  ctx.clearRect(0, 0, size, size)
-  ctx.fillStyle = INK
-  ctx.strokeStyle = INK
-  ctx.lineWidth = 6
-  ctx.lineJoin = 'miter'
-  ctx.lineCap = 'butt'
+  /* fx/fy：在落点之上再平移多少（画布边长的比例）—— 重心对齐用 */
+  const paint = (fx, fy) => {
+    ctx.save()
+    ctx.clearRect(0, 0, size, size)
+    ctx.fillStyle = INK
+    ctx.strokeStyle = INK
+    ctx.lineWidth = 6
+    ctx.lineJoin = 'miter'
+    ctx.lineCap = 'butt'
 
-  const box = size * p.scale
-  ctx.translate(size / 2 + p.dx * size - box / 2, size / 2 + p.dy * size - box / 2)
-  ctx.scale(box / 100, box / 100)
-  shape(ctx)
-  ctx.restore()
+    const box = size * p.scale
+    ctx.translate(
+      size / 2 + p.dx * size - box / 2 + fx * size,
+      size / 2 + p.dy * size - box / 2 + fy * size,
+    )
+    ctx.scale(box / 100, box / 100)
+    shape(ctx)
+    ctx.restore()
+  }
+
+  /* ① 重心对齐：第一次画某个图形时，先不平移画一遍、量墨量包围盒，算出
+     "包围盒中心 → 画布中心" 的偏移并缓存；之后所有尺寸都用这个比例偏移。 */
+  if (!(id in centerFix)) {
+    paint(0, 0)
+    const data = ctx.getImageData(0, 0, size, size).data
+    let minX = size
+    let minY = size
+    let maxX = -1
+    let maxY = -1
+    for (let i = 0; i < size * size; i++) {
+      if (data[i * 4 + 3] > 32) {
+        const x = i % size
+        const y = (i - x) / size
+        if (x < minX) minX = x
+        if (x > maxX) maxX = x
+        if (y < minY) minY = y
+        if (y > maxY) maxY = y
+      }
+    }
+    centerFix[id] =
+      maxX < 0
+        ? { x: 0, y: 0 }
+        : { x: 0.5 - (minX + maxX) / 2 / size, y: 0.5 - (minY + maxY) / 2 / size }
+  }
+
+  paint(centerFix[id].x, centerFix[id].y)
 }
 
 const rect = (ctx, x, y, w, h) => ctx.fillRect(x, y, w, h)
@@ -76,13 +119,15 @@ function about(ctx) {
 function skills(ctx) {
   // 纵轴
   rect(ctx, 12, 12, 3, 76)
-  // 五条：长度各不相同，左侧留出"名称位"
+  // 五条：长度各不相同，左侧留出"名称位"。条从 x=40 起、最长到 x=94
+  // （画布 100 宽，右侧留 6 与别章一致）—— 早年最长条按 72 画到 x=112，
+  // 直接被画布切掉一截，技能栈那张图右边永远是残的
   const rows = [
-    [20, 72],
-    [32, 62],
-    [44, 68],
-    [56, 44],
-    [68, 54],
+    [20, 54],
+    [32, 47],
+    [44, 51],
+    [56, 33],
+    [68, 41],
   ]
   for (const [y, w] of rows) {
     rect(ctx, 22, y, 12, 5) // 名称块
@@ -93,13 +138,13 @@ function skills(ctx) {
   ctx.lineWidth = 3
   ctx.beginPath()
   rows.forEach(([y, w], k) => {
-    const x = 44 + w
+    const x = 40 + w
     k === 0 ? ctx.moveTo(x, y + 2) : ctx.lineTo(x, y + 2)
   })
   ctx.stroke()
   for (const [y, w] of rows) {
     ctx.beginPath()
-    ctx.arc(44 + w, y + 2, 3, 0, Math.PI * 2)
+    ctx.arc(40 + w, y + 2, 3, 0, Math.PI * 2)
     ctx.fill()
   }
   rect(ctx, 12, 90, 80, 3) // 底轴
