@@ -680,7 +680,10 @@
       已拉齐）—— 表单自动往左收，图形和其他章节差不多大 */
 .tabs .pane--notes {
   grid-template-columns: minmax(0, 1fr) var(--slot-w);
-  grid-template-rows: auto auto auto;
+  /* 只有两行：引导句 / 表单 + 便签墙（同一列里顺排）。
+     早年墙面单独占第 3 行，但第 2 行会被右侧 626px 的留白穴撑高，
+     1080p 下墙面整个落到首屏之外 —— 贴完便签看不见它。 */
+  grid-template-rows: auto auto;
 }
 
 .tabs .pane--notes > .sec-lead {
@@ -688,25 +691,16 @@
   grid-row: 1;
 }
 
-.tabs .pane--notes > .notes__form {
+.tabs .pane--notes > .notes__compose {
   grid-column: 1;
   grid-row: 2;
+  min-width: 0; /* grid 子项默认 min-width:auto，会被便签墙顶破 */
 }
 
 .tabs .pane--notes > .pane__slot {
   grid-column: 2;
-  /* 留在第 2 行：引导语（row 1）和便签墙（row 3）都是通栏的，
-     穴不上去压它们；行高由穴自己撑开，不会溢出 */
   grid-row: 2;
   align-self: center;
-}
-
-.tabs .pane--notes > .notes__wall {
-  /* 跟上面的表单同列同宽（不通铺）：早年通栏时右边比表单多出一截，
-     表单收窄后落差更明显。便签墙对齐表单左右埂，右侧下方留白
-     （粒子图形只在第一屏，下面那截本来就没有内容）*/
-  grid-column: 1;
-  grid-row: 3;
 }
 
 /* ---- 矮屏紧凑模式（视口高 ≤ 980px）----
