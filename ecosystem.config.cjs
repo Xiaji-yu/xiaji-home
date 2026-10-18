@@ -6,7 +6,10 @@
 module.exports = {
   apps: [
     {
-      name: 'my-homepage',
+      /* 部署脚本会把 APP_NAME 传进来（默认 xiaji-home）；直接 pm2 start
+         不带变量时用模板默认名 my-homepage。两处名字始终一致，免得
+         脚本 reload 一个名字、PM2 里却起成另一个。 */
+      name: process.env.APP_NAME || 'my-homepage',
       script: 'server/index.cjs',
       cwd: __dirname,
       // 纯静态站单实例就够；cluster 对本地 localhost 通信反而多一层损耗

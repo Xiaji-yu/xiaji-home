@@ -137,13 +137,19 @@ sudo ufw enable
 bash scripts/deploy.sh
 ```
 
+> **应用名默认是 `xiaji-home`**（VPS 上实际在跑的服务名）。脚本启动时会把它打印出来；
+> 如果 `pm2 ls` 的 NAME 列不是这个名字，用 `APP_NAME=<真实名字> bash scripts/deploy.sh`。
+> `pm2 reload` 最多等 **10 秒**，超时会打印 `pm2 ls` 的进程列表，并给出用真实名字重跑、
+> 以及 `pm2 restart <名字> --update-env`（服务在 root 的 PM2 下时用 `sudo`）的示例。
+
 脚本流程（任一步失败即以非 0 退出，PM2 里跑的还是上一个可用版本）：
 
 1. `git status` 体检——有未提交改动先拒绝（加 `ALLOW_DIRTY=1` 可强制）
 2. `git pull --ff-only`
 3. `npm ci`
 4. `npm run build`，并确认 `dist/index.html` 真的在
-5. `pm2 reload my-homepage --update-env`（进程不存在时首次 `pm2 start` + `save`）
+5. `pm2 reload ${APP_NAME} --update-env`，最多等 10 秒；进程不存在时首次
+   `pm2 start ecosystem.config.cjs` + `save`（启动时也会用同一个 `APP_NAME`）
 6. 轮询 `http://127.0.0.1:4173/healthz`，20 次内不 OK 就打印最近 30 行日志并失败退出
 
 > PM2 的 fork 模式下 `reload` = 带优雅退出的重启：新进程通过
