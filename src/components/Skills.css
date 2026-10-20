@@ -1,5 +1,6 @@
 /* ==========================================================================
-   技能栈：做成参考图里那种细边框表格，滚动到时进度条会长出来
+   技能栈：做成参考图里那种细边框表格
+   每次切进这一章，进度条从 0 长到对应数值，右边数字用同一个进度同步跳
    ========================================================================== */
 
 .skills__list {
@@ -54,16 +55,36 @@
   position: relative;
   height: 8px;
   border: 1px solid var(--line);
-  background: transparent;
+  /* 每 10% 一道极浅的刻度，进度条长起来时能看出走到哪一格 */
+  background: repeating-linear-gradient(
+    to right,
+    rgba(17, 17, 17, 0.11) 0 1px,
+    transparent 1px 10%
+  );
   overflow: hidden;
 }
 
 .skill__bar i {
+  position: relative;
   display: block;
   height: 100%;
   width: 0;
   background: var(--ink);
-  transition: width 1.25s var(--ease);
+  /* 宽度由 useProgress 每帧写进来，和右边数字同一条曲线 ——
+     再叠 CSS 过渡的话两者会错开 */
+  transition: none;
+}
+
+/* 进度条前沿留一小截纸色，像终端光标：增长时能清楚看到"走到哪了" */
+.skill__bar i::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--paper);
+  opacity: 0.62;
 }
 
 .skill__val {
@@ -71,6 +92,15 @@
   font-size: 12px;
   letter-spacing: 0.06em;
   color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.skill__val::after {
+  content: '%';
+  margin-left: 2px;
+  font-size: 9px;
+  letter-spacing: 0;
+  color: var(--muted);
 }
 
 @media (max-width: 720px) {

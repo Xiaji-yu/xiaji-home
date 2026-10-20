@@ -207,14 +207,14 @@
 }
 
 .tabs.is-armed .tabs__view:not([hidden]) .reveal {
-  animation: panelIn 0.55s var(--ease) both;
+  animation: panelIn 0.62s var(--ease) both;
   animation-delay: var(--d, 0ms);
 }
 
 @keyframes panelIn {
   from {
     opacity: 0;
-    transform: translateY(26px);
+    transform: translateY(32px);
   }
 
   to {
@@ -231,7 +231,7 @@
 @keyframes cellIn {
   from {
     opacity: 0;
-    transform: translateX(-30px);
+    transform: translateX(-42px);
   }
 
   to {
@@ -290,6 +290,25 @@
 
 .tabs .tl__item > *:nth-child(3) {
   --i: 2;
+}
+
+/* 经历：左边那颗小方块也重播 —— 从空心方块转成实心菱形。
+   单独写一条：它要连背景色和旋转一起动，上面通用的 cellIn 只负责位移。 */
+.tabs.is-armed .tabs__view:not([hidden]) .tl__marker {
+  animation: markerIn 0.55s var(--ease) both;
+  animation-delay: calc(var(--d, 0ms) + 30ms);
+}
+
+@keyframes markerIn {
+  from {
+    background: transparent;
+    transform: translateX(-22px) rotate(0deg);
+  }
+
+  to {
+    background: var(--ink);
+    transform: rotate(45deg);
+  }
 }
 
 /* 卡片（项目 / 联系）：横向擦出来，不用 transform —— 卡片自己有悬停倾斜，
@@ -405,13 +424,38 @@
 
 /* 章节标题：照参考图那套 —— 中文大字、下面一行小号英文、再一根通栏细线 */
 .tabs .sec-head {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 6px;
   margin-bottom: clamp(16px, 4vh, 44px);
   padding-bottom: clamp(10px, 1.8vh, 20px);
-  border-bottom: 1px solid var(--line);
+  border-bottom: 0; /* 标题下那根线改成伪元素，切章时从左往右画出来 */
   background: transparent; /* 透明：粒子可以从元素背面穿过去 */
+}
+
+/* 标题下那根线：每次切进这一章都从左边重新长出来 */
+.tabs .sec-head::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 1px;
+  background: var(--line);
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.tabs.is-armed .tabs__view:not([hidden]) .sec-head::after {
+  animation: lineIn 0.8s var(--ease) both;
+  animation-delay: calc(var(--d, 0ms) + 110ms);
+}
+
+@keyframes lineIn {
+  to {
+    transform: scaleX(1);
+  }
 }
 
 .tabs .sec-head__num {
@@ -569,6 +613,24 @@
   grid-column: 2;
   grid-row: 1 / span 2;
   align-self: center;
+}
+
+/* 关于我 · 信息表逐格浮现：标题线画完、正文落位之后，一格一格接上 */
+.tabs.is-armed .tabs__view:not([hidden]) .about__fact {
+  animation: factIn 0.5s var(--ease) both;
+  animation-delay: calc(190ms + var(--i, 0) * 50ms);
+}
+
+@keyframes factIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* ② 技能栈 · 穴在右侧垂直居中（六章统一位置）*/

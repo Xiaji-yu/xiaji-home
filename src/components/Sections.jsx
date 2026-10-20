@@ -21,6 +21,7 @@ import './Sections.css'
      —— 左侧那列文字选项整个取消了，位置改由屏幕底部那根细线表示
    · 底部条只有一条通栏细线 + 一段"当前位置"，里面不写字
    · 面板里的内容在"整块滚进视野"那一刻开始错落入场，之后每次切板块都重放一次
+     （CSS 入场动画靠 hidden 切换自动重放；技能条这类每帧计算的动画靠 playTick）
    ========================================================================== */
 
 const PANELS = {
@@ -45,6 +46,9 @@ export default function Sections() {
   const [mark, setMark] = useState({ cur: '', prev: '' })
   /* 整块入场动画的"保险栓"：整块滚进视野之前先别演，滚到了才放行 */
   const [armed, setArmed] = useState(false)
+  /* 每次有章节被切到前台就 +1：技能条这类 JS 驱动的动画靠它重播
+     （CSS 的入场动画由 hidden 切换自动重放，这里只管需要每帧计算的部分）*/
+  const [playTick, setPlayTick] = useState(0)
   /* 箭头和底部条只在**板块区在视野里**的时候出现 —— 它们是 fixed 的，
      不然滚回首屏那座山、滚到页脚时也跟着飘在那里 */
   const [inView, setInView] = useState(false)
@@ -211,6 +215,13 @@ export default function Sections() {
     return () => io.disconnect()
   }, [])
 
+  /* 章节被切到前台（含第一次滚进视野）→ 发一次重播信号。
+     放在 armed 之后：首屏还没滚下来时切锚点，也不会提前把动画演完。 */
+  useEffect(() => {
+    if (!armed) return
+    setPlayTick((n) => n + 1)
+  }, [active, armed])
+
   /* 板块区在不在视野里 → 箭头和底部条跟着显隐（它们是 fixed 的，不然首屏、页脚上也有）*/
   useEffect(() => {
     const el = blockRef.current
@@ -273,7 +284,7 @@ export default function Sections() {
                   hidden={t.id !== active}
                   className="tabs__view"
                 >
-                  <Panel />
+                  <Panel play={t.id === active ? playTick : 0} />
                 </section>
               )
             })}

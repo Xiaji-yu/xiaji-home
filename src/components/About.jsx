@@ -29,10 +29,10 @@ export default function About() {
 
           <Reveal className="about__facts" delay={250}>
             <dl style={{ margin: 0 }}>
-              {about.facts.map(([label, value]) => {
+              {about.facts.map(([label, value], i) => {
                 const isLink = /^https?:\/\//.test(value)
                 return (
-                  <div className="about__fact" key={label}>
+                  <div className="about__fact" key={label} style={{ '--i': i }}>
                     <dt>{label}</dt>
                     <dd>
                       {isLink ? (
