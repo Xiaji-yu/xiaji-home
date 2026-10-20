@@ -1,7 +1,7 @@
 {
-  "name": "Your Name · 个人主页",
-  "short_name": "Your Name",
-  "description": "Your Name 的个人主页 —— 黑白点阵风格，首屏那座山由算法现场算出。",
+  "name": "{{meta.title}}",
+  "short_name": "{{site.name}}",
+  "description": "{{meta.description}}",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
