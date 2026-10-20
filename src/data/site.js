@@ -5,10 +5,10 @@
 
 export const site = {
   /* ---- 基本信息（改这里最省事） ---- */
-  name: '夏祭',
-  nameEn: 'XIAJI',
-  email: 'variant305@gmail.com',
-  github: 'https://github.com/Xiaji-yu', // ← 换成你的 GitHub 主页
+  name: 'Your Name',
+  nameEn: 'YOUR NAME',
+  email: 'your-name@example.com',
+  github: 'https://github.com/your-name', // ← 换成你的 GitHub 主页
 
   /* ---- 分享卡片 / SEO 元信息 ----
      这些值会被注入 index.html 的 <title> / og:title / og:description / og:image
@@ -16,17 +16,17 @@ export const site = {
      分享到 QQ / 微信的卡片标题、描述、封面图都在这里改，不用动 index.html。
      og:image 必须是绝对地址，QQ / 微信不认相对路径。 */
   meta: {
-    title: '夏祭 · 个人主页',
+    title: 'Your Name · 个人主页',
     description: '黑白点阵风格的个人主页 —— 首屏那座山是浏览器现场算出来的。',
-    ogImage: 'https://xiaji.xin/og-cover.png',
+    ogImage: 'https://example.com/og-cover.png',
     twitterCard: 'summary_large_image',
   },
 
   /* ---- 首页大标题：两行英文，参考图就是这么排的 ---- */
-  heroTitle: ['Truth Fades.', 'Stone Remains.'],
+  heroTitle: ['Hello.', "I'm Your Name."],
 
   /* ---- 大标题下面的副标题 ---- */
-  heroSub: '真理会过时，构石永恒。所有此刻看起来板上钉钉的结论，迟早都会', // ← 你 VPS 上这句在截图里被截断了，补全一下
+  heroSub: '保持好奇，持续构建。用一两句话介绍你自己：你在意什么、在做什么、相信什么。',
 
   /* ---- 首屏两颗按钮 ---- */
   heroCta: [
@@ -42,22 +42,22 @@ export const site = {
 
   /* ---- 关于我 ---- */
   about: {
-    lead: '我是夏祭，一个编程爱好者。比起「学会某个框架」，我更在意能不能把脑子里的东西真的做出来，并且做得干净、做得耐用。', // ← 截图里这句话被截断了，后半句是按模板原文推断的，确认一下
+    lead: '我是 Your Name，一名开发者。比起「学会某个框架」，我更在意能不能把脑子里的东西真的做出来，并且做得干净、做得耐用。',
     paragraphs: [
       '开始写代码的时间其实不算长，所以这一页上暂时没有什么拿得出手的战绩 —— 但它是真的，每一行都是自己敲出来的。',
       '我偏爱那种克制、有网格感的设计：黑白灰、细边框、把信息摆整齐，不用花哨的渐变和阴影。这个页面就是照这个审美做的。',
       '如果你也在做类似的事情，或者只是想随便聊聊，欢迎给我写邮件。',
     ],
     facts: [
-      ['昵称', '夏祭'],
-      ['身份', '编程爱好者'],
-      ['座右铭', '真理会过时，构石永恒'],
+      ['昵称', 'Your Name'],
+      ['身份', '开发者'],
+      ['座右铭', '保持好奇，持续构建'],
       ['最近在做', '打磨这个主页，补前端与图形学'],
-      ['邮箱', 'variant305@gmail.com'],
-      ['博客', 'https://blog.xiaji.xin'],
+      ['邮箱', 'your-name@example.com'],
+      ['博客', 'https://example.com'],
       /* 下面两格显示在信息区右下角（像身份证的"签发机关 / 有效期限"那一对），
          换成你自己的就行 */
-      ['坐标', '待补充'],
+      ['坐标', '你的城市'],
       ['建站于', '2026.09'],
     ],
   },
@@ -133,14 +133,14 @@ export const site = {
     channels: [
       {
         label: 'Email',
-        value: '待补充',
-        href: '',
+        value: 'your-name@example.com',
+        href: 'mailto:your-name@example.com',
         note: '推荐',
       },
       {
         label: 'GitHub',
-        value: '待补充',
-        href: '',
+        value: 'github.com/your-name',
+        href: 'https://github.com/your-name',
         note: '代码都在这里',
       },
       {
@@ -163,21 +163,21 @@ export const site = {
   /* ---- 页脚 ---- */
   footer: {
     tagline: '保持好奇，持续构建。',
-    copyright: '© 2026 xiaji · 保留所有权利',
-    credit: 'Designed & Built by xiaji',
+    copyright: '© 2026 Your Name · 保留所有权利',
+    credit: 'Designed & Built by Your Name',
     /* ---- 备案号：工信部 ICP + 公安网安备（图标见 src/assets/beian-icon.png）---- */
     beian: {
       icpLabel: 'ICP备案',
-      icpNumber: '沪ICP备2026007186号',
+      icpNumber: '你的ICP备案号',
       icpUrl: 'https://beian.miit.gov.cn/',
       gaLabel: '公网安备',
-      gaNumber: '沪公网安备31011202022181号',
+      gaNumber: '你的公网安备备案号',
       gaUrl: 'http://www.beian.gov.cn/',
     },
     /* 页脚左下角的四个小方块。href 留空就是不可点击的占位 */
     socials: [
-      { code: 'ML', title: '写邮件（待补充）', href: '' },
-      { code: 'GH', title: 'GitHub（待补充）', href: '' },
+      { code: 'ML', title: '写邮件', href: 'mailto:your-name@example.com' },
+      { code: 'GH', title: 'GitHub', href: 'https://github.com/your-name' },
       { code: 'DC', title: 'Discord（待补充）', href: '' },
       { code: 'ST', title: 'Steam（待补充）', href: '' },
     ],
@@ -196,8 +196,8 @@ export const site = {
         head: '找到我',
         headEn: 'Find Me',
         links: [
-          { label: '写邮件给我（待补充）', href: '' },
-          { label: 'GitHub（待补充）', href: '' },
+          { label: '写邮件给我', href: 'mailto:your-name@example.com' },
+          { label: 'GitHub', href: 'https://github.com/your-name' },
           { label: '留言便签', href: '#notes' },
           { label: '回到顶部', href: '#top' },
         ],
