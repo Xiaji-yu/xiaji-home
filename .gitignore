@@ -35,6 +35,11 @@ pnpm-debug.log*
 .env.local
 .env.*.local
 
+# ---- 站点个人配置（从 site.js.example 复制，不要提交）----
+src/data/site.js
+# 但模板本身要进仓库
+!src/data/site.js.example
+
 # ---- 本地临时目录 ----
 .npm-cache/
 .verify/

@@ -89,6 +89,8 @@
 
 ### 变更
 
+- **`site.js` 改为模板 + 本地副本模式**：仓库只保留 `src/data/site.js.example`，个人配置 `src/data/site.js` 加入 `.gitignore`。首次使用先 `cp src/data/site.js.example src/data/site.js` 再改；CI 构建前自动复制模板，`scripts/deploy.sh` 发现缺文件会提示复制命令，避免把姓名 / 邮箱 / 备案号等个人信息提交进仓库。
+
 - **备案行改成两行、放左下角**：`Footer.css` 的 `.foot__beian` 从"一行居中"改成 `flex-direction: column` + `align-items: flex-start`，左边与页脚其它内容对齐（`padding-left` 用同一个 `--pad`），中间那个分隔点去掉（换行后没意义）；两行各带自己的链接，行距 5px。
 
 - **页脚加上备案号**（数据取自另一个项目）：公安网安备 `你的公网安备备案号`（指向 beian.gov.cn，带盾牌小图标）+ 工信部 ICP `你的ICP备案号`（指向 beian.miit.gov.cn）。图标从另一个项目的 `icon/备案图标.png`（36×40）复制到 `src/assets/beian-icon.png`，走 Vite 打包（带 hash、跟着 `base` 前缀）。文案与链接都收在 `site.js` 的 `footer.beian` 里，要改只改那一处；页脚布局是".foot__beian"一行居中，窄屏自动换行。

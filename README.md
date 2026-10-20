@@ -20,7 +20,7 @@
 
 > [!NOTE]
 > 这个仓库是我的个人主页。**想拿去做成你自己的？** 直接 fork 或点 Use this template，
-> 然后按下面的 [自定义](#自定义) 一节改 `src/data/site.js` 就行 —— 文案、链接、项目全在那一个文件里。
+> 然后按下面的 [自定义](#自定义) 一节，把 `src/data/site.js.example` 复制成 `src/data/site.js` 再改 —— 文案、链接、项目全在那一个文件里。
 
 ## 目录
 
@@ -95,6 +95,9 @@
 git clone https://github.com/your-name/my-homepage.git
 cd my-homepage
 
+# 复制站点配置模板（必须；site.js 是个人配置，不进仓库）
+cp src/data/site.js.example src/data/site.js
+
 # 安装依赖
 npm install
 
@@ -140,7 +143,7 @@ my-homepage/
 └─ src/
    ├─ main.jsx                 入口
    ├─ App.jsx                  板块顺序，想调整页面结构就改这里
-   ├─ data/site.js             ★ 全站文案，改内容只改这一个文件
+   ├─ data/site.js.example     ★ 全站文案模板；复制成 site.js 后修改（site.js 不进仓库）
    ├─ lib/dither.js            山景算法：噪声 + 抖动（决定"山长什么样"、点放哪儿）
    ├─ lib/particles.js         粒子：采样、开场无序云、归位、光标按坑（纯函数，可离线渲染验证）
    ├─ lib/figures.js           六个板块的几何图形（全部代码画，不引图片）
@@ -164,7 +167,15 @@ my-homepage/
 
 ### 换文案（最常做的事）
 
-**只改 `src/data/site.js`。** 姓名、座右铭、技能、项目、经历、联系方式、页脚链接全在里面，那六章的顺序与中英文名（`sectionTabs`：中文名 + 英文标签 + 对应板块的 id）也在里面。文件里凡是标了 `← 换成你的` 的地方都是占位内容。
+**先复制模板：**
+
+```bash
+cp src/data/site.js.example src/data/site.js
+```
+
+然后**只改 `src/data/site.js`**。它是个人配置文件，已经被 `.gitignore` 忽略，不会把你的姓名、邮箱、备案号提交上去；模板 `site.js.example` 继续留在仓库里给后来的人用。
+
+姓名、座右铭、技能、项目、经历、联系方式、页脚链接全在里面，那六章的顺序与中英文名（`sectionTabs`：中文名 + 英文标签 + 对应板块的 id）也在里面。文件里凡是标了 `← 换成你的` 的地方都是占位内容。
 
 想调整板块的先后顺序，改 `src/data/site.js` 里 `sectionTabs` 那六项的顺序（面板本身跟着走）。
 

@@ -61,6 +61,13 @@ if [ -n "$(git status --porcelain --untracked-files=no)" ] && [ "${ALLOW_DIRTY:-
 fi
 git pull --ff-only
 
+# 个人配置不进仓库：模板是 src/data/site.js.example
+if [ ! -f src/data/site.js ]; then
+  echo 'ERROR: 缺少 src/data/site.js（个人配置，不进仓库）。' >&2
+  echo '      先复制模板再按需修改：cp src/data/site.js.example src/data/site.js' >&2
+  exit 1
+fi
+
 echo '==> npm ci（锁文件严格安装）'
 npm ci
 

@@ -38,18 +38,25 @@
 git clone <仓库地址> ~/apps/xiaji-home && cd ~/apps/xiaji-home
 # 或者直接把现有仓库拷过来；已在本机就 cd 到仓库根目录
 
-# 2) 严格按锁文件装依赖，构建
+# 2) 个人配置：模板复制一份，再按需改成自己的内容
+cp src/data/site.js.example src/data/site.js
+
+# 3) 严格按锁文件装依赖，构建
 npm ci
 npm run build          # 产物在 dist/；约 100 kB，几秒完成
 
-# 3) 交给 PM2
+# 4) 交给 PM2
 pm2 start ecosystem.config.cjs
 pm2 save               # 把进程清单落盘（开机自启靠它）
 
-# 4) 本地自检
+# 5) 本地自检
 curl -fsS http://127.0.0.1:4173/healthz            # → ok
 curl -sI http://127.0.0.1:4173/ | grep -i cache    # → cache-control: no-cache
 ```
+
+> `src/data/site.js` 是个人配置（姓名、邮箱、备案号等），已加入 `.gitignore`，
+> 不会进仓库；仓库里只有模板 `src/data/site.js.example`。更新脚本发现缺这个文件时会
+> 直接提示复制命令，不会带着空配置去构建。
 
 `npm run build` 支持 `BASE_PATH`，默认 `/`。自托管在根路径下**不用设**；
 实在要放子路径（`https://example.com/portfolio/`）才需要

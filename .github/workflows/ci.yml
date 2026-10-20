@@ -28,6 +28,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Create site config from template
+        run: cp src/data/site.js.example src/data/site.js
+
       - name: Lint
         run: npm run lint
 
