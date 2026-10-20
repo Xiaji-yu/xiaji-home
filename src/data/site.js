@@ -168,10 +168,10 @@ export const site = {
     /* ---- 备案号：工信部 ICP + 公安网安备（图标见 src/assets/beian-icon.png）---- */
     beian: {
       icpLabel: 'ICP备案',
-      icpNumber: '你的ICP备案号',
+      icpNumber: '沪ICP备2026007186号',
       icpUrl: 'https://beian.miit.gov.cn/',
       gaLabel: '公网安备',
-      gaNumber: '你的公网安备备案号',
+      gaNumber: '沪公网安备31011202022181号',
       gaUrl: 'http://www.beian.gov.cn/',
     },
     /* 页脚左下角的四个小方块。href 留空就是不可点击的占位 */
