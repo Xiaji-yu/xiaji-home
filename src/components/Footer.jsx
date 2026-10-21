@@ -57,7 +57,16 @@ export default function Footer() {
             </div>
             {col.links.map((link) =>
               link.href ? (
-                <a className="foot__link" key={link.label} href={link.href}>
+                <a
+                  className="foot__link"
+                  key={link.label}
+                  href={link.href}
+                  /* 站内路由（/agent-web、#notes）留在当前页；
+                     外部站点在新窗口打开，避免把访客带离本站 */
+                  {...(/^https?:\/\//i.test(link.href)
+                    ? { target: '_blank', rel: 'noreferrer' }
+                    : {})}
+                >
                   {link.label}
                 </a>
               ) : (

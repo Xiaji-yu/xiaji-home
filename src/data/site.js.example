@@ -193,13 +193,18 @@ export const site = {
         ],
       },
       {
-        head: '找到我',
-        headEn: 'Find Me',
+        /* 这一列的标题和链接都可以随便改。href 支持三种写法：
+           - 站内路由：/agent-web（当前页打开）
+           - 站内锚点：#notes（当前页打开）
+           - 外部站点：https://example.com（新窗口打开）
+           href 留空则渲染成不可点击的说明文字。 */
+        head: '我的站点',
+        headEn: 'My Sites',
         links: [
-          { label: '写邮件给我', href: 'mailto:your-name@example.com' },
+          { label: 'Agent Web', href: '/agent-web' },
+          { label: '博客', href: 'https://example.com' },
           { label: 'GitHub', href: 'https://github.com/your-name' },
-          { label: '留言便签', href: '#notes' },
-          { label: '回到顶部', href: '#top' },
+          { label: '主站', href: 'https://example.com' },
         ],
       },
       {
