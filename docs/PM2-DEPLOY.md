@@ -20,13 +20,13 @@
 
 ## 0. 前置条件
 
-| 项       | 要求                                                      |
-| -------- | --------------------------------------------------------- |
-| Node     | ≥ 20.19（仓库 `.nvmrc` 是 22；`node -v` 确认一下）        |
-| PM2      | `npm i -g pm2`（Node 24 下亦可 `pnpm add -g pm2`）        |
-| 端口     | 应用监听 `127.0.0.1:4173`；对外开放 `80` / `443`（Nginx） |
-| 防火墙   | 按需执行下面的 ufw 小节                                   |
-| 运行用户 | 用**普通用户**跑 PM2，不要 root                           |
+| 项       | 要求                                                                              |
+| -------- | --------------------------------------------------------------------------------- |
+| Node     | ≥ 20.19（仓库 `.nvmrc` 是 22；`node -v` 确认一下）                                |
+| PM2      | `npm i -g pm2`（Node 24 下亦可 `pnpm add -g pm2`）                                |
+| 端口     | 应用默认监听 `127.0.0.1:4173`（可用 `PORT` 覆盖）；对外开放 `80` / `443`（Nginx） |
+| 防火墙   | 按需执行下面的 ufw 小节                                                           |
+| 运行用户 | 用**普通用户**跑 PM2，不要 root                                                   |
 
 > 应用默认只监听 `127.0.0.1`，外部流量必须走 Nginx 反代。这既是安全习惯，
 > 也保证以后想换反代（Caddy/Traefik）或加 Cloudflare 代理时不用改任何代码。
@@ -45,7 +45,7 @@ cp src/data/site.js.example src/data/site.js
 npm ci
 npm run build          # 产物在 dist/；约 100 kB，几秒完成
 
-# 4) 交给 PM2
+# 4) 交给 PM2（想换端口：PORT=5000 pm2 start ecosystem.config.cjs）
 pm2 start ecosystem.config.cjs
 pm2 save               # 把进程清单落盘（开机自启靠它）
 
@@ -151,6 +151,15 @@ bash scripts/deploy.sh
 >
 > **用普通用户执行，不要 `sudo` / root**：脚本检测到 uid 0 会直接拒绝。sudo 会把
 > `dist/`、`node_modules/` 改成 root 属主，之后普通用户反而更新不了。
+>
+> **健康检查端口不再写死**：脚本优先读 PM2 里该应用实际生效的 `PORT`，读不到才退回
+> `4173`。PM2 挂着多个服务时只认 `name` 等于 `APP_NAME` 的进程；如果有同名服务，
+> 再用 `APP_NAMESPACE=<命名空间>` 限定。要检查别的端口或地址，可以显式覆盖：
+>
+> ```bash
+> PORT=5000 bash scripts/deploy.sh
+> HEALTH_URL=https://xiaji.xin/healthz bash scripts/deploy.sh
+> ```
 
 脚本流程（任一步失败即以非 0 退出，PM2 里跑的还是上一个可用版本）：
 
@@ -160,7 +169,8 @@ bash scripts/deploy.sh
 4. `npm run build`，并确认 `dist/index.html` 真的在
 5. `pm2 reload ${APP_NAME} --update-env`，最多等 10 秒；进程不存在时首次
    `pm2 start ecosystem.config.cjs` + `save`（启动时也会用同一个 `APP_NAME`）
-6. 轮询 `http://127.0.0.1:4173/healthz`，20 次内不 OK 就打印最近 30 行日志并失败退出
+6. 轮询健康检查（端口自动读 PM2 里实际生效的 `PORT`，默认 `http://127.0.0.1:<PORT>/healthz`；
+   可用 `PORT=...` 或 `HEALTH_URL=...` 覆盖），20 次内不 OK 就打印最近 30 行日志并失败退出
 
 > PM2 的 fork 模式下 `reload` = 带优雅退出的重启：新进程通过
 > `kill_timeout`(8s) 内收到 SIGTERM，旧进程处理完存量连接再退出。

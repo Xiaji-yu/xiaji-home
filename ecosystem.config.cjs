@@ -29,7 +29,9 @@ module.exports = {
       time: true, // 日志带时间戳（配合 pm2-logrotate 才好读）
       env: {
         NODE_ENV: 'production',
-        PORT: 4173,
+        // 首次 pm2 start 时可用 PORT=<端口> 覆盖；之后改端口要重新 start，
+        // deploy.sh 的健康检查会自动读取 PM2 里实际生效的 PORT
+        PORT: Number(process.env.PORT || 4173),
         HOST: '127.0.0.1', // 只监听本地，外部流量一律走 Nginx 反代
       },
     },

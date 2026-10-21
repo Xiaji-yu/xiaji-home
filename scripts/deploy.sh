@@ -6,6 +6,9 @@
 # 用法（在仓库根目录）：
 #   bash scripts/deploy.sh            # 常规更新（默认服务名 xiaji-home）
 #   APP_NAME=<别的名字> bash scripts/deploy.sh   # 服务名不同时覆盖
+#   APP_NAMESPACE=<命名空间> bash scripts/deploy.sh # PM2 里有同名服务时进一步限定
+#   PORT=<端口> bash scripts/deploy.sh           # 覆盖健康检查端口（首次启动也用它）
+#   HEALTH_URL=<完整地址> bash scripts/deploy.sh # 完全自定义健康检查地址
 #   ALLOW_DIRTY=1 bash scripts/deploy.sh   # 本地有未提交改动时也强制部署
 #
 # 用运行 PM2 的普通用户执行，不要 sudo / root。
@@ -26,17 +29,50 @@ fi
 # 首次启动时 ecosystem.config.cjs 也读这个变量，避免"脚本找一个名字、
 # PM2 里却起成另一个名字"。
 APP_NAME="${APP_NAME:-xiaji-home}"
-export APP_NAME
-
-PORT="${PORT:-4173}"
-HEALTH_URL="http://127.0.0.1:${PORT}/healthz"
-
-echo "==> 运行用户：$(id -un) · 应用名：${APP_NAME}（可用 APP_NAME=... 覆盖）"
+APP_NAMESPACE="${APP_NAMESPACE:-}"
+export APP_NAME APP_NAMESPACE
 
 if ! command -v pm2 >/dev/null 2>&1; then
   echo 'ERROR: 找不到 pm2。先安装：npm i -g pm2' >&2
   exit 1
 fi
+
+# 健康检查端口优先顺序：
+#   1. 显式 PORT=<端口>
+#   2. PM2 里这个应用实际使用的 PORT（端口由 ecosystem / PM2 决定，脚本不猜）
+#   3. 都没取到时退回 4173（和 ecosystem.config.cjs 的默认值一致）
+#
+# PM2 通常挂着不止一个服务：这里只认 name 等于 APP_NAME 的进程，
+# 同名有多个时优先 online 的那个；设了 APP_NAMESPACE 时再按 namespace 过滤。
+read_pm2_port() {
+  pm2 jlist 2>/dev/null | node -e '
+    let raw = ""
+    process.stdin.setEncoding("utf8")
+    process.stdin.on("data", (chunk) => (raw += chunk))
+    process.stdin.on("end", () => {
+      try {
+        const apps = JSON.parse(raw).filter(
+          (item) =>
+            item.name === process.env.APP_NAME &&
+            (!process.env.APP_NAMESPACE ||
+              item.pm2_env?.namespace === process.env.APP_NAMESPACE),
+        )
+        const app = apps.find((item) => item.pm2_env?.status === "online") ?? apps[0]
+        const port = app?.pm2_env?.env?.PORT ?? app?.pm2_env?.PORT
+        if (port) process.stdout.write(String(port))
+      } catch {
+        /* jlist 输出不是 JSON 时留给下面的默认值兜底 */
+      }
+    })
+  '
+}
+
+PORT="${PORT:-$(read_pm2_port || true)}"
+PORT="${PORT:-4173}"
+HEALTH_URL="${HEALTH_URL:-http://127.0.0.1:${PORT}/healthz}"
+
+echo "==> 运行用户：$(id -un) · 应用名：${APP_NAME}（可用 APP_NAME=... 覆盖）"
+echo "==> 健康检查：${HEALTH_URL}（可用 PORT=... 或 HEALTH_URL=... 覆盖）"
 
 # reload 卡住 / 找不到服务时统一提示：怎么查名字、怎么手动重启
 pm2_name_hint() {
@@ -96,8 +132,8 @@ else
     pm2_name_hint
     exit 1
   fi
-  echo "==> 首次启动：pm2 start ecosystem.config.cjs（应用名 ${APP_NAME}）"
-  pm2 start ecosystem.config.cjs --update-env
+  echo "==> 首次启动：pm2 start ecosystem.config.cjs（应用名 ${APP_NAME}，端口 ${PORT}）"
+  PORT="${PORT}" pm2 start ecosystem.config.cjs --update-env
   pm2 save
 fi
 
