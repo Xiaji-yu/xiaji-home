@@ -938,26 +938,30 @@
   .adm-login__foot {
     display: none;
   }
+  /* 卡片窄下来：手机上不再顶满整宽，两侧留出纸面 */
+  .adm-login:not(.adm-login--change) .adm-login__panel {
+    width: min(320px, 88vw);
+  }
   .adm-login__bar {
-    padding: 8px 16px;
+    padding: 6px 12px;
     font-size: 9.5px;
   }
   .adm-login__form {
-    padding: 14px 14px 12px;
+    padding: 10px 12px 8px;
   }
   .adm-login__no {
-    margin-bottom: 10px;
-    padding-bottom: 8px;
+    margin-bottom: 6px;
+    padding-bottom: 7px;
     font-size: 9.5px;
   }
   .adm-login__welcome {
-    margin-bottom: 4px;
-    font-size: 20px;
+    margin-bottom: 2px;
+    font-size: 19px;
   }
   .adm-login__sub {
-    margin-bottom: 17px;
-    font-size: 12px;
-    line-height: 1.5;
+    margin-bottom: 12px;
+    font-size: 11.5px;
+    line-height: 1.45;
   }
   .adm-login__label {
     font-size: 10.5px;
@@ -965,15 +969,15 @@
   /* iOS 聚焦字号 <16px 的输入框会自动放大整页，字号保持 16px，
      靠上下内边距把输入条压矮 */
   .adm-login__input {
-    padding: 10px 0 9px;
+    padding: 9px 0 8px;
     font-size: 16px;
   }
   .adm-login__show {
     font-size: 10.5px;
   }
   .adm-login__keeprow {
-    margin-top: 8px;
-    padding-top: 8px;
+    margin-top: 4px;
+    padding-top: 4px;
   }
   .adm-login__keep span {
     font-size: 11px;
@@ -982,20 +986,17 @@
     font-size: 9.5px;
   }
   .adm-login__submit {
-    margin-top: 17px;
-    padding: 10px 0;
-    font-size: 12.5px;
+    margin-top: 10px;
+    padding: 9px 0;
+    font-size: 12px;
   }
   .adm-login__devhint {
     margin-top: 10px;
     font-size: 10px;
   }
-  /* 会话面板回到两列：单列时它自己就占掉 200px */
+  /* 手机上会话面板整块收起：它只是补充信息，却占掉约 120px */
   .adm-login__session {
-    grid-template-columns: 1fr 1fr;
-    gap: 8px 14px;
-    margin-top: 17px;
-    padding-top: 10px;
+    display: none;
   }
   .adm-login__sesscol {
     gap: 4px;
@@ -1007,8 +1008,8 @@
     font-size: 11px;
   }
   .adm-login__row {
-    margin-top: 17px;
-    padding-top: 10px;
+    margin-top: 10px;
+    padding-top: 8px;
     font-size: 10.5px;
   }
   /* 改口令页：字段多，标签行间距也收一档 */
