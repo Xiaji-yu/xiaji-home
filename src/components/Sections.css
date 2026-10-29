@@ -58,6 +58,191 @@
   padding: clamp(36px, 5.4vh, 70px) var(--pad-x);
 }
 
+/* ==========================================================================
+   制图标记（和登录页同一套语言）
+   --------------------------------------------------------------------------
+   · 四角十字准星 + 两侧刻度尺：fixed 浮层，板块区在视野里才出现
+   · 内容栏左右两条竖线：贯穿整块高度，进场时从上 / 下画出来
+   · 当前章节上下两条横线：贯穿整个屏幕宽度，切章时重新画一次
+   线条一律 1px 线色，不抢内容；手机上收起准星和刻度尺，只留横线。
+   ========================================================================== */
+
+.tabs__guides {
+  position: fixed;
+  inset: 0;
+  z-index: 5; /* 箭头是 6，记号不压过导航 */
+  pointer-events: none;
+  transition: opacity 0.4s var(--ease);
+}
+
+.tabs__guides.is-away {
+  opacity: 0;
+}
+
+/* ---- 四角十字准星：让开吸顶页眉，落在版面四角 ---- */
+.tabs__g-mark {
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  opacity: 0;
+  animation: gMarkIn 0.45s var(--ease) both;
+}
+.tabs__g-mark::before,
+.tabs__g-mark::after {
+  content: '';
+  position: absolute;
+  background: var(--ink-soft);
+}
+.tabs__g-mark::before {
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+}
+.tabs__g-mark::after {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+}
+.tabs__g-mark--tl {
+  top: calc(var(--header-h) + 12px);
+  left: 14px;
+  animation-delay: 0.2s;
+}
+.tabs__g-mark--tr {
+  top: calc(var(--header-h) + 12px);
+  right: 14px;
+  animation-delay: 0.28s;
+}
+.tabs__g-mark--bl {
+  bottom: 14px;
+  left: 14px;
+  animation-delay: 0.36s;
+}
+.tabs__g-mark--br {
+  bottom: 14px;
+  right: 14px;
+  animation-delay: 0.44s;
+}
+
+/* ---- 两侧刻度尺：像仪器面板的标尺，竖着从中间展开 ----
+   位置避开两侧箭头（箭头在 50% 竖直居中，这里放在偏上那一段） */
+.tabs__g-ticks {
+  position: absolute;
+  width: 9px;
+  height: 22vh;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--line-soft) 0 1px,
+    transparent 1px 11px
+  );
+  transform-origin: center;
+  animation: gTicksIn 0.6s var(--ease) 0.5s both;
+}
+.tabs__g-ticks--l {
+  left: 18px;
+  top: 20vh;
+}
+.tabs__g-ticks--r {
+  right: 18px;
+  top: 20vh;
+  animation-delay: 0.6s;
+}
+
+/* ---- 内容栏的竖框线：贯穿整块高度 ---- */
+.tabs__inner::before,
+.tabs__inner::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--line-soft);
+  pointer-events: none;
+  transform: scaleY(0);
+}
+.tabs__inner::before {
+  left: 0;
+  transform-origin: top;
+}
+.tabs__inner::after {
+  right: 0;
+  transform-origin: bottom;
+}
+.tabs.is-armed .tabs__inner::before {
+  animation: gDrawY 0.85s var(--ease) 0.3s both;
+}
+.tabs.is-armed .tabs__inner::after {
+  animation: gDrawY 0.85s var(--ease) 0.45s both;
+}
+
+/* ---- 当前章节的上下横线：贯穿全屏，切章重画 ---- */
+.tabs__view::before,
+.tabs__view::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  width: 100vw;
+  height: 1px;
+  background: var(--line-soft);
+  pointer-events: none;
+  transform: translateX(-50%) scaleX(0);
+}
+.tabs__view::before {
+  top: -18px;
+  transform-origin: left center;
+}
+.tabs__view::after {
+  bottom: -18px;
+  transform-origin: right center;
+}
+/* 进场 / 切章：从左边长进来、从右边收回去，和登录卡片的延伸线一个节奏 */
+.tabs.is-armed .tabs__view:not([hidden])::before {
+  animation: gDrawX 0.7s var(--ease) 0.15s both;
+}
+.tabs.is-armed .tabs__view:not([hidden])::after {
+  animation: gDrawX 0.7s var(--ease) 0.3s both;
+}
+
+@keyframes gDrawX {
+  from {
+    transform: translateX(-50%) scaleX(0);
+  }
+  to {
+    transform: translateX(-50%) scaleX(1);
+  }
+}
+
+@keyframes gDrawY {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes gMarkIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes gTicksIn {
+  from {
+    opacity: 0;
+    transform: scaleY(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
 /* ---- 左右箭头 + 底部条（照参考图：导航不再占左边一栏）---- */
 
 /* 箭头 + 底部条的外壳：板块区不在视野里时整体淡出（它们是 fixed 的，
@@ -967,5 +1152,38 @@
   .tabs .sec-lead,
   .tabs .about__body p {
     font-size: 14.5px;
+  }
+}
+
+/* ---- 记号在窄屏收起（和两角箭头抢位置），横线保留 ---- */
+@media (max-width: 860px) {
+  .tabs__guides {
+    display: none;
+  }
+}
+
+/* 减少动态效果：线条直接以终态出现，不做生长动画 */
+@media (prefers-reduced-motion: reduce) {
+  .tabs__inner::before,
+  .tabs__inner::after,
+  .tabs__view::before,
+  .tabs__view::after,
+  .tabs__g-mark,
+  .tabs__g-ticks {
+    animation: none;
+  }
+  .tabs__inner::before,
+  .tabs__inner::after {
+    transform: scaleY(1);
+  }
+  .tabs__view::before,
+  .tabs__view::after {
+    transform: translateX(-50%) scaleX(1);
+  }
+  .tabs__g-mark {
+    opacity: 1;
+  }
+  .tabs__g-ticks {
+    transform: none;
   }
 }

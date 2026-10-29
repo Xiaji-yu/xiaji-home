@@ -321,6 +321,23 @@ export default function Sections() {
         </div>
       </section>
 
+      {/* 制图标记层：四角准星 + 两侧刻度尺（fixed，只在板块区在视野里时出现）。
+          和登录页是同一套图纸语言；线条本身挂在 .tabs__inner / .tabs__view 上，
+          这里只放两样不参与布局的记号。 */}
+      {armed ? (
+        <div
+          className={`tabs__guides${inView && !footInView ? '' : ' is-away'}`}
+          aria-hidden="true"
+        >
+          <i className="tabs__g-mark tabs__g-mark--tl" />
+          <i className="tabs__g-mark tabs__g-mark--tr" />
+          <i className="tabs__g-mark tabs__g-mark--bl" />
+          <i className="tabs__g-mark tabs__g-mark--br" />
+          <i className="tabs__g-ticks tabs__g-ticks--l" />
+          <i className="tabs__g-ticks tabs__g-ticks--r" />
+        </div>
+      ) : null}
+
       {/* 左右箭头：贴在屏幕两侧（窄屏在底部两角）、到头循环。
           放在 section 外面 —— .tabs 上有 clip-path，fixed 子元素会被它裁掉。
           板块区不在视野、或页脚已经露头（is-away）时整体淡出。 */}
