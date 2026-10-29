@@ -3,7 +3,6 @@ import Header from './components/Header.jsx'
 import Sections from './components/Sections.jsx'
 import Cursor from './components/Cursor.jsx'
 import BackToTop from './components/BackToTop.jsx'
-import AdminEntry from './components/AdminEntry.jsx'
 import Hero from './components/Hero.jsx'
 import Footer from './components/Footer.jsx'
 
@@ -30,12 +29,11 @@ export default function App() {
   return (
     <>
       {/* 页眉同时是开场那根加载条（见 components/Header.jsx）；
-          浮在最上层的东西：自定义光标、右下角的回到顶部、左下角的后台入口
-          （后台入口只在有后端的自托管环境下出现，见 AdminEntry.jsx） */}
+          另外两个浮在最上层的东西：自定义光标、右下角的回到顶部
+          （后台入口在页脚 GH / DC 那排小方块里，见 Footer.jsx） */}
       <Header />
       <Cursor />
       <BackToTop />
-      <AdminEntry />
 
       <main>
         <Hero />

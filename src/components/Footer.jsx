@@ -1,11 +1,36 @@
-import { useSite } from '../data/SiteContext.jsx'
+import { useSite, useApiAvailable } from '../data/SiteContext.jsx'
 import beianIcon from '../assets/beian-icon.png'
 import './Footer.css'
 
+const ADMIN_HREF = `${import.meta.env.BASE_URL}admin`
+
+/**
+ * 页脚小方块里的后台入口（GH / DC 那一排）。
+ *   · 后端 /api 在跑才显示：纯静态托管上点进去也登不上，不如不摆
+ *   · site.js 里已经配过 AD 的（老版本的写法）以数据为准，不重复渲染；
+ *     配了但 href 是空的，就用内置的这一条补上链接
+ *   · 没配过就插在第一个占位符（href 为空）之前，保持 ML / GH / AD / DC 的观感；
+ *     全是有效链接时排到最后
+ */
+function withAdminEntry(list, apiAvailable) {
+  const builtin = { code: 'AD', title: '内容后台', href: ADMIN_HREF }
+  const own = list.find((item) => item.code === 'AD')
+  if (!apiAvailable) {
+    return own ? list.filter((item) => item !== own) : list
+  }
+  if (own) {
+    return own.href ? list : list.map((item) => (item === own ? { ...builtin } : item))
+  }
+  const placeholder = list.findIndex((item) => !item.href)
+  if (placeholder === -1) return [...list, builtin]
+  return [...list.slice(0, placeholder), builtin, ...list.slice(placeholder)]
+}
+
 export default function Footer() {
   const site = useSite()
+  const apiAvailable = useApiAvailable()
   const { footer } = site
-  const socials = footer.socials || []
+  const socials = withAdminEntry(footer.socials || [], apiAvailable)
 
   return (
     <footer>
