@@ -939,25 +939,25 @@
     display: none;
   }
   .adm-login__bar {
-    padding: 10px 16px;
+    padding: 8px 16px;
     font-size: 9.5px;
   }
   .adm-login__form {
-    padding: 18px 16px 14px;
+    padding: 14px 14px 12px;
   }
   .adm-login__no {
-    margin-bottom: 16px;
-    padding-bottom: 9px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
     font-size: 9.5px;
   }
   .adm-login__welcome {
-    margin-bottom: 6px;
-    font-size: 22px;
+    margin-bottom: 4px;
+    font-size: 20px;
   }
   .adm-login__sub {
-    margin-bottom: 22px;
-    font-size: 12.5px;
-    line-height: 1.55;
+    margin-bottom: 17px;
+    font-size: 12px;
+    line-height: 1.5;
   }
   .adm-login__label {
     font-size: 10.5px;
@@ -965,15 +965,15 @@
   /* iOS 聚焦字号 <16px 的输入框会自动放大整页，字号保持 16px，
      靠上下内边距把输入条压矮 */
   .adm-login__input {
-    padding: 11px 0 10px;
+    padding: 10px 0 9px;
     font-size: 16px;
   }
   .adm-login__show {
     font-size: 10.5px;
   }
   .adm-login__keeprow {
-    margin-top: 12px;
-    padding-top: 10px;
+    margin-top: 8px;
+    padding-top: 8px;
   }
   .adm-login__keep span {
     font-size: 11px;
@@ -982,8 +982,8 @@
     font-size: 9.5px;
   }
   .adm-login__submit {
-    margin-top: 20px;
-    padding: 11px 0;
+    margin-top: 17px;
+    padding: 10px 0;
     font-size: 12.5px;
   }
   .adm-login__devhint {
@@ -993,12 +993,12 @@
   /* 会话面板回到两列：单列时它自己就占掉 200px */
   .adm-login__session {
     grid-template-columns: 1fr 1fr;
-    gap: 10px 14px;
-    margin-top: 20px;
-    padding-top: 12px;
+    gap: 8px 14px;
+    margin-top: 17px;
+    padding-top: 10px;
   }
   .adm-login__sesscol {
-    gap: 6px;
+    gap: 4px;
   }
   .adm-login__sesskey {
     font-size: 9px;
@@ -1007,8 +1007,8 @@
     font-size: 11px;
   }
   .adm-login__row {
-    margin-top: 22px;
-    padding-top: 12px;
+    margin-top: 17px;
+    padding-top: 10px;
     font-size: 10.5px;
   }
   /* 改口令页：字段多，标签行间距也收一档 */
