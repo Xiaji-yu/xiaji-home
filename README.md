@@ -346,14 +346,17 @@ PM2 进程定义 `ecosystem.config.cjs`、一键更新脚本 `scripts/deploy.sh`
 
 自托管还有个专属福利：**内容后台 `/admin`**。托管在 Cloudflare / Pages 这类纯静态
 平台时没有后端，后台用不了（前台自动只用构建时的 `site.js`）；自托管则完整可用 ——
-首次启动带上口令：
+开箱即用，不需要先配口令：
 
 ```bash
-ADMIN_PASSWORD='换成你自己的长口令' pm2 start ecosystem.config.cjs
+pm2 start ecosystem.config.cjs
 ```
 
-之后打开 `https://你的域名/admin` 就能在浏览器里改全站文案、保存即生效、
-导入导出 JSON。细节（备份 / 安全 / 常见问题）见 [docs/ADMIN.md](docs/ADMIN.md)。
+打开 `https://你的域名/admin`，用默认口令 **`xiaji-admin`** 登录，**首次登录会强制
+改成你自己的口令**（改完才知道的新口令存在服务器 `content/admin-auth.json` 里）；
+之后就能在浏览器里改全站文案、保存即生效、导入导出 JSON。想跳过强制改密，
+也可以启动时带上 `ADMIN_PASSWORD='你的长口令'`。细节（备份 / 安全 / 常见问题）见
+[docs/ADMIN.md](docs/ADMIN.md)。
 
 ### GitHub Pages（需要公开仓库或 Pro 以上）
 

@@ -46,8 +46,9 @@ npm ci
 npm run build          # 产物在 dist/；约 100 kB，几秒完成
 
 # 4) 交给 PM2（想换端口：PORT=5000 pm2 start ecosystem.config.cjs）
-#    想用 /admin 内容后台：把口令也带上（不配则后台只读不可写）
-ADMIN_PASSWORD='换成你自己的长口令' pm2 start ecosystem.config.cjs
+#    /admin 内容后台开箱可用：默认口令 xiaji-admin，首次登录强制修改。
+#    想跳过强制改密、直接用指定口令，也可以把 ADMIN_PASSWORD 带上。
+pm2 start ecosystem.config.cjs
 pm2 save               # 把进程清单落盘（开机自启靠它）
 
 # 5) 本地自检
@@ -56,7 +57,8 @@ curl -sI http://127.0.0.1:4173/ | grep -i cache    # → cache-control: no-cache
 curl -s http://127.0.0.1:4173/api/content          # → {"updatedAt":null,"content":null}
 ```
 
-> **内容后台**：部署后在浏览器打开 `https://你的域名/admin`，登录就能改全站文案，
+> **内容后台**：部署后在浏览器打开 `https://你的域名/admin`，用默认口令
+> `xiaji-admin` 登录，第一次登录会强制改成你自己的口令；之后就能改全站文案，
 > 保存即生效（写 `content/site.json`，前台刷新可见），支持导入导出 JSON、
 > 自动备份。口令、安全设计和常见问题见 [ADMIN.md](ADMIN.md)。
 

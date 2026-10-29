@@ -793,6 +793,64 @@
   color: var(--muted);
 }
 
+/* 改口令页：卡片比登录页高，四角标签会被卡片压住 —— 这一屏不要它们 */
+.adm-login--change .adm-login__tag {
+  display: none;
+}
+/* 改密页的提示改到顶部：底部中间会盖住提交按钮 */
+.adm-login--change .adm-toast {
+  top: 22px;
+  bottom: auto;
+}
+
+/* ---- 改口令页：多组字段的纵向节奏 + 强度提示 ----
+   和登录页共用输入条 / 焦点态，只是字段多两组，节奏收紧一点 */
+.adm-login__form--change .adm-login__sub {
+  margin-bottom: 30px;
+}
+.adm-login__form--change .adm-login__labelrow {
+  margin-top: 26px;
+}
+.adm-login__form--change .adm-login__sub + .adm-login__labelrow {
+  margin-top: 0;
+}
+/* 强度条：四格细线，亮几格表示强度 —— 不用彩色，维持黑白语言 */
+.adm-login__strength {
+  display: flex;
+  gap: 4px;
+  margin: 14px 14px 0;
+}
+.adm-login__strength i {
+  flex: 1;
+  height: 2px;
+  background: var(--line-soft);
+  transition: background 0.2s var(--ease);
+}
+.adm-login__strength i.is-on {
+  background: var(--ink);
+}
+.adm-login__hint {
+  margin: 8px 14px 0;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+/* 表单底部的文字操作（返回编辑器 / 退出登录） */
+.adm-login__cancel {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.15s var(--ease);
+}
+.adm-login__cancel:hover {
+  color: var(--ink);
+}
+
 /* ---- 会话信息面板：左会话 · 右内容 ------------------------
    两条贯穿线都锚定在这里：面板顶线横贯 100vw，
    两列之间的纵向分隔线纵贯 100vh（上下长进屏幕边缘）。 */

@@ -20,25 +20,38 @@ JSON 留档 / 迁移，以及从 JSON 导入恢复。
 - `index.html` 的 `<title>` / og 分享卡片由服务器在响应时替换成线上内容里的
   `meta`，微信 / QQ 爬虫（不执行 JS）也能拿到新值。
 
-## 首次启用（生产服务器）
+## 口令：默认口令 + 首次登录强制修改
 
-1. 设置后台口令（**必须**，没设置时后台只读不可写）：
+口令按优先级取三个来源（`server/auth.cjs`）：
 
-   ```bash
-   # 首次启动：连口令一起传给 PM2
-   ADMIN_PASSWORD='换成你自己的长口令' pm2 start ecosystem.config.cjs
+| 优先级 | 来源                               | 何时生效                                         |
+| ------ | ---------------------------------- | ------------------------------------------------ |
+| 1      | `content/admin-auth.json`          | 在后台改过口令之后（scrypt 加盐哈希，权限 0600） |
+| 2      | `ADMIN_PASSWORD` 环境变量          | 部署时注入、且还没在后台改过口令                 |
+| 3      | 仓库内置默认口令 **`xiaji-admin`** | 以上都没有（开箱即用）                           |
 
-   # 已经在跑的服务补配 / 换口令（所有已登录的 token 立即作废）
-   ADMIN_PASSWORD='新口令' pm2 restart xiaji-home --update-env
-   ```
+- **用默认口令登录会被强制改密**：登录后先弹出「设置新口令」，改完才能进入
+  编辑器；服务端同样会拦 —— 没改之前 `PUT /api/content` 直接返回 403。
+- 新口令至少 10 位，不能等于默认口令、也不能和当前口令相同。
+- 改完口令后旧口令立即失效，**所有已登录设备的 token 也立即作废**（token 的
+  签名密钥由当前口令派生）。
+- 想用环境变量当初始口令（跳过强制改密），部署时带上 `ADMIN_PASSWORD=...`
+  即可；一旦在后台改过口令，环境变量就不再参与校验（以文件为准）。
 
-2. 打开 `https://你的域名/admin`，输口令登录（一次管 12 小时）。
-3. 左侧选分区（基本信息 / 首屏 / 关于我 / …… / 导航），右侧直接改，
-   数组项可以增删和上下移动。改完点右上角**保存**。
+### 首次启用（生产服务器）
 
-本地开发不用配置：`npm run dev` 后打开 `/admin`，默认口令 `admin`
-（可用环境变量 `ADMIN_PASSWORD` 覆盖）。dev / preview / 生产用的是同一套
-API 实现（`server/api.cjs`），行为一致。
+```bash
+cd /var/www/xiaji-home
+npm ci && npm run build
+pm2 delete xiaji-home                     # 旧进程如果起错了脚本，先删掉
+pm2 start ecosystem.config.cjs            # 不配环境变量就用默认口令
+```
+
+然后打开 `https://你的域名/admin`，用 `xiaji-admin` 登录，按提示设置自己的口令
+（一次登录管 12 小时，「保持登录」管 30 天）。
+
+> 想指定初始口令而不是用默认的：`ADMIN_PASSWORD='你的长口令' pm2 start ecosystem.config.cjs`。
+> 之后想换口令，直接在后台「改口令」里改，不必再碰服务器。
 
 ## 导入 / 导出
 
@@ -53,9 +66,11 @@ API 实现（`server/api.cjs`），行为一致。
 
 ## 安全说明
 
-- 写接口（`PUT /api/content`）必须带登录 token；token 是用口令 HMAC 签名
-  的时间戳，服务重启不失效，换口令全体作废。
-- 登录错误 5 次锁同一 IP 10 分钟。
+- 写接口（`PUT /api/content`）必须带登录 token；**还在用默认口令时写入一律 403**。
+- 口令不在代码里明文流转：落盘的是 scrypt 加盐哈希（`content/admin-auth.json`，
+  权限 0600）；token 的签名密钥由当前口令的哈希派生，服务重启不失效、改口令
+  立即全体作废。
+- 登录 / 改密错误 5 次锁同一 IP 10 分钟。
 - 内容写入前做结构校验（只允许字符串 / 数字 / 布尔 / 对象 / 数组，≤512KB，
   嵌套 ≤8 层），并且**原子写**（先写临时文件再 rename）——断电也不会留下
   半个 JSON。
@@ -72,4 +87,12 @@ API 实现（`server/api.cjs`），行为一致。
 **想回到构建时的默认内容？** 后台删掉服务器上的 `content/site.json`
 （或把它改名），前台就会回退到打包进去的 `site.js`。
 
-**口令忘了？** 口令只在 PM2 环境变量里，登服务器按上面的 restart 命令重设。
+**口令忘了 / 想重置？** 口令哈希在服务器的 `content/admin-auth.json` 里：
+
+```bash
+rm content/admin-auth.json     # 回到默认口令 xiaji-admin（或环境变量口令）
+pm2 restart xiaji-home --update-env   # 不需要，但重启一下最稳妥
+```
+
+删掉后用默认口令登录，会再次要求设置新口令。注意环境变量 `ADMIN_PASSWORD`
+只有在这个文件不存在时才生效。

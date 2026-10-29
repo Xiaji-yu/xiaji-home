@@ -24,12 +24,13 @@ const HOST = process.env.HOST || '127.0.0.1'
 const MAX_ENTRIES = 256 // 内存里最多驻留多少份压缩结果（这个站的资源数远到不了）
 
 /* 线上内容仓库（content/site.json）+ /api 路由。
-   ADMIN_PASSWORD 在 ecosystem.config.cjs 的 env 里配；没配时后台只读不可写。 */
+   后台口令见 server/auth.cjs：改过的口令在 content/admin-auth.json；
+   没改过时用 ecosystem 里的 ADMIN_PASSWORD，再没有就落到仓库内置默认口令，
+   用默认口令登录会被强制先改口令。 */
 const contentStore = createContentStore()
 const api = createApiHandler({
   store: contentStore,
   password: process.env.ADMIN_PASSWORD,
-  isProd: process.env.NODE_ENV === 'production',
 })
 
 const MIME = {
