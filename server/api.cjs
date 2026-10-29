@@ -115,6 +115,19 @@ function createApiHandler({ store, password, authFile } = {}) {
   })
   const loginFails = new Map() // ip -> { count, until }
 
+  /* 启动时打一行「口令从哪来」——排查「为什么登不上」先看这一行。
+     只报来源，不报口令值：日志会被 pm2 logs / 轮转文件带走，口令不该落进去。 */
+  if (process.env.NODE_ENV !== 'test') {
+    const source = auth.current().kind
+    const label =
+      source === 'default'
+        ? '仓库默认口令（首次登录会强制修改）'
+        : source === 'env'
+          ? 'ADMIN_PASSWORD 环境变量'
+          : 'content/admin-auth.json'
+    console.log(`[auth] 口令来源：${label}`)
+  }
+
   function loginAllowed(ip) {
     const rec = loginFails.get(ip)
     if (!rec) return true
