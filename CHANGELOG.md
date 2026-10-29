@@ -9,6 +9,8 @@
 
 ### 新增
 
+- **首页左下角的后台入口「AD」**：`/admin` 不再是「只有站主记得的地址」—— 首页左下角一枚 40×26 的小方牌，点进内容后台。只在 `/api` 真的在跑（自托管）时出现：`SiteProvider` 把 `GET /api/content` 是否回了本项目的 JSON 暴露成 `apiAvailable`，GitHub Pages 这类纯静态托管不渲染它，免得点进去登不上。方牌与「回到顶部」同层（z-index 800），让开首屏底部状态栏（用 App 已量好的 `--status-h`）和手机底部的章节箭头（84px），页脚露头时收起、同时移出 Tab 序列。
+
 - **后台口令：默认口令 + 首次登录强制修改**：不再要求部署时先配 `ADMIN_PASSWORD` —— 没配口令时用仓库内置默认口令 `xiaji-admin` 登录，**第一次登录强制改成自己的新口令**，改完之前服务端会把 `PUT /api/content` 一律 403 挡下（`code: PASSWORD_CHANGE_REQUIRED`）。新增 `server/auth.cjs`（零依赖）：口令来源优先级 = 后台改过的口令文件（scrypt 加盐哈希、`content/admin-auth.json` 权限 0600、原子写）> `ADMIN_PASSWORD` 环境变量 > 默认口令；口令文件损坏时自动回退默认口令（不把站主锁在门外）；token 的 HMAC 密钥改由当前口令派生，改密后旧 token 立刻全部作废。API 新增 `POST /api/admin/password`（要 token + 当前口令，成功后返回新 token），登录 / 会话接口返回 `mustChangePassword`。后台 UI 新增「设置新口令」页（与登录页同一套黑白线条语言，带强度提示）和编辑器右上角「改口令」入口。新增口令模块与 API 流程单测（默认口令 / 强制修改 / 改密落盘 / 改密后旧 token 失效 / 重启后仍生效）。
 
 - **内容后台 `/admin`（免构建改文案 + 导入导出）**：部署后在浏览器里表单化编辑全站内容 —— 左侧十个分区（基本信息 / 首屏 / 关于我 / 技能栈 / 项目 / 经历 / 联系方式 / 便签 / 页脚 / 导航），数组项可增删排序，保存写到服务器 `content/site.json`，**前台刷新即生效，不需要登服务器改 `site.js`、不需要重新构建或重启**；内容可一键导出 JSON（留档 / 迁移），也能从 JSON 导入编辑器确认后再保存。内容链路：构建时打包的 `site.js` 降级为默认值，新增 `SiteProvider` 在页面打开时 `GET /api/content` 拉线上内容与默认值深合并（缺字段自动回退，首帧仍同步渲染不闪空白，GitHub Pages 这类无后端平台自动只用默认值）；`index.html` 的 `<title>` / og 分享卡片由服务器在响应时替换成线上 `meta`（不执行 JS 的 QQ / 微信爬虫也能拿到新值），标签页标题和 favicon 由 `SiteProvider` 运行时同步。实现全部零依赖：`server/content.cjs`（原子写 + 每次覆盖前自动备份，保留最近 10 份）、`server/api.cjs`（口令换 HMAC 签名 token、12 小时有效、登录限速 5 次/10 分钟、内容结构校验 ≤512KB/≤8 层、剥原型污染键）、`server/index.cjs` 接入 `/api` 并对 `index.html` 做 meta 运行时替换（按 dist mtime + 内容版本缓存）；vite dev / preview 挂同一套 API，口令规则统一见 `server/auth.cjs`（默认口令 + 首次登录强制修改，`ADMIN_PASSWORD` 可覆盖）。后台 UI 延续站点黑白网格风格，有未保存修改时拦 `beforeunload`。文档见 `docs/ADMIN.md`，新增 10 个单测（内容存取 / 备份轮转 / token 校验）。
@@ -47,6 +49,8 @@
 - **首屏整体落在一屏之内**：山景的可用高度改为跟着视口高走（`30vh`），归位时能看见整座山在屏幕底部凝聚，而不是被折线切掉。
 
 ### 修复
+
+- **`deploy.sh` 不再「假成功」**：PM2 里同名进程跑的不是本仓库服务端时（例如旧部署留下的静态文件服务），`pm2 reload` 只会继续重启错的东西 —— `/api` 不存在、`/admin` 存不进去，而旧健康检查只认 HTTP 200，静态服务器回的 index.html 也算「通过」。现在脚本先比对 PM2 里实际的 `pm_exec_path` 与本仓库 `server/index.cjs`：不一致就报错退出并打印双方路径，加 `RECREATE=1` 会删掉旧进程、按当前端口重新 `pm2 start ecosystem.config.cjs`；健康检查改为**响应体必须正好是 `ok`**，回 HTML 会被判定失败并提示「端口上答话的不是 Node 服务端」。
 
 - **更新脚本明确服务名 + 卡住时给排查命令**：`scripts/deploy.sh` 的应用名默认改为 VPS 上实际在跑的 `xiaji-home`（启动时显式打印运行用户和应用名，`APP_NAME=<名字>` 可覆盖），`ecosystem.config.cjs` 的默认名也同步改成 `xiaji-home`，不再出现“脚本 reload 一个名字、PM2 里起成另一个”；`pm2 reload` 最多等 10 秒，超时或 PM2 里找不到服务时打印 `pm2 ls` 列表，并给出按真实名字重跑、`pm2 restart <名字> --update-env` 的示例。脚本检测到 `uid 0`（sudo / root）会直接拒绝并提示改用普通用户；`pm2` 改为直接调用全局命令，不再经 `npx`。
 

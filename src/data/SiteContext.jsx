@@ -74,6 +74,10 @@ function drawFavicon(name) {
 export function SiteProvider({ children }) {
   /* null = 还没拉到线上内容（或根本没有），用构建默认值 */
   const [live, setLive] = useState(null)
+  /* 后端在不在：只有 /api/content 真的回了本项目的 JSON 才算有，
+     静态托管（GitHub Pages）把页面回给自己解析失败 → 保持 false。
+     首页左下角的「AD」入口靠它决定要不要出现。 */
+  const [apiAvailable, setApiAvailable] = useState(false)
 
   useEffect(() => {
     let aborted = false
@@ -81,11 +85,20 @@ export function SiteProvider({ children }) {
     fetch(`${import.meta.env.BASE_URL}api/content`, {
       headers: { accept: 'application/json' },
     })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (!aborted && data && data.content && isPlainObject(data.content)) {
-          setLive(data.content)
+      .then(async (res) => {
+        if (!res.ok) return null
+        /* 静态托管会把 index.html 回给这个路径：解析不是 JSON，就当没有后端 */
+        try {
+          return await res.json()
+        } catch {
+          return null
         }
+      })
+      .then((data) => {
+        if (aborted || !data || typeof data !== 'object') return
+        if (!('content' in data) || !('updatedAt' in data)) return
+        setApiAvailable(true)
+        if (isPlainObject(data.content)) setLive(data.content)
       })
       .catch(() => {
         /* 静态托管（GitHub Pages）没有这个接口 —— 用默认值就好 */
@@ -106,8 +119,8 @@ export function SiteProvider({ children }) {
       Array.isArray(live?.navLinks) && live.navLinks.length
         ? live.navLinks.filter((t) => t && typeof t.href === 'string')
         : defaultNav
-    return { site, sectionTabs, navLinks }
-  }, [live])
+    return { site, sectionTabs, navLinks, apiAvailable }
+  }, [live, apiAvailable])
 
   /* 标签标题 / 分享卡片 meta / favicon 跟随线上内容（index.html 里的是构建期兜底） */
   useEffect(() => {
@@ -135,6 +148,11 @@ export function useSectionTabs() {
 
 export function useNavLinks() {
   return useContext(SiteContext).navLinks
+}
+
+/* 后端 /api 在不在（决定首页要不要显示后台入口） */
+export function useApiAvailable() {
+  return useContext(SiteContext).apiAvailable
 }
 
 /* 后台导入功能也要用到默认值（「恢复构建版本」按钮） */
