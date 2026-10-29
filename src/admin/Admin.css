@@ -516,6 +516,8 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+  /* 和输入条同一档内边距：标签、正文、右侧按钮站在同一条竖向基准线上 */
+  padding: 0 10px 0 14px;
 }
 
 .adm-login__label {
@@ -531,13 +533,20 @@
   color: var(--muted);
 }
 
+/* 输入条：只留底部一条 1px 细线，像印刷表单上的填写栏。
+   聚焦时不套方框、不加粗线条 —— 而是「把这一格填进纸面」：
+   极轻的纸色底 + 底线转墨 + 左侧定位块长出来 + 刻度尺淡出。
+   全站都是 1px 细线，这里坚持同一档，不再用 2px 墨条压在上面。 */
 .adm-login__field {
   position: relative;
   display: flex;
   align-items: center;
+  padding: 0 10px 0 14px;
   border-bottom: 1px solid var(--line-soft);
   background: transparent;
-  transition: border-color 0.15s var(--ease);
+  transition:
+    border-bottom-color 0.2s var(--ease),
+    background-color 0.2s var(--ease);
 }
 /* 填写刻度尺：输入条下方一排细刻度（图纸的填写栏语言） */
 .adm-login__field::before {
@@ -554,8 +563,41 @@
   );
   opacity: 0.55;
   pointer-events: none;
+  transition: opacity 0.2s var(--ease);
 }
-/* 墨色焦点线：聚焦时从中心向两侧展开 */
+/* 左侧定位块：聚焦时从中间长出来，标出「正在填这一格」 */
+.adm-login__field::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 2px;
+  height: 0;
+  background: var(--ink);
+  transform: translateY(-50%);
+  transition: height 0.22s var(--ease);
+  pointer-events: none;
+}
+.adm-login__field:focus-within {
+  border-bottom-color: var(--ink);
+  background: var(--paper-2);
+}
+.adm-login__field:focus-within::before {
+  opacity: 0; /* 有底色了，刻度尺再留着就成了双线 */
+}
+.adm-login__field:focus-within::after {
+  height: 20px;
+}
+/* 焦点完全由上面这套样式表达，任何 UA / 扩展画的方框都压掉 */
+.adm-login__field,
+.adm-login__field:focus-within,
+.adm-login__input,
+.adm-login__input:focus,
+.adm-login__input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+/* 墨色焦点线只在「口令不对」时用：出错才值得多一条线 */
 .adm-login__caret {
   position: absolute;
   left: 0;
@@ -564,20 +606,17 @@
   height: 2px;
   background: var(--ink);
   transform: scaleX(0);
-  transform-origin: center;
+  transform-origin: left;
   transition: transform 0.35s var(--ease);
   pointer-events: none;
-}
-.adm-login__field:focus-within {
-  border-bottom-color: var(--line-soft);
-}
-.adm-login__field:focus-within .adm-login__caret {
-  transform: scaleX(1);
 }
 /* 口令不对：底线变红 + 整条抖动 */
 .adm-login__field.is-error {
   border-bottom-color: #b42318;
   animation: adm-shake 0.4s var(--ease);
+}
+.adm-login__field.is-error::after {
+  background: #b42318;
 }
 .adm-login__field.is-error .adm-login__caret {
   background: #b42318;
@@ -613,25 +652,55 @@
   background: transparent;
   font: inherit;
   font-size: 15px;
-  padding: 12px 2px;
+  /* 上下留够呼吸，但左右交给输入条自己的内边距 —— 聚焦时底色块才不会撑出边缘 */
+  padding: 15px 0 14px;
   color: var(--ink);
+  caret-color: var(--ink); /* 光标跟墨色一致，默认的黑色 vs 蓝黑跳一下很扎眼 */
   outline: none;
+  box-shadow: none;
+  appearance: none;
 }
 .adm-login__input::placeholder {
-  color: var(--line-soft);
+  color: var(--muted);
+  opacity: 0.55;
+  transition: opacity 0.2s var(--ease);
+}
+/* 聚焦时占位文案再退一步，让位给真正输入的内容 */
+.adm-login__field:focus-within .adm-login__input::placeholder {
+  opacity: 0.38;
+}
+/* 浏览器自动填充会把输入框涂成淡黄 / 淡蓝，和黑白纸面完全不搭：
+   用等大面积的内阴影盖住它，文字与光标仍保持墨色 */
+.adm-login__input:-webkit-autofill,
+.adm-login__input:-webkit-autofill:hover,
+.adm-login__input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--ink);
+  -webkit-box-shadow: 0 0 0 1000px var(--paper-2) inset;
+  caret-color: var(--ink);
+  transition: background-color 99999s ease-out 0s;
 }
 
 .adm-login__show {
   border: 0;
   background: none;
   font-family: var(--mono);
-  font-size: 11.5px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
   color: var(--muted);
   cursor: pointer;
-  padding: 6px 2px;
+  padding: 6px 0 6px 12px;
+  outline: none;
+  transition: color 0.15s var(--ease);
 }
 .adm-login__show:hover {
   color: var(--ink);
+}
+/* 键盘走到这里时用下划线提示，而不是再画一个方框 */
+.adm-login__show:focus-visible {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  outline: none;
 }
 
 .adm-login__submit {
@@ -704,8 +773,8 @@
   transform: scale(1);
 }
 .adm-login__keep input:focus-visible + i {
-  outline: 2px solid var(--ink);
-  outline-offset: 2px;
+  outline: 1px solid var(--ink);
+  outline-offset: 3px;
 }
 .adm-login__keep span {
   font-size: 11.5px;
@@ -817,6 +886,10 @@
   }
   .adm-login__form {
     padding: 28px 22px 24px;
+  }
+  /* iOS 聚焦字号 <16px 的输入框会自动放大整页，手机上就把字号抬到 16px */
+  .adm-login__input {
+    font-size: 16px;
   }
   .adm-login__welcome {
     font-size: 26px;
