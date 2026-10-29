@@ -595,9 +595,6 @@ export default function AdminApp() {
           </div>
 
           <h1 className="adm-login__welcome">欢迎回来</h1>
-          <p className="adm-login__sub">
-            输入后台口令，进入内容工作台。首次登录会要求先改掉默认口令。
-          </p>
 
           <div className="adm-login__labelrow">
             <label className="adm-login__label mono" htmlFor="adm-pass">
@@ -685,7 +682,6 @@ export default function AdminApp() {
 
           <div className="adm-login__row mono">
             <a href={BASE}>← 返回首页</a>
-            <span>仅限站主使用</span>
           </div>
         </form>
       </LoginShell>

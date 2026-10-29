@@ -5,6 +5,8 @@
 
 .adm-page {
   min-height: 100vh;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
   background: var(--paper);
   color: var(--ink);
   font-family: var(--sans);
@@ -24,6 +26,10 @@
 .adm-login {
   position: relative;
   min-height: 100vh;
+  /* 关掉移动端「字体自动放大」：窄卡片里的 10px 小字会被浏览器放大成 11px，
+     导致会话面板里的长值被挤成省略号 */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -500,7 +506,8 @@
 }
 
 .adm-login__welcome {
-  margin: 0 0 8px;
+  /* 副文案删掉之后，标题和口令字段之间靠这条间距撑开 */
+  margin: 0 0 24px;
   font-size: 30px;
   font-weight: 800;
   letter-spacing: 0.02em;
@@ -932,7 +939,7 @@
   .adm-login {
     padding: 12px 10px;
   }
-  .adm-login__tag--r,
+  .adm-login__tag,
   .adm-login__mark,
   .adm-login__ticks,
   .adm-login__foot {
@@ -947,15 +954,15 @@
     font-size: 9.5px;
   }
   .adm-login__form {
-    padding: 14px 14px 12px;
+    padding: 18px 16px 20px;
   }
   .adm-login__no {
-    margin-bottom: 10px;
-    padding-bottom: 8px;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
     font-size: 9.5px;
   }
   .adm-login__welcome {
-    margin-bottom: 4px;
+    margin-bottom: 16px;
     font-size: 21px;
   }
   .adm-login__sub {
@@ -976,8 +983,8 @@
     font-size: 10.5px;
   }
   .adm-login__keeprow {
-    margin-top: 8px;
-    padding-top: 8px;
+    margin-top: 16px;
+    padding-top: 10px;
   }
   .adm-login__keep span {
     font-size: 11px;
@@ -986,7 +993,7 @@
     font-size: 9.5px;
   }
   .adm-login__submit {
-    margin-top: 14px;
+    margin-top: 20px;
     padding: 10px 0;
     font-size: 12.5px;
   }
@@ -998,7 +1005,7 @@
   .adm-login__session {
     grid-template-columns: 1fr 1fr;
     gap: 8px 14px;
-    margin-top: 18px;
+    margin-top: 20px;
     padding-top: 12px;
   }
   .adm-login__sesscol {
@@ -1007,12 +1014,16 @@
   .adm-login__sesskey {
     font-size: 9px;
   }
-  .adm-login__sessval {
-    font-size: 11px;
+  /* 卡片窄了：字号再收一档，长值（更新时间 / 用构建默认）仍保持一行。
+     选择器带上 .adm-login：base.css 的 .mono 也在这批元素上，
+     且它比 admin 的样式后加载（同权重会赢），得提高权重压过去 */
+  .adm-login .adm-login__sessval {
+    font-size: 10px;
+    letter-spacing: 0;
   }
   .adm-login__row {
-    margin-top: 14px;
-    padding-top: 10px;
+    margin-top: 18px;
+    padding-top: 12px;
     font-size: 10.5px;
   }
   /* 改口令页：字段多，标签行间距也收一档 */
