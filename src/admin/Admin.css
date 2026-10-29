@@ -927,40 +927,102 @@
   }
 }
 @media (max-width: 560px) {
+  /* 手机上一屏本来就矮：整张卡按「能一屏放下」重排 ——
+     标题、间距、按钮逐项收一档，会话面板从单列改回两列 */
   .adm-login {
-    padding: 20px 16px;
-  }
-  .adm-login__tag {
-    top: 18px;
-    left: 16px;
+    padding: 12px 10px;
   }
   .adm-login__tag--r,
   .adm-login__mark,
-  .adm-login__ticks {
-    display: none;
-  }
+  .adm-login__ticks,
   .adm-login__foot {
     display: none;
   }
-  .adm-login__form {
-    padding: 28px 22px 24px;
+  .adm-login__bar {
+    padding: 10px 16px;
+    font-size: 9.5px;
   }
-  /* iOS 聚焦字号 <16px 的输入框会自动放大整页，手机上就把字号抬到 16px */
-  .adm-login__input {
-    font-size: 16px;
+  .adm-login__form {
+    padding: 18px 16px 14px;
+  }
+  .adm-login__no {
+    margin-bottom: 16px;
+    padding-bottom: 9px;
+    font-size: 9.5px;
   }
   .adm-login__welcome {
-    font-size: 26px;
+    margin-bottom: 6px;
+    font-size: 22px;
+  }
+  .adm-login__sub {
+    margin-bottom: 22px;
+    font-size: 12.5px;
+    line-height: 1.55;
+  }
+  .adm-login__label {
+    font-size: 10.5px;
+  }
+  /* iOS 聚焦字号 <16px 的输入框会自动放大整页，字号保持 16px，
+     靠上下内边距把输入条压矮 */
+  .adm-login__input {
+    padding: 11px 0 10px;
+    font-size: 16px;
+  }
+  .adm-login__show {
+    font-size: 10.5px;
+  }
+  .adm-login__keeprow {
+    margin-top: 12px;
+    padding-top: 10px;
+  }
+  .adm-login__keep span {
+    font-size: 11px;
+  }
+  .adm-login__ses {
+    font-size: 9.5px;
   }
   .adm-login__submit {
-    margin-top: 36px;
+    margin-top: 20px;
+    padding: 11px 0;
+    font-size: 12.5px;
+  }
+  .adm-login__devhint {
+    margin-top: 10px;
+    font-size: 10px;
+  }
+  /* 会话面板回到两列：单列时它自己就占掉 200px */
+  .adm-login__session {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 14px;
+    margin-top: 20px;
+    padding-top: 12px;
+  }
+  .adm-login__sesscol {
+    gap: 6px;
+  }
+  .adm-login__sesskey {
+    font-size: 9px;
+  }
+  .adm-login__sessval {
+    font-size: 11px;
   }
   .adm-login__row {
-    margin-top: 38px;
+    margin-top: 22px;
+    padding-top: 12px;
+    font-size: 10.5px;
   }
-  /* 会话面板窄屏改单列 */
-  .adm-login__session {
-    grid-template-columns: 1fr;
+  /* 改口令页：字段多，标签行间距也收一档 */
+  .adm-login__form--change .adm-login__sub {
+    margin-bottom: 20px;
+  }
+  .adm-login__form--change .adm-login__labelrow {
+    margin-top: 18px;
+  }
+  .adm-login__strength {
+    margin-top: 10px;
+  }
+  .adm-login__hint {
+    font-size: 9.5px;
   }
 }
 /* ---- toast ---- */
