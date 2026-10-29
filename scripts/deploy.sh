@@ -150,6 +150,9 @@ if pm2 describe "${APP_NAME}" >/dev/null 2>&1; then
     echo "       当前脚本：${APP_SCRIPT:-（读不到，pm2 里可能是旧配置）}" >&2
     echo "       期望脚本：${EXPECTED_SCRIPT}" >&2
     echo '       这种状态下 /api 根本不存在：后台登录不了，`/admin` 也存不进去。' >&2
+    echo "       注意：会沿用端口 ${PORT}（读自 PM2 环境，读不到才用 4173）。" >&2
+    echo '       先用 sudo nginx -T | grep -n proxy_pass 确认反代端口；不一致就传 PORT：' >&2
+    echo '         PORT=<nginx 反代的端口> RECREATE=1 bash scripts/deploy.sh' >&2
     echo '       换成 ecosystem.config.cjs 里的服务端（沿用当前端口）：' >&2
     echo '         RECREATE=1 bash scripts/deploy.sh' >&2
     echo '       或者手动：' >&2
