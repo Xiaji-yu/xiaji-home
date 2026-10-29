@@ -27,7 +27,11 @@ const clone = (v) => JSON.parse(JSON.stringify(v))
 /** 时间显示：`10 月 29 日 14:05` 这种 */
 function fmtTime(value) {
   if (!value) return '——'
-  const d = new Date(value)
+  /* localStorage 里存的是 `String(Date.now())`：13 位数字串不是合法日期字符串，
+     直接 new Date('1759…') 会得到 Invalid Date（曾显示成「NAN 月 NAN 日」） */
+  const ms = typeof value === 'string' && /^\d+$/.test(value) ? Number(value) : value
+  const d = new Date(ms)
+  if (Number.isNaN(d.getTime())) return '——'
   const p = (n) => String(n).padStart(2, '0')
   return `${d.getMonth() + 1} 月 ${d.getDate()} 日 ${p(d.getHours())}:${p(d.getMinutes())}`
 }
@@ -148,6 +152,7 @@ export default function AdminApp() {
   const [lastLogin, setLastLogin] = useState(() => localStorage.getItem(LAST_LOGIN_KEY))
   const [contentUpdatedAt, setContentUpdatedAt] = useState(null)
   const fileRef = useRef(null)
+  const headerRef = useRef(null)
 
   const say = (kind, text) => setToast({ kind, text })
   useEffect(() => {
@@ -215,6 +220,21 @@ export default function AdminApp() {
       aborted = true
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* 顶栏高度量进 --adm-top-h：窄屏顶栏是两行（品牌 + 操作），
+     左侧/顶部的分区导航要正好贴在它下面，不能靠写死的 55px 猜 */
+  useEffect(() => {
+    const el = headerRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return undefined
+    const setVar = () => {
+      const h = Math.round(el.getBoundingClientRect().height)
+      if (h > 0) document.documentElement.style.setProperty('--adm-top-h', `${h}px`)
+    }
+    setVar()
+    const ro = new ResizeObserver(setVar)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [boot])
 
   const dirty = draft && baseline && JSON.stringify(draft) !== JSON.stringify(baseline)
 
@@ -675,7 +695,7 @@ export default function AdminApp() {
   /* ============================ 编辑器 ============================ */
   return (
     <div className="adm-page adm-page--app">
-      <header className="adm-top">
+      <header className="adm-top" ref={headerRef}>
         <div className="adm-top__brand">
           <span className="adm-top__dot" data-on={dirty ? '1' : '0'} />
           内容后台
@@ -723,15 +743,15 @@ export default function AdminApp() {
           <button className="adm-btn" type="button" onClick={() => logout()}>
             退出
           </button>
-          <button
-            className="adm-btn adm-btn--solid"
-            type="button"
-            onClick={save}
-            disabled={!dirty || saving}
-          >
-            {saving ? '保存中…' : dirty ? '保存' : '已保存'}
-          </button>
         </div>
+        <button
+          className="adm-btn adm-btn--solid adm-top__save"
+          type="button"
+          onClick={save}
+          disabled={!dirty || saving}
+        >
+          {saving ? '保存中…' : dirty ? '保存' : '已保存'}
+        </button>
       </header>
 
       <div className="adm-body">

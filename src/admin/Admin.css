@@ -998,30 +998,508 @@
   }
 }
 
-/* ---- 窄屏：导航横向 ---- */
+/* ==========================================================================
+   编辑器（登录之后的界面）
+   --------------------------------------------------------------------------
+   结构：顶栏（品牌 + 操作）→ 左侧分区导航 + 右侧表单。
+   和前台同一套语言：纸底、1px 线、等宽小标签、悬停整块翻墨。
+   表单控件全部重画（默认的 UA 控件和这套黑白纸面完全不搭）。
+   ========================================================================== */
+
+/* ---- 顶栏：sticky，半透纸色 + 细线收边 ---- */
+.adm-top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 10px var(--pad);
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+.adm-top__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.adm-top__brand em {
+  font-style: normal;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  padding: 3px 6px;
+  border: 1px solid var(--line-soft);
+}
+/* 未保存提示点：纸色小方块，有改动才变墨 */
+.adm-top__dot {
+  width: 8px;
+  height: 8px;
+  background: var(--line-soft);
+  transition: background 0.2s var(--ease);
+}
+.adm-top__dot[data-on='1'] {
+  background: var(--ink);
+}
+
+.adm-top__ops {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+/* 保存是这一屏的主操作：桌面上钉在最右，手机上单独占一格（见窄屏媒体） */
+.adm-top__save {
+  flex: 0 0 auto;
+}
+
+/* ---- 按钮：和站点 .btn 同语法，小一号 ---- */
+.adm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 7px 12px;
+  border: 1px solid var(--line-soft);
+  background: var(--white);
+  color: var(--ink-soft);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 0.2s var(--ease),
+    border-color 0.2s var(--ease),
+    color 0.2s var(--ease);
+}
+.adm-btn:hover:not(:disabled) {
+  border-color: var(--line);
+  color: var(--ink);
+  background: var(--paper-2);
+}
+.adm-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.adm-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.adm-btn--solid {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+.adm-btn--solid:hover:not(:disabled) {
+  background: var(--ink-soft);
+  border-color: var(--ink-soft);
+  color: var(--paper);
+}
+
+/* ---- 主体：左侧分区导航 + 右侧表单 ---- */
+.adm-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  align-items: start;
+}
+
+.adm-nav {
+  position: sticky;
+  /* 顶栏高度（App 量进 --adm-top-h）：让导航自己滚，别把品牌滚走 */
+  top: calc(var(--adm-top-h, 55px) + 1px);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - var(--adm-top-h, 55px) - 1px);
+  overflow-y: auto;
+  border-right: 1px solid var(--line-soft);
+  background: var(--paper);
+}
+
+.adm-nav__item {
+  display: block;
+  width: 100%;
+  padding: 12px 18px 12px 15px;
+  border: 0;
+  border-bottom: 1px solid var(--line-soft);
+  border-left: 3px solid transparent;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 0.2s var(--ease),
+    color 0.2s var(--ease);
+}
+.adm-nav__item:hover {
+  color: var(--ink);
+  background: var(--paper-2);
+}
+.adm-nav__item.is-on {
+  border-left-color: var(--ink);
+  background: var(--paper-2);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.adm-main {
+  min-width: 0;
+  padding: 26px var(--pad) 72px;
+  /* 在导航右侧那一格里居中：grid 项用 auto 外边距居中会被缩成
+     fit-content（实测只剩 390px 宽），必须显式给宽度 + justify-self */
+  width: 100%;
+  max-width: 860px;
+  justify-self: center;
+}
+
+.adm-main__head h2 {
+  margin: 0 0 6px;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+.adm-main__head p {
+  margin: 0 0 22px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ---- 字段组：一根细线开始，标签是等宽小号 ---- */
+.adm-group {
+  padding: 18px 0 20px;
+  border-top: 1px solid var(--line-soft);
+}
+.adm-group__label {
+  margin: 0 0 12px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+}
+
+.adm-field {
+  margin-bottom: 14px;
+}
+.adm-field:last-child {
+  margin-bottom: 0;
+}
+.adm-field__label {
+  margin-bottom: 6px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+/* ---- 输入控件：细描边、纸面感，聚焦时底线转墨 ---- */
+.adm-input {
+  width: 100%;
+  border: 1px solid var(--line-soft);
+  background: var(--white);
+  padding: 9px 12px;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13.5px;
+  line-height: 1.5;
+  outline: none;
+  /* iOS 上字号 <16px 聚焦会自动放大整页，这里先按桌面密度，窄屏媒体里再抬 */
+  transition:
+    border-color 0.2s var(--ease),
+    background-color 0.2s var(--ease);
+}
+.adm-input:focus {
+  border-color: var(--ink);
+  background: var(--paper);
+}
+.adm-input--num {
+  max-width: 120px;
+}
+.adm-textarea {
+  min-height: 84px;
+  resize: vertical;
+}
+
+/* 开关：方框 + 「开 / 关」，和登录页的复选框同一套画法 */
+.adm-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  user-select: none;
+}
+.adm-check input {
+  appearance: none;
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  border: 1px solid var(--line);
+  background: var(--white);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.adm-check input::after {
+  content: '';
+  width: 9px;
+  height: 9px;
+  background: var(--paper);
+  transform: scale(0);
+  transition: transform 0.15s var(--ease);
+}
+.adm-check input:checked {
+  background: var(--ink);
+}
+.adm-check input:checked::after {
+  transform: scale(1);
+}
+.adm-check input:focus-visible {
+  outline: 1px solid var(--ink);
+  outline-offset: 3px;
+}
+.adm-check span {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--ink-soft);
+}
+
+/* ---- 数组：每项一张带标题条的卡片，增删排序在标题条右侧 ---- */
+.adm-array {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.adm-item {
+  border: 1px solid var(--line);
+  background: var(--white);
+}
+.adm-item .adm-item {
+  border-color: var(--line-soft); /* 嵌套项用浅一档的线，层级不糊 */
+}
+
+.adm-item__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 4px 6px 4px 10px;
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--paper-2);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+
+.adm-item__ops {
+  display: flex;
+  gap: 4px;
+}
+.adm-item__ops button {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--line-soft);
+  background: var(--white);
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 0.15s var(--ease),
+    border-color 0.15s var(--ease),
+    color 0.15s var(--ease);
+}
+.adm-item__ops button:hover:not(:disabled) {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+.adm-item__ops button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.adm-item__ops button.is-del:hover {
+  background: #b42318;
+  border-color: #b42318;
+  color: var(--white);
+}
+
+/* 卡片里的内容统一留白（标题条之外的第一层） */
+.adm-item > .adm-object,
+.adm-item > .adm-array {
+  padding: 12px 12px 2px;
+}
+.adm-item > .adm-input,
+.adm-item > .adm-textarea,
+.adm-item > .adm-check {
+  margin: 12px;
+  width: calc(100% - 24px);
+}
+.adm-item > .adm-check {
+  width: auto;
+}
+
+.adm-add {
+  align-self: flex-start;
+  padding: 8px 14px;
+  border: 1px dashed var(--line-soft);
+  background: none;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition:
+    border-color 0.2s var(--ease),
+    color 0.2s var(--ease);
+}
+.adm-add:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+/* ==========================================================================
+   窄屏（手机 / 窄平板）
+   --------------------------------------------------------------------------
+   导航从左侧竖栏改成顶部横向滚动条；顶栏折成两行，操作按钮一条横滚带；
+   输入框字号抬到 16px，避免 iOS 聚焦自动放大整页。
+   ========================================================================== */
 @media (max-width: 760px) {
+  /* 两行：品牌 + 保存（主操作永远看得见），其余操作一条横滚带 */
+  .adm-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'brand save'
+      'ops ops';
+    align-items: center;
+    gap: 8px 10px;
+    padding: 10px 14px;
+  }
+  .adm-top__brand {
+    grid-area: brand;
+    font-size: 12.5px;
+  }
+  .adm-top__save {
+    grid-area: save;
+    min-height: 34px;
+    padding: 6px 16px;
+  }
+  .adm-top__ops {
+    grid-area: ops;
+    margin-left: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 6px;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+  .adm-top__ops::-webkit-scrollbar {
+    display: none;
+  }
+  .adm-btn {
+    flex: 0 0 auto;
+    min-height: 32px;
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
   .adm-body {
     grid-template-columns: 1fr;
   }
   .adm-nav {
-    position: static;
+    position: sticky;
+    top: calc(var(--adm-top-h, 100px) + 1px);
+    z-index: 15;
     flex-direction: row;
+    max-height: none;
     overflow-x: auto;
+    overflow-y: hidden;
     border-right: 0;
     border-bottom: 1px solid var(--line-soft);
-    padding: 0;
+    /* 横滚条吸顶时会盖住内容：这里要实心纸色，不能半透 */
+    background: var(--paper);
+    scrollbar-width: none;
+  }
+  .adm-nav::-webkit-scrollbar {
+    display: none;
   }
   .adm-nav__item {
+    flex: 0 0 auto;
+    width: auto;
+    padding: 11px 14px;
     border-left: 0;
-    border-bottom: 3px solid transparent;
-    white-space: nowrap;
-    padding: 10px 14px;
+    border-bottom: 2px solid transparent;
+    font-size: 12.5px;
   }
   .adm-nav__item.is-on {
     border-bottom-color: var(--ink);
     background: none;
   }
-  .adm-top {
-    padding: 10px 16px;
+
+  .adm-main {
+    padding: 18px 14px calc(56px + env(safe-area-inset-bottom, 0px));
+    max-width: none;
+  }
+  .adm-main__head h2 {
+    font-size: 20px;
+  }
+  .adm-main__head p {
+    margin-bottom: 16px;
+    font-size: 12.5px;
+  }
+
+  .adm-group {
+    padding: 15px 0 16px;
+  }
+
+  /* iOS：聚焦字号 <16px 会自动放大整页 */
+  .adm-input {
+    font-size: 16px;
+    padding: 10px 12px;
+  }
+  .adm-input--num {
+    max-width: 96px;
+  }
+
+  .adm-item__ops button {
+    width: 32px;
+    height: 32px;
+    font-size: 15px;
+  }
+  .adm-item__bar {
+    padding-right: 4px;
+  }
+  .adm-item > .adm-object,
+  .adm-item > .adm-array {
+    padding: 10px 10px 0;
+  }
+  .adm-item > .adm-input,
+  .adm-item > .adm-textarea {
+    margin: 10px;
+    width: calc(100% - 20px);
+  }
+
+  .adm-add {
+    width: 100%;
+    padding: 11px 14px;
   }
 }
