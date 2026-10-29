@@ -160,6 +160,13 @@ bash scripts/deploy.sh
 > **用普通用户执行，不要 `sudo` / root**：脚本检测到 uid 0 会直接拒绝。sudo 会把
 > `dist/`、`node_modules/` 改成 root 属主，之后普通用户反而更新不了。
 >
+> **同名进程跑错脚本会被拦下**：`pm2 reload` 只重启现有进程，如果 `xiaji-home`
+> 这个名字下跑的是别的脚本（比如某个静态文件服务），光 reload 永远修不好 ——
+> `/api` 不存在，`/admin` 也存不进去。脚本会比对 PM2 里实际的 `pm_exec_path`
+> 与本仓库的 `server/index.cjs`，不一致就报错退出，并提示用
+> `RECREATE=1 bash scripts/deploy.sh` 删掉旧进程、按当前端口重新 `pm2 start
+ecosystem.config.cjs`。
+>
 > **健康检查端口不再写死**：脚本优先读 PM2 里该应用实际生效的 `PORT`，读不到才退回
 > `4173`。PM2 挂着多个服务时只认 `name` 等于 `APP_NAME` 的进程；如果有同名服务，
 > 再用 `APP_NAMESPACE=<命名空间>` 限定。要检查别的端口或地址，可以显式覆盖：
@@ -175,10 +182,14 @@ bash scripts/deploy.sh
 2. `git pull --ff-only`
 3. `npm ci`
 4. `npm run build`，并确认 `dist/index.html` 真的在
-5. `pm2 reload ${APP_NAME} --update-env`，最多等 10 秒；进程不存在时首次
-   `pm2 start ecosystem.config.cjs` + `save`（启动时也会用同一个 `APP_NAME`）
+5. 核对 PM2 里 `APP_NAME` 实际执行的脚本是不是本仓库的 `server/index.cjs`：
+   是 → `pm2 reload ${APP_NAME} --update-env`（最多 10 秒）；不是 → 报错退出，
+   加 `RECREATE=1` 则删掉旧进程后按当前端口重新 `pm2 start ecosystem.config.cjs`；
+   进程不存在时首次 `pm2 start ecosystem.config.cjs` + `save`
 6. 轮询健康检查（端口自动读 PM2 里实际生效的 `PORT`，默认 `http://127.0.0.1:<PORT>/healthz`；
-   可用 `PORT=...` 或 `HEALTH_URL=...` 覆盖），20 次内不 OK 就打印最近 30 行日志并失败退出
+   可用 `PORT=...` 或 `HEALTH_URL=...` 覆盖），**响应体必须正好是 `ok`** ——
+   只认 200 会被静态服务器回的 index.html 骗过去；20 次内不 OK 就打印最近 30 行
+   日志并失败退出
 
 > PM2 的 fork 模式下 `reload` = 带优雅退出的重启：新进程通过
 > `kill_timeout`(8s) 内收到 SIGTERM，旧进程处理完存量连接再退出。
@@ -235,15 +246,16 @@ PORT=4173 node server/index.cjs    # 或 npm run preview（vite 自带）
 
 ## 7. 排错
 
-| 现象                         | 原因 / 处理                                                                                 |
-| ---------------------------- | ------------------------------------------------------------------------------------------- |
-| 访问返回 404                 | 先 `curl 127.0.0.1:4173/healthz` 确认应用活着，再查 Nginx 是否 reload                       |
-| 刷新子路由 404（别人不 404） | 说明回源的把请求打到了别的服务器；本站的设计本就是 SPA 回退，见 `server/index.cjs`          |
-| `EADDRINUSE`                 | `lsof -i:4173` 找到占用者；`vite preview` 默认也占这个端口                                  |
-| 页面还是旧版                 | 看 `curl -sI /` 的 `cache-control` 是否 `no-cache`；CDN/Cloudflare 代理也要清缓存           |
-| pm2 reload 后不变化          | 确认 deploy.sh 真的重建了：`pm2 describe xiaji-home` 看 uptime 和 script 路径               |
-| 日志涨满磁盘                 | 第 5 节的 pm2-logrotate 没配；`logs/` 已被 `.gitignore` 忽略                                |
-| 证书过期                     | `sudo certbot renew --dry-run`；systemd timer 坏了就 `sudo systemctl restart certbot.timer` |
+| 现象                         | 原因 / 处理                                                                                                         |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| 访问返回 404                 | 先 `curl 127.0.0.1:4173/healthz` 确认应用活着，再查 Nginx 是否 reload                                               |
+| 刷新子路由 404（别人不 404） | 说明回源的把请求打到了别的服务器；本站的设计本就是 SPA 回退，见 `server/index.cjs`                                  |
+| `EADDRINUSE`                 | `lsof -i:4173` 找到占用者；`vite preview` 默认也占这个端口                                                          |
+| 页面还是旧版                 | 看 `curl -sI /` 的 `cache-control` 是否 `no-cache`；CDN/Cloudflare 代理也要清缓存                                   |
+| pm2 reload 后不变化          | 确认 deploy.sh 真的重建了：`pm2 describe xiaji-home` 看 uptime 和 script path                                       |
+| 部署「成功」但 /admin 登不上 | 端口上答话的可能不是 Node 服务端：`curl -s http://127.0.0.1:4173/healthz` 必须输出 `ok`，`/api/content` 必须回 JSON |
+| 日志涨满磁盘                 | 第 5 节的 pm2-logrotate 没配；`logs/` 已被 `.gitignore` 忽略                                                        |
+| 证书过期                     | `sudo certbot renew --dry-run`；systemd timer 坏了就 `sudo systemctl restart certbot.timer`                         |
 
 ## 8. 安全自查清单
 

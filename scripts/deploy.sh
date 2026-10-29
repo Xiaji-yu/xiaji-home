@@ -10,12 +10,15 @@
 #   PORT=<端口> bash scripts/deploy.sh           # 覆盖健康检查端口（首次启动也用它）
 #   HEALTH_URL=<完整地址> bash scripts/deploy.sh # 完全自定义健康检查地址
 #   ALLOW_DIRTY=1 bash scripts/deploy.sh   # 本地有未提交改动时也强制部署
+#   RECREATE=1 bash scripts/deploy.sh      # PM2 里同名进程跑的不是本仓库服务端时，删掉重建
 #
 # 用运行 PM2 的普通用户执行，不要 sudo / root。
 # 首次上线先把前置步骤做完，见 docs/PM2-DEPLOY.md。
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+REPO_DIR="$(pwd -P)"
+EXPECTED_SCRIPT="${REPO_DIR}/server/index.cjs"
 
 if [ "$(id -u)" -eq 0 ]; then
   echo 'ERROR: 不要用 root / sudo 跑部署脚本。' >&2
@@ -62,6 +65,31 @@ read_pm2_port() {
         if (port) process.stdout.write(String(port))
       } catch {
         /* jlist 输出不是 JSON 时留给下面的默认值兜底 */
+      }
+    })
+  '
+}
+
+# PM2 里这个应用实际执行的脚本绝对路径 —— 用来确认它真的是本仓库的 server/index.cjs。
+# 同名进程跑着别的脚本（比如某个静态文件服务）时，reload 只会继续重启错的东西。
+read_pm2_script() {
+  pm2 jlist 2>/dev/null | node -e '
+    let raw = ""
+    process.stdin.setEncoding("utf8")
+    process.stdin.on("data", (chunk) => (raw += chunk))
+    process.stdin.on("end", () => {
+      try {
+        const apps = JSON.parse(raw).filter(
+          (item) =>
+            item.name === process.env.APP_NAME &&
+            (!process.env.APP_NAMESPACE ||
+              item.pm2_env?.namespace === process.env.APP_NAMESPACE),
+        )
+        const app = apps.find((item) => item.pm2_env?.status === "online") ?? apps[0]
+        const script = app?.pm2_env?.pm_exec_path
+        if (script) process.stdout.write(String(script))
+      } catch {
+        /* 读不到就留空，下面按「不是本仓库服务端」处理 */
       }
     })
   '
@@ -116,12 +144,32 @@ if ! ls dist/index.html >/dev/null 2>&1; then
 fi
 
 if pm2 describe "${APP_NAME}" >/dev/null 2>&1; then
-  echo "==> pm2 reload ${APP_NAME}（最多等 10 秒）"
-  if ! timeout 10s pm2 reload "${APP_NAME}" --update-env; then
-    echo "ERROR: pm2 reload ${APP_NAME} 超过 10 秒没有完成。" >&2
-    echo '多半是服务名不对（核对 pm2 ls 的 NAME 列）。' >&2
-    pm2_name_hint
-    exit 1
+  APP_SCRIPT="$(read_pm2_script || true)"
+  if [ "${APP_SCRIPT}" != "${EXPECTED_SCRIPT}" ]; then
+    echo "ERROR: PM2 里的「${APP_NAME}」跑的不是本仓库的服务端，reload 修不好它。" >&2
+    echo "       当前脚本：${APP_SCRIPT:-（读不到，pm2 里可能是旧配置）}" >&2
+    echo "       期望脚本：${EXPECTED_SCRIPT}" >&2
+    echo '       这种状态下 /api 根本不存在：后台登录不了，`/admin` 也存不进去。' >&2
+    echo '       换成 ecosystem.config.cjs 里的服务端（沿用当前端口）：' >&2
+    echo '         RECREATE=1 bash scripts/deploy.sh' >&2
+    echo '       或者手动：' >&2
+    echo "         pm2 delete ${APP_NAME} && PORT=${PORT} pm2 start ecosystem.config.cjs" >&2
+    echo '       起完确认 nginx 反代到同一个端口（server/index.cjs 只监听 127.0.0.1）。' >&2
+    if [ "${RECREATE:-0}" != "1" ]; then
+      exit 1
+    fi
+    echo "==> RECREATE：删除旧进程「${APP_NAME}」，按端口 ${PORT} 重新起"
+    pm2 delete "${APP_NAME}"
+    PORT="${PORT}" pm2 start ecosystem.config.cjs --update-env
+    pm2 save
+  else
+    echo "==> pm2 reload ${APP_NAME}（最多等 10 秒）"
+    if ! timeout 10s pm2 reload "${APP_NAME}" --update-env; then
+      echo "ERROR: pm2 reload ${APP_NAME} 超过 10 秒没有完成。" >&2
+      echo '多半是服务名不对（核对 pm2 ls 的 NAME 列）。' >&2
+      pm2_name_hint
+      exit 1
+    fi
   fi
 else
   # 端口已被占、但 PM2 里没有这个名字：别再起一个抢端口，
@@ -137,19 +185,26 @@ else
   pm2 save
 fi
 
-echo "==> 健康检查 ${HEALTH_URL}"
+echo "==> 健康检查 ${HEALTH_URL}（响应必须是 ok）"
+# 只认 200 不够：静态服务器对 /healthz 也会回 200 的 index.html，
+# 那种「假绿」正是进程起错时的典型症状。这里严格比对响应体。
+probe_health() {
+  curl -fsS --max-time 3 "${HEALTH_URL}" 2>/dev/null || true
+}
 ok=0
 for _ in $(seq 1 20); do
-  if curl -fsS --max-time 3 "${HEALTH_URL}" >/dev/null 2>&1; then
+  if [ "$(probe_health)" = "ok" ]; then
     ok=1
     break
   fi
   sleep 0.5
 done
 if [ "${ok}" != "1" ]; then
-  echo "ERROR: 健康检查失败，最近 30 行日志：" >&2
+  echo "ERROR: 健康检查失败（期望 ok，实际：$(probe_health | head -c 120)）。" >&2
+  echo '       如果回的是 HTML，说明端口上答话的不是 server/index.cjs。' >&2
+  echo "       最近 30 行日志：" >&2
   pm2 logs "${APP_NAME}" --lines 30 --nostream >&2 || true
   exit 1
 fi
 
-echo "==> 完成：$(pm2 describe "${APP_NAME}" | grep -E 'status|script' | head -2)"
+echo "==> 完成：$(pm2 describe "${APP_NAME}" | grep -E 'status|script path' | head -2)"
