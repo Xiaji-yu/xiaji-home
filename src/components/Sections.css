@@ -31,10 +31,6 @@
   .tabs__inner {
     min-height: calc(100dvh - var(--header-h) - var(--status-h));
   }
-
-  .tabs__view {
-    min-height: min(64dvh, 560px);
-  }
 }
 
 .tabs__inner {
@@ -48,7 +44,9 @@
   display: grid;
   /* 只有一栏了：左栏那列选项整个取消（导航挪到屏幕两侧的箭头 + 底部那条线）*/
   grid-template-columns: minmax(0, 1fr);
-  align-items: center;
+  /* 拉伸而不是居中：面板撑满整块高度，章标题才能落在同一条基线上
+     （以前按内容高度居中，切章时标题会上下跳） */
+  align-items: stretch;
   width: 100%;
   /* 宽度正好等于"左栏 + 间距 + 板块 + 两侧留白"，再 margin auto —— 整组在屏幕上居中，
      1080P 上不再整体偏左（想改板块宽度只动 --col-w 就行）*/
@@ -330,6 +328,8 @@
 
 .tabs__panel {
   position: relative;
+  display: flex;
+  flex-direction: column;
   min-width: 0; /* grid 子项默认 min-width:auto，会被宽内容顶破 */
   width: 100%;
   /* 比图形高一层；自己不要底色 —— 图形要能从留白穴里透出来。
@@ -586,12 +586,13 @@
 .tabs__view {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  /* 面板自己的高度下限：内容更矮时也撑住，居中才有参照。
-     这里曾经写成 var(--vh) —— 全站没有任何地方定义它，整条声明
-     invalid at computed-value time、min-height 回落 auto，等于没写。
-     dvh 版本在上面那个 @supports 块里，和 .tabs 保持同一套路 */
-  min-height: min(64vh, 560px);
+  /* 内容从顶端开始：六个章节的标题因此对齐在同一基线上；
+     剩下的高度由 flex 吃掉，贯穿全屏的框线也就固定在同样的位置 */
+  justify-content: flex-start;
+  flex: 1 1 auto;
+  min-height: 0;
+  /* 让开吸顶页眉和首屏那条状态栏：标题落在这条基线上，六章一致 */
+  padding-top: clamp(20px, 5vh, 56px);
 }
 
 /* hidden 的面板必须真的消失（下面的 display:flex 会盖掉 UA 的 [hidden]） */
@@ -1122,6 +1123,8 @@
 
   .tabs__view {
     min-height: 0;
+    /* 手机上首屏状态栏本来就矮，再叠两层内边距会顶出太多空白 */
+    padding-top: 4px;
   }
 
   .tabs__figure {
