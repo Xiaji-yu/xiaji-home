@@ -1,8 +1,8 @@
 /**
- * 零依赖静态服务器 —— 只服务 vite build 产出的 ../dist。
+ * 零依赖静态服务器 —— 服务 vite build 产出的 ../dist，外加后台内容 API。
  * 生产环境交给 PM2 看守（ecosystem.config.cjs），
  * 完整部署步骤（Nginx 反代 / TLS / 开机自启 / 日志轮转 / 更新回滚）
- * 见 docs/PM2-DEPLOY.md。
+ * 见 docs/PM2-DEPLOY.md，后台（/admin）说明见 docs/ADMIN.md。
  *
  * 刻意不引任何 npm 包：这个站整包 gzip 后约 80 kB，
  * node 内置的 http / fs / zlib 完全够用 ——
@@ -14,11 +14,23 @@ const http = require('node:http')
 const fs = require('node:fs')
 const path = require('node:path')
 const zlib = require('node:zlib')
+const { createContentStore } = require('./content.cjs')
+const { createApiHandler } = require('./api.cjs')
 
 const ROOT = path.resolve(__dirname, '..', 'dist')
+const INDEX_ABS = path.join(ROOT, 'index.html')
 const PORT = Number(process.env.PORT || 4173)
 const HOST = process.env.HOST || '127.0.0.1'
 const MAX_ENTRIES = 256 // 内存里最多驻留多少份压缩结果（这个站的资源数远到不了）
+
+/* 线上内容仓库（content/site.json）+ /api 路由。
+   ADMIN_PASSWORD 在 ecosystem.config.cjs 的 env 里配；没配时后台只读不可写。 */
+const contentStore = createContentStore()
+const api = createApiHandler({
+  store: contentStore,
+  password: process.env.ADMIN_PASSWORD,
+  isProd: process.env.NODE_ENV === 'production',
+})
 
 const MIME = {
   '.css': 'text/css; charset=utf-8',
@@ -46,24 +58,84 @@ const FALLBACK_CACHE = 'public, max-age=3600'
 const cache = new Map()
 
 function compress(abs, ext, stat) {
-  const raw = fs.readFileSync(abs)
-  cache.set(abs, {
+  return makeEntry(fs.readFileSync(abs), MIME[ext] || 'application/octet-stream')
+}
+
+/** 把一份原始字节做成 { raw, gz, br, type } 三件套 */
+function makeEntry(raw, type) {
+  return {
     raw,
     gz: zlib.gzipSync(raw, { level: zlib.constants.Z_BEST_COMPRESSION }),
     br: zlib.brotliCompressSync(raw),
-    type: MIME[ext] || 'application/octet-stream',
-    mtimeMs: stat.mtimeMs,
-  })
-  if (cache.size > MAX_ENTRIES) {
-    const oldest = cache.keys().next().value
-    cache.delete(oldest)
+    type,
   }
-  return cache.get(abs)
 }
 
 function entryFor(abs, ext, stat) {
   const hit = cache.get(abs)
-  return hit && hit.mtimeMs === stat.mtimeMs ? hit : compress(abs, ext, stat)
+  if (hit && hit.mtimeMs === stat.mtimeMs) return hit
+  const entry = { ...compress(abs, ext, stat), mtimeMs: stat.mtimeMs }
+  cache.set(abs, entry)
+  if (cache.size > MAX_ENTRIES) {
+    const oldest = cache.keys().next().value
+    cache.delete(oldest)
+  }
+  return entry
+}
+
+/* ---- index.html 的线上 meta 替换 ----------------------------------------
+   构建时 index.html 的 <title> / og:* 已经被 site.js 的值填死了，
+   但后台编辑改的是 content/site.json —— 所以在响应 index.html 时，
+   把标题、描述、分享卡片这几处替换成线上内容里的 meta。
+   结果按 (dist mtime + 内容版本) 缓存，内容不变就是一次内存查找。 */
+
+const htmlCache = new Map() // abs -> { key, entry }
+
+/** HTML 属性值转义（和 vite.config.js 的 fillPlaceholders 同一套） */
+function escapeAttr(value) {
+  return String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
+}
+
+function applyLiveMeta(html, content) {
+  const site = content?.site
+  if (!site) return html
+  const meta = site.meta || {}
+  const title = meta.title || (site.name ? `${site.name} · 个人主页` : '')
+  const replacements = [
+    [/([<]title[^>]*>)[^<]*(<\/title>)/, title],
+    [/([<]meta\s+property="og:title"\s+content=")[^"]*(")/, title],
+    [/([<]meta\s+property="og:description"\s+content=")[^"]*(")/, meta.description],
+    [/([<]meta\s+property="og:image"\s+content=")[^"]*(")/, meta.ogImage],
+    [/([<]meta\s+name="twitter:card"\s+content=")[^"]*(")/, meta.twitterCard],
+    [/([<]meta\s+name="description"\s+content=")[^"]*(")/, meta.description],
+  ]
+  for (const [pattern, value] of replacements) {
+    if (!value) continue
+    html = html.replace(pattern, (m, before, after) => before + escapeAttr(value) + after)
+  }
+  return html
+}
+
+function htmlEntryFor(abs) {
+  let stat
+  try {
+    stat = fs.statSync(abs)
+  } catch {
+    return null
+  }
+  const key = `${stat.mtimeMs}:${stat.size}:${contentStore.version()}`
+  const hit = htmlCache.get(abs)
+  if (hit && hit.key === key) return hit.entry
+  let html = fs.readFileSync(abs, 'utf8')
+  try {
+    const { content } = contentStore.read()
+    html = applyLiveMeta(html, content)
+  } catch (error) {
+    console.error('[my-homepage] live meta skipped:', error.message) // 内容坏了就出构建版
+  }
+  const entry = makeEntry(Buffer.from(html, 'utf8'), 'text/html; charset=utf-8')
+  htmlCache.set(abs, { key, entry })
+  return entry
 }
 
 /** 把 URL 路径收敛到 dist 内；越界 / 不存在返回 null（404 还是 SPA 回退由调用方决定） */
@@ -113,6 +185,12 @@ function handle(req, res) {
     return res.end('ok')
   }
 
+  /* /api/* 交给后台内容 API（内部处理 POST/PUT 和鉴权），其余仍是只读静态站 */
+  if (pathname.startsWith('/api/')) {
+    api(req, res)
+    return
+  }
+
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     res.writeHead(405, { allow: 'GET, HEAD' })
     return res.end()
@@ -128,7 +206,15 @@ function handle(req, res) {
   }
 
   try {
-    const entry = entryFor(file.abs, file.ext, file.stat)
+    /* index.html 单独走：注入线上内容的 meta（分享卡片跟随后台编辑，即时生效） */
+    const entry =
+      file.abs === INDEX_ABS
+        ? htmlEntryFor(file.abs)
+        : entryFor(file.abs, file.ext, file.stat)
+    if (!entry) {
+      res.writeHead(500)
+      return res.end()
+    }
     const headers = {
       'content-type': entry.type,
       'cache-control': cacheControlFor(pathname, file.ext),

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import Reveal from './Reveal.jsx'
-import { site } from '../data/site.js'
+import { useSite } from '../data/SiteContext.jsx'
 import './Notes.css'
 
 /* ==========================================================================
@@ -46,6 +46,7 @@ function makeId() {
 }
 
 export default function Notes() {
+  const site = useSite()
   const { notes: config } = site
   const max = config.maxLength || 100
 

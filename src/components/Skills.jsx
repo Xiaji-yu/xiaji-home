@@ -1,6 +1,6 @@
 import { useProgress } from '../hooks/useCountUp.js'
 import Reveal from './Reveal.jsx'
-import { site } from '../data/site.js'
+import { useSite } from '../data/SiteContext.jsx'
 import './Skills.css'
 
 /* play 由 Sections 给：每次切进「技能栈」这一章都会换一个新值，
@@ -37,6 +37,7 @@ function SkillRow({ skill, index, play }) {
 }
 
 export default function Skills({ play = 0 }) {
+  const site = useSite()
   return (
     <section className="section" id="skills">
       <div className="wrap">

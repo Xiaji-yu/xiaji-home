@@ -1,8 +1,9 @@
 import Reveal from './Reveal.jsx'
-import { site } from '../data/site.js'
+import { useSite } from '../data/SiteContext.jsx'
 import './About.css'
 
 export default function About() {
+  const site = useSite()
   const { about } = site
 
   return (

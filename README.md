@@ -82,6 +82,7 @@
 - ✨ **滚动揭示** —— 进入视口淡入上浮，逐条错落出现
 - 📊 **技能条生长 + 数字滚动**、**卡片悬停 3D 倾斜**、**按钮从左侧填充**
 - 📝 **留言便签墙** —— 100 字上限、存在浏览器本地、可单条撕掉
+- 🛠 **内容后台（`/admin`）** —— 部署后不用登服务器改文件：浏览器里表单化编辑全站文案，保存即生效（无需重新构建）；内容可导出 JSON 留档 / 迁移，也能从 JSON 导入；保存前自动备份。详见 [docs/ADMIN.md](docs/ADMIN.md)
 - 📱 **完整响应式** —— 桌面 / 平板 / 手机：≤1279px 平板段撤掉留白穴、内容摊回一列，粒子图形改固定右侧、缩小、35% 透明度当背景（小米平板 7 Pro 实测过）；≤860px 手机端图形整块隐藏、箭头收小贴边；粒子格子按屏幕面积自适应
 - ♿ **尊重系统设置** —— 开启「减少动态效果」后完全不建粒子，直接显示同一套点阵的静态图
 - 🧰 **开箱即用的工程化** —— ESLint 10 + Prettier + CI + Pages 自动部署 + Dependabot
@@ -118,7 +119,7 @@ npm run dev
 | `npm run lint:fix`     | ESLint 自动修复                                                |
 | `npm run format`       | Prettier 格式化全仓库                                          |
 | `npm run format:check` | 只检查格式，不改文件（CI 用）                                  |
-| `npm run test`         | 跑 `lib/` 纯函数的单元测试（vitest，36 个）                    |
+| `npm run test`         | 跑单元测试（vitest：`lib/` 纯函数 + 后台内容模块，46 个）      |
 | `npm run check`        | `lint` + `format:check` + `test` + `build`，**提 PR 前跑这个** |
 
 ## 项目结构
@@ -140,10 +141,20 @@ my-homepage/
 │  ├─ preview-mouse.png          光标按坑与慢慢流回 + 滚动逐层错开
 ├─ public/                     不经构建、原样拷贝的资源：PWA manifest、应用图标、
 │                              og 分享图、scrollRestoration 脚本（CSP 不许内联，只能外置）
+├─ server/                     零依赖生产服务器 + 后台内容 API（见 docs/PM2-DEPLOY.md）
+│  ├─ index.cjs                  静态服务 dist：SPA 回退、压缩缓存、CSP、/api 路由、
+│  │                             index.html 的分享卡片 meta 跟随线上内容
+│  ├─ api.cjs                    /api：登录（口令换 HMAC token）、内容读写、登录限速
+│  ├─ content.cjs                content/site.json 的原子读写 + 自动备份（保留 10 份）
+│  └─ content.test.mjs           上述两块的单测
+├─ content/                    后台编辑的线上内容（gitignore，在服务器上生成）
 └─ src/
-   ├─ main.jsx                 入口
+   ├─ main.jsx                 入口（/admin 渲染后台，其余渲染站点）
    ├─ App.jsx                  板块顺序，想调整页面结构就改这里
    ├─ data/site.js.example     ★ 全站文案模板；复制成 site.js 后修改（site.js 不进仓库）
+   ├─ data/SiteContext.jsx     运行时内容：拉 /api/content 与构建默认值深合并，
+   │                           标签标题 / 分享 meta / favicon 跟随线上内容
+   ├─ admin/                   内容后台（/admin）：登录 + 分区表单 + 导入导出
    ├─ lib/dither.js            山景算法：噪声 + 抖动（决定"山长什么样"、点放哪儿）
    ├─ lib/particles.js         粒子：采样、开场无序云、归位、光标按坑（纯函数，可离线渲染验证）
    ├─ lib/figures.js           六个板块的几何图形（全部代码画，不引图片）
@@ -174,6 +185,8 @@ cp src/data/site.js.example src/data/site.js
 ```
 
 然后**只改 `src/data/site.js`**。它是个人配置文件，已经被 `.gitignore` 忽略，不会把你的姓名、邮箱、备案号提交上去；模板 `site.js.example` 继续留在仓库里给后来的人用。
+
+**部署之后有更省事的改法：打开 `/admin` 内容后台**（开发环境 `npm run dev` 后也可以），表单化编辑全部文案，保存即生效，不用登服务器、不用重新构建，还能导出 / 导入 JSON。`site.js` 的角色变成**构建时的默认值和兜底**：后台改的内容存在服务器 `content/site.json`，前台打开页面时拉取并与默认值合并；部署到 GitHub Pages 这类没有后端的平台时自动只用默认值。后台的口令、备份、安全设计见 [docs/ADMIN.md](docs/ADMIN.md)。
 
 姓名、座右铭、技能、项目、经历、联系方式、页脚链接全在里面，那六章的顺序与中英文名（`sectionTabs`：中文名 + 英文标签 + 对应板块的 id）也在里面。文件里凡是标了 `← 换成你的` 的地方都是占位内容。
 
@@ -330,6 +343,17 @@ Vercel / Netlify），构建设置同样是「`npm run build` / 输出 `dist` / 
 PM2 进程定义 `ecosystem.config.cjs`、一键更新脚本 `scripts/deploy.sh`，
 完整步骤（Nginx 反代 / TLS / 开机自启 / 日志轮转 / 回滚 / 排错）见
 [docs/PM2-DEPLOY.md](docs/PM2-DEPLOY.md)。与托管平台二选一，切换只改 DNS。
+
+自托管还有个专属福利：**内容后台 `/admin`**。托管在 Cloudflare / Pages 这类纯静态
+平台时没有后端，后台用不了（前台自动只用构建时的 `site.js`）；自托管则完整可用 ——
+首次启动带上口令：
+
+```bash
+ADMIN_PASSWORD='换成你自己的长口令' pm2 start ecosystem.config.cjs
+```
+
+之后打开 `https://你的域名/admin` 就能在浏览器里改全站文案、保存即生效、
+导入导出 JSON。细节（备份 / 安全 / 常见问题）见 [docs/ADMIN.md](docs/ADMIN.md)。
 
 ### GitHub Pages（需要公开仓库或 Pro 以上）
 

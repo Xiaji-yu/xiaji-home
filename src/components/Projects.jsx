@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Reveal from './Reveal.jsx'
-import { site } from '../data/site.js'
+import { useSite } from '../data/SiteContext.jsx'
 import { prefersReducedMotion } from '../hooks/useCountUp.js'
 import './Projects.css'
 
@@ -74,6 +74,7 @@ function ProjectCard({ project }) {
 }
 
 export default function Projects() {
+  const site = useSite()
   return (
     <section className="section" id="work">
       <div className="wrap">

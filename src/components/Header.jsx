@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useState } from 'react'
-import { navLinks, site } from '../data/site.js'
+import { useNavLinks, useSite } from '../data/SiteContext.jsx'
 import { INTRO_MS } from '../lib/particles.js'
 import { prefersReducedMotion } from '../hooks/useCountUp.js'
 import './Header.css'
@@ -27,6 +27,8 @@ const RISE_MS = 900
 const CURTAIN_OUT_MS = 900
 
 export default function Header() {
+  const site = useSite()
+  const navLinks = useNavLinks()
   // 开了「减少动态效果」就跳过整个开场：页眉一开始就在位、进度直接 100%
   const reduced = typeof window !== 'undefined' && prefersReducedMotion()
   const [pct, setPct] = useState(reduced ? 100 : 0)

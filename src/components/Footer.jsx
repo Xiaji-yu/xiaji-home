@@ -1,8 +1,9 @@
-import { site } from '../data/site.js'
+import { useSite } from '../data/SiteContext.jsx'
 import beianIcon from '../assets/beian-icon.png'
 import './Footer.css'
 
 export default function Footer() {
+  const site = useSite()
   const { footer } = site
   const socials = footer.socials || []
 

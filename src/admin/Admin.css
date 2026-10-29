@@ -1,0 +1,896 @@
+/* ==========================================================================
+   内容后台 —— 和前台同一套黑白网格语言：纸底、墨线、等宽小标签
+   变量来自 styles/tokens.css（main.jsx 统一引入）
+   ========================================================================== */
+
+.adm-page {
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- 登录页：左「这是哪」+ 右「凭口令进」 -------------------------------
+   点阵纸底（呼应全站粒子美学）、中缝一条贯穿竖线、竖线中点一枚圆点。
+   左栏：粒子球体 + 大字文案；右栏：底线式口令表单。 */
+
+/* ---- 登录页：居中面板 + 边框延伸线（线条主题） --------------------------
+   卡片四条边线各自向屏幕四边延伸（排版里的「裁切标记」语言）：
+   线画在卡片层之下，穿过卡片的部分被实心卡片底盖住，
+   看起来就是「从边距长进来、消失在卡片后面」。 */
+
+.adm-login {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden; /* 延伸线是 100vw / 100vh，裁掉溢出免得出现滚动条 */
+  padding: 24px;
+  background-color: var(--paper);
+  /* 点阵纹理：等大墨点，和粒子山同一个语言 */
+  background-image: radial-gradient(circle, rgba(17, 17, 17, 0.075) 1px, transparent 1.1px);
+  background-size: 17px 17px;
+  color: var(--ink);
+  font-family: var(--sans);
+}
+
+.adm-login__tag {
+  position: absolute;
+  top: 26px;
+  left: clamp(24px, 5vw, 72px);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--ink-soft);
+}
+.adm-login__tag--r {
+  left: auto;
+  right: clamp(24px, 5vw, 72px);
+  color: var(--muted);
+}
+
+.adm-login__foot {
+  position: absolute;
+  left: clamp(24px, 5vw, 72px);
+  bottom: 26px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+}
+.adm-login__foot--r {
+  left: auto;
+  right: clamp(24px, 5vw, 72px);
+  text-align: right;
+}
+
+/* ---- 四角十字准星 ---- */
+.adm-login__mark {
+  position: absolute;
+  width: 15px;
+  height: 15px;
+}
+.adm-login__mark::before,
+.adm-login__mark::after {
+  content: '';
+  position: absolute;
+  background: var(--ink-soft);
+}
+.adm-login__mark::before {
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+}
+.adm-login__mark::after {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+}
+.adm-login__mark--tl {
+  top: 14px;
+  left: 14px;
+}
+.adm-login__mark--tr {
+  top: 14px;
+  right: 14px;
+}
+.adm-login__mark--bl {
+  bottom: 14px;
+  left: 14px;
+}
+.adm-login__mark--br {
+  bottom: 14px;
+  right: 14px;
+}
+
+/* ---- 屏幕两侧的刻度尺（像仪器面板） ---- */
+.adm-login__ticks {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 9px;
+  height: 34vh;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--line-soft) 0 1px,
+    transparent 1px 11px
+  );
+}
+.adm-login__ticks--l {
+  left: 22px;
+}
+.adm-login__ticks--r {
+  right: 22px;
+}
+
+/* ---- 面板与四条延伸线 ---- */
+.adm-login__panel {
+  position: relative;
+  width: min(460px, 100%);
+}
+
+/* 卡片两侧的纵向标注线：贴着卡片边框各两条（一实一点），上下贯穿全屏 */
+.adm-login__vrules {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 56px;
+  pointer-events: none;
+}
+.adm-login__vrules--l {
+  right: 100%;
+}
+.adm-login__vrules--r {
+  left: 100%;
+}
+.adm-login__vrules::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  /* 两端渐隐：线「长」进屏幕边缘，不在边缘处生硬截断 */
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--line-soft) 40px,
+    var(--line-soft) calc(100% - 40px),
+    transparent
+  );
+}
+.adm-login__vrules::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  opacity: 0.55;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--line-soft) 0 5px,
+    transparent 5px 12px
+  );
+}
+.adm-login__vrules--l::before {
+  right: 22px;
+}
+.adm-login__vrules--l::after {
+  right: 46px;
+}
+.adm-login__vrules--r::before {
+  left: 22px;
+}
+.adm-login__vrules--r::after {
+  left: 46px;
+}
+
+.adm-login__rule {
+  position: absolute;
+  background: var(--line);
+  z-index: 0;
+}
+/* 延伸线的远端各落一枚小方点节点（8 个，像图纸的定位标记） */
+.adm-login__rule::before,
+.adm-login__rule::after {
+  content: '';
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background: var(--ink);
+}
+.adm-login__rule--t::before {
+  left: 30px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.adm-login__rule--t::after {
+  right: 30px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.adm-login__rule--b::before {
+  left: 30px;
+  bottom: 50%;
+  transform: translateY(50%);
+}
+.adm-login__rule--b::after {
+  right: 30px;
+  bottom: 50%;
+  transform: translateY(50%);
+}
+.adm-login__rule--l::before {
+  top: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.adm-login__rule--l::after {
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.adm-login__rule--r::before {
+  top: 30px;
+  right: 50%;
+  transform: translateX(50%);
+}
+.adm-login__rule--r::after {
+  bottom: 30px;
+  right: 50%;
+  transform: translateX(50%);
+}
+.adm-login__rule--r {
+  top: 50%;
+  right: 0;
+  width: 1.5px;
+  height: 100vh;
+  transform: translate(50%, -50%);
+}
+
+/* ---- 开场编排：线沿自己的方向推进进场 ------------------------------
+   横线横向平移（从左/右屏幕外推入），竖线纵向平移（从上/下推入），
+   像一排尺子被依次推到位。主线四条先就位，卡片内结构线跟着
+   各自的内容推进，标注线最后滑入。开局画面上只有卡片淡入。 */
+
+@keyframes adm-in-h-from-left {
+  from {
+    transform: translate(calc(-50% - 100vw), 0);
+  }
+  to {
+    transform: translate(-50%, 0);
+  }
+}
+@keyframes adm-in-h-from-right {
+  from {
+    transform: translate(calc(-50% + 100vw), 0);
+  }
+  to {
+    transform: translate(-50%, 0);
+  }
+}
+@keyframes adm-in-t-from-left {
+  from {
+    transform: translate(calc(-50% - 100vw), -50%);
+  }
+  to {
+    transform: translate(-50%, -50%);
+  }
+}
+@keyframes adm-in-b-from-right {
+  from {
+    transform: translate(calc(-50% + 100vw), 50%);
+  }
+  to {
+    transform: translate(-50%, 50%);
+  }
+}
+@keyframes adm-in-l-from-top {
+  from {
+    transform: translate(-50%, calc(-50% - 100vh));
+  }
+  to {
+    transform: translate(-50%, -50%);
+  }
+}
+@keyframes adm-in-r-from-bottom {
+  from {
+    transform: translate(50%, calc(-50% + 100vh));
+  }
+  to {
+    transform: translate(50%, -50%);
+  }
+}
+@keyframes adm-in-v-from-top {
+  from {
+    transform: translateY(-100vh);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes adm-in-v-from-bottom {
+  from {
+    transform: translateY(100vh);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes adm-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes adm-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.adm-login__rule--t {
+  animation: adm-in-t-from-left 0.75s var(--ease) 0.3s both;
+}
+.adm-login__rule--l {
+  animation: adm-in-l-from-top 0.75s var(--ease) 0.5s both;
+}
+.adm-login__rule--r {
+  animation: adm-in-r-from-bottom 0.75s var(--ease) 0.65s both;
+}
+.adm-login__rule--b {
+  animation: adm-in-b-from-right 0.75s var(--ease) 0.8s both;
+}
+.adm-login__bar::after {
+  animation: adm-in-h-from-right 0.7s var(--ease) 0.95s both;
+}
+.adm-login__no::after {
+  animation: adm-in-h-from-left 0.7s var(--ease) 1.05s both;
+}
+.adm-login__keeprow::before {
+  animation: adm-in-h-from-right 0.7s var(--ease) 1.15s both;
+}
+.adm-login__session::before {
+  animation: adm-in-h-from-left 0.7s var(--ease) 1.25s both;
+}
+.adm-login__row::before {
+  animation: adm-in-h-from-right 0.7s var(--ease) 1.35s both;
+}
+.adm-login__vrules--l {
+  animation: adm-in-v-from-top 0.9s var(--ease) 0.9s both;
+}
+.adm-login__vrules--r {
+  animation: adm-in-v-from-bottom 0.9s var(--ease) 1.05s both;
+}
+
+.adm-login__card {
+  animation: adm-card-in 0.6s var(--ease) 0.12s both;
+}
+.adm-login__tag,
+.adm-login__foot {
+  animation: adm-fade 0.6s var(--ease) 1.5s both;
+}
+.adm-login__ticks {
+  animation: adm-fade 0.6s var(--ease) 1.3s both;
+}
+.adm-login__mark {
+  animation: adm-fade 0.6s var(--ease) 1.4s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adm-login,
+  .adm-login * {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+  }
+}
+
+.adm-login__rule--t {
+  left: 50%;
+  top: 0;
+  width: 100vw;
+  height: 1.5px;
+  transform: translate(-50%, -50%);
+}
+.adm-login__rule--b {
+  left: 50%;
+  bottom: 0;
+  width: 100vw;
+  height: 1.5px;
+  transform: translate(-50%, 50%);
+}
+.adm-login__rule--l {
+  top: 50%;
+  left: 0;
+  width: 1.5px;
+  height: 100vh;
+  transform: translate(-50%, -50%);
+}
+.adm-login__rule--r {
+  top: 50%;
+  right: 0;
+  width: 1.5px;
+  height: 100vh;
+  transform: translate(50%, -50%);
+}
+
+/* ---- 卡片（实心纸底，盖住穿过自己的线） ---- */
+.adm-login__card {
+  position: relative;
+  z-index: 1;
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  box-shadow: 8px 8px 0 rgba(17, 17, 17, 0.08);
+}
+
+.adm-login__bar,
+.adm-login__no,
+.adm-login__row,
+.adm-login__keeprow {
+  position: relative;
+}
+/* 卡片内的结构分隔线延伸贯穿全屏：伪元素以分隔线为中心横贯 100vw，
+   卡片内的部分与 border 重合（同色同宽看不出），卡片外露出「从边距长进来」 */
+.adm-login__bar::after,
+.adm-login__no::after,
+.adm-login__row::before,
+.adm-login__keeprow::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  width: 100vw;
+  height: 1px;
+  background: var(--line-soft);
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: -1;
+}
+.adm-login__bar::after {
+  bottom: -1px;
+}
+.adm-login__no::after {
+  bottom: -1px;
+}
+.adm-login__row::before {
+  top: -1px;
+}
+.adm-login__keeprow::before {
+  top: 0;
+}
+
+.adm-login__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 22px;
+  border-bottom: 1px solid var(--line);
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  color: var(--ink-soft);
+}
+.adm-login__bar span:last-child {
+  color: var(--muted);
+}
+
+.adm-login__form {
+  display: flex;
+  flex-direction: column;
+  padding: 34px 32px 28px;
+}
+
+/* 章节编号行：站点里「01 / 02 / 03」的板式语言 */
+.adm-login__no {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line-soft);
+  padding-bottom: 12px;
+  margin-bottom: 30px;
+}
+
+.adm-login__welcome {
+  margin: 0 0 8px;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.adm-login__sub {
+  margin: 0 0 40px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.adm-login__labelrow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.adm-login__label {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--ink-soft);
+  margin-bottom: 6px;
+}
+
+.adm-login__labelen {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+}
+
+.adm-login__field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--line-soft);
+  background: transparent;
+  transition: border-color 0.15s var(--ease);
+}
+/* 填写刻度尺：输入条下方一排细刻度（图纸的填写栏语言） */
+.adm-login__field::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -8px;
+  height: 5px;
+  background: repeating-linear-gradient(
+    to right,
+    var(--line-soft) 0 1px,
+    transparent 1px 13px
+  );
+  opacity: 0.55;
+  pointer-events: none;
+}
+/* 墨色焦点线：聚焦时从中心向两侧展开 */
+.adm-login__caret {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1.5px;
+  height: 2px;
+  background: var(--ink);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.35s var(--ease);
+  pointer-events: none;
+}
+.adm-login__field:focus-within {
+  border-bottom-color: var(--line-soft);
+}
+.adm-login__field:focus-within .adm-login__caret {
+  transform: scaleX(1);
+}
+/* 口令不对：底线变红 + 整条抖动 */
+.adm-login__field.is-error {
+  border-bottom-color: #b42318;
+  animation: adm-shake 0.4s var(--ease);
+}
+.adm-login__field.is-error .adm-login__caret {
+  background: #b42318;
+  transform: scaleX(1);
+}
+
+@keyframes adm-shake {
+  20% {
+    transform: translateX(-7px);
+  }
+  40% {
+    transform: translateX(7px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+.adm-login__caps {
+  margin: 10px 0 0;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: #b42318;
+}
+
+.adm-login__input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 15px;
+  padding: 12px 2px;
+  color: var(--ink);
+  outline: none;
+}
+.adm-login__input::placeholder {
+  color: var(--line-soft);
+}
+
+.adm-login__show {
+  border: 0;
+  background: none;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 6px 2px;
+}
+.adm-login__show:hover {
+  color: var(--ink);
+}
+
+.adm-login__submit {
+  margin-top: 40px;
+  border: 1px solid var(--line);
+  background: var(--ink);
+  color: var(--paper);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-indent: 0.28em; /* 视觉居中补偿字距 */
+  padding: 14px 0;
+  cursor: pointer;
+  transition:
+    opacity 0.15s var(--ease),
+    background 0.15s var(--ease);
+}
+.adm-login__submit:hover:not(:disabled) {
+  background: var(--ink-soft);
+}
+.adm-login__submit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ---- 保持登录开关 + 会话时长 ---- */
+.adm-login__keeprow {
+  margin-top: 20px;
+  padding-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.adm-login__keep {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  user-select: none;
+}
+.adm-login__keep input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.adm-login__keep i {
+  width: 15px;
+  height: 15px;
+  border: 1px solid var(--line);
+  background: var(--white);
+  display: grid;
+  place-items: center;
+  transition: background 0.15s var(--ease);
+}
+.adm-login__keep i::after {
+  content: '';
+  width: 7px;
+  height: 7px;
+  background: var(--paper);
+  transform: scale(0);
+  transition: transform 0.15s var(--ease);
+}
+.adm-login__keep input:checked + i {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+.adm-login__keep input:checked + i::after {
+  transform: scale(1);
+}
+.adm-login__keep input:focus-visible + i {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+.adm-login__keep span {
+  font-size: 11.5px;
+  color: var(--ink-soft);
+}
+
+.adm-login__ses {
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+
+.adm-login__devhint {
+  margin: 14px 0 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* ---- 会话信息面板：左会话 · 右内容 ------------------------
+   两条贯穿线都锚定在这里：面板顶线横贯 100vw，
+   两列之间的纵向分隔线纵贯 100vh（上下长进屏幕边缘）。 */
+.adm-login__session {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 26px;
+  border-top: 1px solid var(--line-soft);
+  margin-top: 34px;
+  padding-top: 16px;
+}
+.adm-login__session::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -1px;
+  width: 100vw;
+  height: 1px;
+  background: var(--line-soft);
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.adm-login__sesscol {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+}
+
+.adm-login__sesskey {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+}
+.adm-login__sessval {
+  font-size: 12.5px;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adm-login__row {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line-soft);
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.adm-login__row a {
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+.adm-login__row a:hover {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+/* ---- 窄屏：面板占满宽度，延伸线保留，装饰收紧 ---- */
+@media (max-width: 1180px) {
+  .adm-login__vrules--l::after,
+  .adm-login__vrules--r::after {
+    display: none; /* 空间不够时先收掉外侧的点线 */
+  }
+}
+@media (max-width: 900px) {
+  .adm-login__vrules {
+    display: none; /* 面板贴边后标注线没有立足之地 */
+  }
+}
+@media (max-width: 560px) {
+  .adm-login {
+    padding: 20px 16px;
+  }
+  .adm-login__tag {
+    top: 18px;
+    left: 16px;
+  }
+  .adm-login__tag--r,
+  .adm-login__mark,
+  .adm-login__ticks {
+    display: none;
+  }
+  .adm-login__foot {
+    display: none;
+  }
+  .adm-login__form {
+    padding: 28px 22px 24px;
+  }
+  .adm-login__welcome {
+    font-size: 26px;
+  }
+  .adm-login__submit {
+    margin-top: 36px;
+  }
+  .adm-login__row {
+    margin-top: 38px;
+  }
+  /* 会话面板窄屏改单列 */
+  .adm-login__session {
+    grid-template-columns: 1fr;
+  }
+}
+/* ---- toast ---- */
+.adm-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  border: 1.5px solid var(--line);
+  background: var(--white);
+  padding: 10px 20px;
+  font-size: 13px;
+  box-shadow: 4px 4px 0 rgba(17, 17, 17, 0.12);
+  animation: adm-toast-in 0.25s var(--ease);
+}
+.adm-toast--ok {
+  background: var(--ink);
+  color: var(--paper);
+}
+.adm-toast--err {
+  border-color: #8b1f1f;
+  color: #8b1f1f;
+  background: #fdf6f6;
+}
+
+@keyframes adm-toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* ---- 窄屏：导航横向 ---- */
+@media (max-width: 760px) {
+  .adm-body {
+    grid-template-columns: 1fr;
+  }
+  .adm-nav {
+    position: static;
+    flex-direction: row;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding: 0;
+  }
+  .adm-nav__item {
+    border-left: 0;
+    border-bottom: 3px solid transparent;
+    white-space: nowrap;
+    padding: 10px 14px;
+  }
+  .adm-nav__item.is-on {
+    border-bottom-color: var(--ink);
+    background: none;
+  }
+  .adm-top {
+    padding: 10px 16px;
+  }
+}

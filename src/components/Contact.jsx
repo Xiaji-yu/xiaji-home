@@ -1,5 +1,5 @@
 import Reveal from './Reveal.jsx'
-import { site } from '../data/site.js'
+import { useSite } from '../data/SiteContext.jsx'
 import './Contact.css'
 
 function ChannelCard({ channel }) {
@@ -38,6 +38,7 @@ function ChannelCard({ channel }) {
 }
 
 export default function Contact() {
+  const site = useSite()
   const { contact } = site
 
   return (

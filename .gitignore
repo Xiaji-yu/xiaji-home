@@ -40,6 +40,9 @@ src/data/site.js
 # 但模板本身要进仓库
 !src/data/site.js.example
 
+# ---- 后台线上内容（content/site.json 在服务器上由后台生成）----
+content/
+
 # ---- 本地临时目录 ----
 .npm-cache/
 .verify/

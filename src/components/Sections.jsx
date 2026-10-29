@@ -6,7 +6,7 @@ import Timeline from './Timeline.jsx'
 import Contact from './Contact.jsx'
 import Notes from './Notes.jsx'
 import FigureCanvas from './FigureCanvas.jsx'
-import { sectionTabs } from '../data/site.js'
+import { useSectionTabs } from '../data/SiteContext.jsx'
 import { prefersReducedMotion } from '../hooks/useCountUp.js'
 import './Sections.css'
 
@@ -33,15 +33,20 @@ const PANELS = {
   notes: Notes,
 }
 
-/** 读地址栏里的 #xxx，只认六个板块的 id */
-function hashId() {
+/** 读地址栏里的 #xxx，只认选项卡里存在的板块 id */
+function hashId(tabs) {
   if (typeof window === 'undefined') return ''
   const id = window.location.hash.replace('#', '')
-  return sectionTabs.some((t) => t.id === id) ? id : ''
+  return tabs.some((t) => t.id === id) ? id : ''
 }
 
 export default function Sections() {
-  const [active, setActive] = useState(() => hashId() || sectionTabs[0].id)
+  /* 选项卡跟内容一样支持后台编辑：没有对应面板的 id 直接滤掉 */
+  const allTabs = useSectionTabs()
+  const sectionTabs = allTabs.filter((t) => PANELS[t.id])
+  const [active, setActive] = useState(
+    () => hashId(allTabs) || sectionTabs[0]?.id || 'about',
+  )
   /* 幽灵字交叉淡入：留住上一个名字，让它淡出的同时新的淡入 */
   const [mark, setMark] = useState({ cur: '', prev: '' })
   /* 整块入场动画的"保险栓"：整块滚进视野之前先别演，滚到了才放行 */
@@ -86,21 +91,21 @@ export default function Sections() {
   /* 外部改 hash（页眉链接、浏览器前进后退）→ 切到对应面板 */
   useEffect(() => {
     const onHash = () => {
-      const id = hashId()
+      const id = hashId(allTabs)
       if (!id) return
       setActive((prev) => (prev === id ? prev : id))
       alignBlock()
     }
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)
-  }, [alignBlock])
+  }, [alignBlock, allTabs])
 
   /* 直接带 #锚点 打开页面（分享出去的链接）：开场 2.9s 里 body 被 is-locked
      锁住（overflow:hidden），浏览器的原生锚点跳转在那之前就放弃了，解锁后
      不会再重试 —— 实测停在首屏不动。所以挂载时自己对齐：解锁那一刻的下一轮
      尝试正好落位；用户先滚了就立刻收手，绝不跟人抢滚动条。 */
   useEffect(() => {
-    if (!hashId()) return undefined
+    if (!hashId(allTabs)) return undefined
     let landed = false
     let timer = 0
     const abort = () => {
@@ -129,7 +134,7 @@ export default function Sections() {
       window.removeEventListener('touchstart', abort)
       window.clearTimeout(timer)
     }
-  }, [alignBlock])
+  }, [alignBlock, allTabs])
 
   /* 所有指向章节的锚点（页眉、页脚、首屏按钮）都由这里接管：
      ① 目标章节常常是隐藏的，浏览器跳不过去；② 浏览器把这次跳转推迟到 React
@@ -150,7 +155,7 @@ export default function Sections() {
     }
     document.addEventListener('click', onClick)
     return () => document.removeEventListener('click', onClick)
-  }, [alignBlock])
+  }, [alignBlock, sectionTabs])
 
   /** 切面板 + 只改地址栏（replaceState 不触发 hashchange，免得重复滚动） */
   const select = useCallback(
@@ -164,13 +169,16 @@ export default function Sections() {
     [ensureInView],
   )
 
-  /** 左右箭头：在六章之间循环 */
+  /** 左右箭头：在几章之间循环（active 因内容热更新失效时落回第一章） */
   const step = useCallback(
     (d) => {
-      const i = sectionTabs.findIndex((t) => t.id === active)
+      const i = Math.max(
+        0,
+        sectionTabs.findIndex((t) => t.id === active),
+      )
       select(sectionTabs[(i + d + sectionTabs.length) % sectionTabs.length].id)
     },
-    [active, select],
+    [active, select, sectionTabs],
   )
 
   /* 键盘：←/→ 切相邻章节（填表单时让开，不抢光标键） */
@@ -187,7 +195,9 @@ export default function Sections() {
     return () => window.removeEventListener('keydown', onKey)
   }, [step])
 
-  const activeEn = sectionTabs.find((t) => t.id === active)?.en || ''
+  /* 内容热更新后 active 可能指向已不存在的板块 —— 找不到就落回第一章 */
+  const safeActive = sectionTabs.some((t) => t.id === active) ? active : sectionTabs[0]?.id
+  const activeEn = sectionTabs.find((t) => t.id === safeActive)?.en || ''
 
   /* 幽灵字换名字：把当前这个名字挪到 prev，新的成为 cur */
   useEffect(() => {
@@ -252,7 +262,7 @@ export default function Sections() {
 
   const index = Math.max(
     0,
-    sectionTabs.findIndex((t) => t.id === active),
+    sectionTabs.findIndex((t) => t.id === safeActive),
   )
   const chevron = (d) => (
     <svg width="20" height="34" viewBox="0 0 20 34" fill="none" aria-hidden="true">
@@ -281,10 +291,10 @@ export default function Sections() {
                   key={t.id}
                   id={t.id}
                   aria-label={t.cn}
-                  hidden={t.id !== active}
+                  hidden={t.id !== safeActive}
                   className="tabs__view"
                 >
-                  <Panel play={t.id === active ? playTick : 0} />
+                  <Panel play={t.id === safeActive ? playTick : 0} />
                 </section>
               )
             })}
@@ -293,7 +303,7 @@ export default function Sections() {
           {/* 粒子画布：铺在整块板块区上，图形落在右侧的留白穴里
               （六章统一位置，切板块只变形、不挪窝） */}
           <div className="tabs__figure">
-            <FigureCanvas id={active} />
+            <FigureCanvas id={safeActive} />
           </div>
 
           {/* 当前板块的名字，压成大号幽灵字（参考图左下那个 WORLD）。

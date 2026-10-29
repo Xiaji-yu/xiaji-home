@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react'
 import ParticleMountain from './ParticleMountain.jsx'
-import { site } from '../data/site.js'
+import { useSite } from '../data/SiteContext.jsx'
 import { prefersReducedMotion } from '../hooks/useCountUp.js'
 import './Hero.css'
 
 export default function Hero() {
+  const site = useSite()
   const stageRef = useRef(null)
   const mountRef = useRef(null)
   const titleRef = useRef(null)

@@ -1,9 +1,17 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { createRequire } from 'node:module'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { site } from './src/data/site.js'
+
+const require = createRequire(import.meta.url)
+/* 后台内容 API 与生产（server/index.cjs）共用同一套实现：
+   dev / preview 里也能完整体验 /admin —— 登录、编辑、保存、导入导出。
+   开发口令默认 admin（ADMIN_PASSWORD 可覆盖）；内容写在 content/site.json。 */
+const { createContentStore } = require('./server/content.cjs')
+const { createApiHandler } = require('./server/api.cjs')
 
 /**
  * BASE_PATH 用来兼容 GitHub Pages：
@@ -82,9 +90,36 @@ function siteMetaPlugin() {
   }
 }
 
+/* dev / preview 挂后台 API：与生产（server/index.cjs）共用同一套实现，
+   npm run dev 打开 /admin 就是完整后台（开发口令默认 admin）。 */
+function adminApiPlugin() {
+  const store = createContentStore()
+  const api = createApiHandler({
+    store,
+    password: process.env.ADMIN_PASSWORD || 'admin', // 开发口令；生产必须显式配置
+    isProd: false,
+  })
+  const attach = (middlewares) => {
+    middlewares.use((req, res, next) => {
+      api(req, res).then((handled) => {
+        if (!handled) next()
+      })
+    })
+  }
+  return {
+    name: 'admin-api',
+    configureServer(server) {
+      attach(server.middlewares)
+    },
+    configurePreviewServer(server) {
+      attach(server.middlewares)
+    },
+  }
+}
+
 export default defineConfig({
   base,
-  plugins: [react(), siteMetaPlugin()],
+  plugins: [react(), siteMetaPlugin(), adminApiPlugin()],
   server: {
     host: '127.0.0.1',
     port: 5173,

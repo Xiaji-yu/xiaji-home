@@ -46,13 +46,19 @@ npm ci
 npm run build          # 产物在 dist/；约 100 kB，几秒完成
 
 # 4) 交给 PM2（想换端口：PORT=5000 pm2 start ecosystem.config.cjs）
-pm2 start ecosystem.config.cjs
+#    想用 /admin 内容后台：把口令也带上（不配则后台只读不可写）
+ADMIN_PASSWORD='换成你自己的长口令' pm2 start ecosystem.config.cjs
 pm2 save               # 把进程清单落盘（开机自启靠它）
 
 # 5) 本地自检
 curl -fsS http://127.0.0.1:4173/healthz            # → ok
 curl -sI http://127.0.0.1:4173/ | grep -i cache    # → cache-control: no-cache
+curl -s http://127.0.0.1:4173/api/content          # → {"updatedAt":null,"content":null}
 ```
+
+> **内容后台**：部署后在浏览器打开 `https://你的域名/admin`，登录就能改全站文案，
+> 保存即生效（写 `content/site.json`，前台刷新可见），支持导入导出 JSON、
+> 自动备份。口令、安全设计和常见问题见 [ADMIN.md](ADMIN.md)。
 
 > `src/data/site.js` 是个人配置（姓名、邮箱、备案号等），已加入 `.gitignore`，
 > 不会进仓库；仓库里只有模板 `src/data/site.js.example`。更新脚本发现缺这个文件时会
@@ -69,9 +75,9 @@ curl -sI http://127.0.0.1:4173/ | grep -i cache    # → cache-control: no-cache
 - 其他静态文件：`public, max-age=3600`
 - `Accept-Encoding` 里带 `br` 走 brotli、否则 `gzip`、都不支持才直出；
   压缩结果首次访问时算好并驻留内存（整站解压后约 1 MB），之后**零 CPU**
-- 无扩展名的路径（SPA 路由）一律回退到 `index.html`；带扩展名但找不到的文件老实 404
+- 无扩展名的路径（SPA 路由，含 `/admin`）一律回退到 `index.html`；带扩展名但找不到的文件老实 404
 - 目录穿越（`/../package.json` 这类）一律 404
-- `GET`/`HEAD` 之外的方法 405；只暴露 `GET /healthz` 一个探针
+- `GET`/`HEAD` 之外的方法 405（`/api/*` 除外，那是后台内容 API：读公开、写要口令 token）；只暴露 `GET /healthz` 一个探针
 
 ## 2. 开机自启
 

@@ -1,6 +1,6 @@
 import { useReveal } from '../hooks/useReveal.js'
 import Reveal from './Reveal.jsx'
-import { site } from '../data/site.js'
+import { useSite } from '../data/SiteContext.jsx'
 import './Timeline.css'
 
 function TimelineItem({ item, index }) {
@@ -19,6 +19,7 @@ function TimelineItem({ item, index }) {
 }
 
 export default function Timeline() {
+  const site = useSite()
   return (
     <section className="section" id="journey">
       <div className="wrap">

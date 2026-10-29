@@ -33,6 +33,10 @@ module.exports = {
         // deploy.sh 的健康检查会自动读取 PM2 里实际生效的 PORT
         PORT: Number(process.env.PORT || 4173),
         HOST: '127.0.0.1', // 只监听本地，外部流量一律走 Nginx 反代
+        // 内容后台（/admin）的登录口令：第一次 pm2 start 前设置好，例如
+        //   ADMIN_PASSWORD='换成你自己的长口令' pm2 start ecosystem.config.cjs
+        // 改口令 = 改这里后 pm2 restart --update-env（所有已发的登录 token 立即作废）
+        ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || '',
       },
     },
   ],
