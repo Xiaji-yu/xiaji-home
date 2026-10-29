@@ -697,9 +697,13 @@ export default function AdminApp() {
     <div className="adm-page adm-page--app">
       <header className="adm-top" ref={headerRef}>
         <div className="adm-top__brand">
-          <span className="adm-top__dot" data-on={dirty ? '1' : '0'} />
-          内容后台
-          {dirty && <em className="mono">有未保存的修改</em>}
+          <span className="adm-top__mark mono" aria-hidden="true">
+            AD
+          </span>
+          <span className="adm-top__title">内容后台</span>
+          <span className="adm-top__sub mono">CONTENT ADMIN</span>
+          <span className="adm-top__dot" data-on={dirty ? '1' : '0'} aria-hidden="true" />
+          {dirty && <em className="mono">未保存</em>}
           {mustChange && <em className="mono">默认口令未修改</em>}
         </div>
         <div className="adm-top__ops">
@@ -756,20 +760,25 @@ export default function AdminApp() {
 
       <div className="adm-body">
         <nav className="adm-nav" aria-label="内容分区">
-          {SECTIONS.map((s) => (
+          {SECTIONS.map((s, i) => (
             <button
               key={s.id}
               type="button"
               className={`adm-nav__item${s.id === section ? ' is-on' : ''}`}
               onClick={() => setSection(s.id)}
             >
-              {s.label}
+              <span className="adm-nav__idx mono">{String(i + 1).padStart(2, '0')}</span>
+              <span className="adm-nav__label">{s.label}</span>
             </button>
           ))}
         </nav>
 
-        <main className="adm-main">
+        <main className="adm-main" key={current.id}>
           <div className="adm-main__head">
+            <span className="adm-main__eyebrow mono">
+              {String(SECTIONS.findIndex((s) => s.id === current.id) + 1).padStart(2, '0')}{' '}
+              · {current.id.toUpperCase()}
+            </span>
             <h2>{current.label}</h2>
             <p>{current.desc}</p>
           </div>

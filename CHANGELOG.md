@@ -99,6 +99,8 @@
 
 ### 变更
 
+- **后台界面按站点语言重做了一轮**：顶栏换成「AD 墨块 + 标题 + CONTENT ADMIN 小字 + 状态点」的记号（和页脚 AD 方块同源），操作按钮改成幽灵按钮（悬停才出现细框），保存是唯一的实心主操作，**没有改动时退回细描边**而不是一块灰；左侧分区导航加了 01–10 的目录编号，选中项细墨条 + 纸色底 + 加粗；主区标题上方加一行「— 04 · SKILLS」等宽眉标，字段组标题前加一小段线；输入框悬停描边转深、聚焦转墨，字段标签随焦点变墨；数组卡片边框降到浅灰一档（悬停才转深），编号加粗，增删按钮默认幽灵态；切换分区时主区轻轻推入（`prefers-reduced-motion` 下关闭）。
+
 - **`site.js` 改为模板 + 本地副本模式**：仓库只保留 `src/data/site.js.example`，个人配置 `src/data/site.js` 加入 `.gitignore`。首次使用先 `cp src/data/site.js.example src/data/site.js` 再改；CI 构建前自动复制模板，`scripts/deploy.sh` 发现缺文件会提示复制命令，避免把姓名 / 邮箱 / 备案号等个人信息提交进仓库。
 
 - **备案行改成两行、放左下角**：`Footer.css` 的 `.foot__beian` 从"一行居中"改成 `flex-direction: column` + `align-items: flex-start`，左边与页脚其它内容对齐（`padding-left` 用同一个 `--pad`），中间那个分隔点去掉（换行后没意义）；两行各带自己的链接，行距 5px。

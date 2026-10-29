@@ -1013,38 +1013,54 @@
   z-index: 20;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  gap: 14px;
   flex-wrap: wrap;
-  padding: 10px var(--pad);
+  padding: 9px var(--pad);
   border-bottom: 1px solid var(--line);
-  background: color-mix(in srgb, var(--paper) 92%, transparent);
-  backdrop-filter: blur(6px);
+  background: var(--paper); /* 不支持 color-mix 的老浏览器也有一层实底 */
+  background: color-mix(in srgb, var(--paper) 94%, transparent);
+  backdrop-filter: blur(8px);
 }
 
 .adm-top__brand {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  min-width: 0;
+}
+
+/* 品牌块：一枚墨色小方牌（和页脚 AD 方块同一个记号） */
+.adm-top__mark {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-indent: 0.1em;
+}
+
+.adm-top__title {
+  font-size: 13.5px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
   white-space: nowrap;
 }
-.adm-top__brand em {
-  font-style: normal;
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 400;
-  letter-spacing: 0.08em;
+
+.adm-top__sub {
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
   color: var(--muted);
-  padding: 3px 6px;
-  border: 1px solid var(--line-soft);
+  white-space: nowrap;
 }
-/* 未保存提示点：纸色小方块，有改动才变墨 */
+
+/* 未保存状态点：一小格灰，有改动变墨 */
 .adm-top__dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   background: var(--line-soft);
   transition: background 0.2s var(--ease);
 }
@@ -1052,10 +1068,21 @@
   background: var(--ink);
 }
 
+.adm-top__brand em {
+  font-style: normal;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  padding: 2px 6px;
+  border: 1px solid var(--line-soft);
+  white-space: nowrap;
+}
+
 .adm-top__ops {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
   margin-left: auto;
 }
@@ -1065,21 +1092,22 @@
   flex: 0 0 auto;
 }
 
-/* ---- 按钮：和站点 .btn 同语法，小一号 ---- */
+/* ---- 按钮：次级是「幽灵」按钮（悬停才有框），主操作整块翻墨 ---- */
 .adm-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   min-height: 34px;
-  padding: 7px 12px;
-  border: 1px solid var(--line-soft);
-  background: var(--white);
-  color: var(--ink-soft);
+  padding: 7px 11px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
   font-family: var(--mono);
-  font-size: 11.5px;
+  font-size: 11px;
   letter-spacing: 0.06em;
   text-decoration: none;
+  white-space: nowrap;
   cursor: pointer;
   transition:
     background-color 0.2s var(--ease),
@@ -1087,16 +1115,27 @@
     color 0.2s var(--ease);
 }
 .adm-btn:hover:not(:disabled) {
-  border-color: var(--line);
+  border-color: var(--line-soft);
+  background: var(--white);
   color: var(--ink);
-  background: var(--paper-2);
 }
 .adm-btn:active:not(:disabled) {
   transform: translateY(1px);
 }
+.adm-btn:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
 .adm-btn:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
+}
+/* 「已保存」不该还是一块黑：没有改动时退回细描边，等于告诉人这里不用点 */
+.adm-btn--solid:disabled {
+  opacity: 1;
+  background: transparent;
+  border-color: var(--line-soft);
+  color: var(--muted);
 }
 .adm-btn--solid {
   background: var(--ink);
@@ -1113,7 +1152,7 @@
 .adm-body {
   flex: 1;
   display: grid;
-  grid-template-columns: 210px minmax(0, 1fr);
+  grid-template-columns: 224px minmax(0, 1fr);
   align-items: start;
 }
 
@@ -1130,12 +1169,14 @@
 }
 
 .adm-nav__item {
-  display: block;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
   width: 100%;
-  padding: 12px 18px 12px 15px;
+  padding: 12px 16px 12px 13px;
   border: 0;
   border-bottom: 1px solid var(--line-soft);
-  border-left: 3px solid transparent;
+  border-left: 2px solid transparent;
   background: none;
   color: var(--muted);
   font: inherit;
@@ -1150,16 +1191,38 @@
   color: var(--ink);
   background: var(--paper-2);
 }
+.adm-nav__item:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+}
 .adm-nav__item.is-on {
   border-left-color: var(--ink);
   background: var(--paper-2);
   color: var(--ink);
+}
+.adm-nav__item.is-on .adm-nav__label {
   font-weight: 700;
+}
+
+/* 分区编号：像图纸的目录行，选中变墨 */
+.adm-nav__idx {
+  flex: 0 0 16px;
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  color: var(--line-soft);
+  transition: color 0.2s var(--ease);
+}
+.adm-nav__item:hover .adm-nav__idx,
+.adm-nav__item.is-on .adm-nav__idx {
+  color: var(--muted);
+}
+.adm-nav__item.is-on .adm-nav__idx {
+  color: var(--ink);
 }
 
 .adm-main {
   min-width: 0;
-  padding: 26px var(--pad) 72px;
+  padding: 28px var(--pad) 72px;
   /* 在导航右侧那一格里居中：grid 项用 auto 外边距居中会被缩成
      fit-content（实测只剩 390px 宽），必须显式给宽度 + justify-self */
   width: 100%;
@@ -1167,34 +1230,84 @@
   justify-self: center;
 }
 
+/* 切换分区时轻轻推入一下（key={current.id} 触发重放） */
+.adm-main {
+  animation: adm-view-in 0.22s var(--ease);
+}
+@keyframes adm-view-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .adm-main {
+    animation: none;
+  }
+}
+
+/* 标题区：一行等宽眉标（编号 · 英文），下面才是中文大标题 */
+.adm-main__head {
+  margin-bottom: 8px;
+}
+.adm-main__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  color: var(--muted);
+}
+/* 眉标前一小段墨线，呼应全站的「尺寸标注」语言 */
+.adm-main__eyebrow::before {
+  content: '';
+  width: 18px;
+  height: 1px;
+  background: var(--line);
+}
+
 .adm-main__head h2 {
-  margin: 0 0 6px;
-  font-size: 24px;
+  margin: 10px 0 8px;
+  font-size: 26px;
   font-weight: 800;
   letter-spacing: 0.01em;
 }
 .adm-main__head p {
-  margin: 0 0 22px;
+  margin: 0 0 24px;
   font-size: 13px;
   color: var(--muted);
 }
 
 /* ---- 字段组：一根细线开始，标签是等宽小号 ---- */
 .adm-group {
-  padding: 18px 0 20px;
+  padding: 20px 0 22px;
   border-top: 1px solid var(--line-soft);
 }
 .adm-group__label {
-  margin: 0 0 12px;
+  margin: 0 0 14px;
   font-family: var(--mono);
   font-size: 10.5px;
   font-weight: 400;
   letter-spacing: 0.12em;
   color: var(--muted);
 }
+/* 组标题前一小段线，和眉标同一套标记 */
+.adm-group__label::before {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 1px;
+  margin-right: 8px;
+  vertical-align: middle;
+  background: var(--line-soft);
+}
 
 .adm-field {
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 .adm-field:last-child {
   margin-bottom: 0;
@@ -1205,9 +1318,14 @@
   font-size: 10.5px;
   letter-spacing: 0.06em;
   color: var(--muted);
+  transition: color 0.2s var(--ease);
+}
+/* 正在编辑的字段，标签跟着变墨：眼睛不用在表单里找焦点 */
+.adm-field:focus-within > .adm-field__label {
+  color: var(--ink);
 }
 
-/* ---- 输入控件：细描边、纸面感，聚焦时底线转墨 ---- */
+/* ---- 输入控件：细描边、纸面感，聚焦时描边转墨 ---- */
 .adm-input {
   width: 100%;
   border: 1px solid var(--line-soft);
@@ -1218,20 +1336,23 @@
   font-size: 13.5px;
   line-height: 1.5;
   outline: none;
-  /* iOS 上字号 <16px 聚焦会自动放大整页，这里先按桌面密度，窄屏媒体里再抬 */
   transition:
     border-color 0.2s var(--ease),
     background-color 0.2s var(--ease);
 }
+.adm-input:hover {
+  border-color: var(--ink-soft);
+}
 .adm-input:focus {
   border-color: var(--ink);
-  background: var(--paper);
+  background: var(--white);
 }
 .adm-input--num {
-  max-width: 120px;
+  max-width: 110px;
 }
 .adm-textarea {
   min-height: 84px;
+  line-height: 1.65;
   resize: vertical;
 }
 
@@ -1278,7 +1399,7 @@
   color: var(--ink-soft);
 }
 
-/* ---- 数组：每项一张带标题条的卡片，增删排序在标题条右侧 ---- */
+/* ---- 数组：每项一张卡片，编号条 + 右侧增删排序 ---- */
 .adm-array {
   display: flex;
   flex-direction: column;
@@ -1286,11 +1407,15 @@
 }
 
 .adm-item {
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-soft);
   background: var(--white);
+  transition: border-color 0.2s var(--ease);
+}
+.adm-item:hover {
+  border-color: var(--ink-soft);
 }
 .adm-item .adm-item {
-  border-color: var(--line-soft); /* 嵌套项用浅一档的线，层级不糊 */
+  border-color: var(--line-soft); /* 嵌套项不再叠加深色边框 */
 }
 
 .adm-item__bar {
@@ -1306,10 +1431,15 @@
   letter-spacing: 0.1em;
   color: var(--muted);
 }
+.adm-item__idx {
+  color: var(--ink);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
 
 .adm-item__ops {
   display: flex;
-  gap: 4px;
+  gap: 2px;
 }
 .adm-item__ops button {
   width: 26px;
@@ -1317,9 +1447,9 @@
   display: grid;
   place-items: center;
   padding: 0;
-  border: 1px solid var(--line-soft);
-  background: var(--white);
-  color: var(--ink-soft);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
   font-size: 13px;
   line-height: 1;
   cursor: pointer;
@@ -1329,11 +1459,12 @@
     color 0.15s var(--ease);
 }
 .adm-item__ops button:hover:not(:disabled) {
-  border-color: var(--ink);
+  border-color: var(--line);
+  background: var(--white);
   color: var(--ink);
 }
 .adm-item__ops button:disabled {
-  opacity: 0.35;
+  opacity: 0.3;
   cursor: not-allowed;
 }
 .adm-item__ops button.is-del:hover {
@@ -1359,9 +1490,12 @@
 
 .adm-add {
   align-self: flex-start;
-  padding: 8px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
   border: 1px dashed var(--line-soft);
-  background: none;
+  background: transparent;
   color: var(--muted);
   font-family: var(--mono);
   font-size: 11.5px;
@@ -1369,10 +1503,12 @@
   cursor: pointer;
   transition:
     border-color 0.2s var(--ease),
+    background-color 0.2s var(--ease),
     color 0.2s var(--ease);
 }
 .adm-add:hover {
   border-color: var(--ink);
+  background: var(--white);
   color: var(--ink);
 }
 
@@ -1382,6 +1518,12 @@
    导航从左侧竖栏改成顶部横向滚动条；顶栏折成两行，操作按钮一条横滚带；
    输入框字号抬到 16px，避免 iOS 聚焦自动放大整页。
    ========================================================================== */
+@media (max-width: 1180px) {
+  .adm-top__sub {
+    display: none; /* 顶栏挤的时候先收英文小字 */
+  }
+}
+
 @media (max-width: 760px) {
   /* 两行：品牌 + 保存（主操作永远看得见），其余操作一条横滚带 */
   .adm-top {
@@ -1392,15 +1534,26 @@
       'ops ops';
     align-items: center;
     gap: 8px 10px;
-    padding: 10px 14px;
+    padding: 9px 12px;
   }
   .adm-top__brand {
     grid-area: brand;
+  }
+  /* 手机上「保存 / 已保存」自己就是状态，留个灰点反而碍眼 */
+  .adm-top__dot {
+    display: none;
+  }
+  .adm-top__mark {
+    width: 24px;
+    height: 24px;
+    font-size: 8.5px;
+  }
+  .adm-top__title {
     font-size: 12.5px;
   }
   .adm-top__save {
     grid-area: save;
-    min-height: 34px;
+    min-height: 32px;
     padding: 6px 16px;
   }
   .adm-top__ops {
@@ -1415,11 +1568,18 @@
   .adm-top__ops::-webkit-scrollbar {
     display: none;
   }
-  .adm-btn {
+  /* 触屏上「幽灵按钮」没有悬停提示，得把边框还给它们；
+     主操作（保存）不在此列，否则会被刷成白底白字 */
+  .adm-btn:not(.adm-btn--solid) {
     flex: 0 0 auto;
     min-height: 32px;
     padding: 6px 10px;
-    font-size: 11px;
+    border-color: var(--line-soft);
+    background: var(--white);
+  }
+  .adm-btn--solid {
+    min-height: 32px;
+    padding: 6px 16px;
   }
 
   .adm-body {
@@ -1445,10 +1605,15 @@
   .adm-nav__item {
     flex: 0 0 auto;
     width: auto;
+    gap: 0;
     padding: 11px 14px;
     border-left: 0;
     border-bottom: 2px solid transparent;
     font-size: 12.5px;
+    white-space: nowrap;
+  }
+  .adm-nav__idx {
+    display: none; /* 横滚条上省空间，回到编号没意义 */
   }
   .adm-nav__item.is-on {
     border-bottom-color: var(--ink);
@@ -1460,7 +1625,8 @@
     max-width: none;
   }
   .adm-main__head h2 {
-    font-size: 20px;
+    font-size: 21px;
+    margin-top: 8px;
   }
   .adm-main__head p {
     margin-bottom: 16px;
@@ -1468,7 +1634,7 @@
   }
 
   .adm-group {
-    padding: 15px 0 16px;
+    padding: 16px 0 18px;
   }
 
   /* iOS：聚焦字号 <16px 会自动放大整页 */
@@ -1484,6 +1650,8 @@
     width: 32px;
     height: 32px;
     font-size: 15px;
+    border-color: var(--line-soft);
+    background: var(--white);
   }
   .adm-item__bar {
     padding-right: 4px;
@@ -1500,6 +1668,7 @@
 
   .adm-add {
     width: 100%;
+    justify-content: center;
     padding: 11px 14px;
   }
 }
