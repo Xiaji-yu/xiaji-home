@@ -76,6 +76,15 @@ figure {
   margin: 0;
 }
 
+/* 标题字体走 --heading（默认同 --sans）：后台「字体」分区选了标题字体时，
+   SiteContext 注入的样式会覆盖这里的栈 —— 只有标题变，正文不受牵连 */
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--heading);
+}
+
 ul,
 ol {
   margin: 0;

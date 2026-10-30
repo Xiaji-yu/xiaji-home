@@ -3,6 +3,10 @@
  *
  *   GET  /api/content          读线上内容（公开：前台渲染也要用）
  *   PUT  /api/content          写线上内容（要 token；全量覆盖，写前自动备份）
+ *   GET  /api/fonts            字体清单（公开：前台注入 @font-face 也要用）
+ *   POST /api/fonts            上传字体（要 token；原始字节，文件名在 ?name=）
+ *   GET  /api/fonts/file/<名>   字体文件本体（公开静态服务，immutable 缓存）
+ *   DELETE /api/fonts/<id>     删除字体（要 token）
  *   POST /api/admin/login      口令换 token
  *   POST /api/admin/password   改口令（要 token + 当前口令），返回新 token
  *   GET  /api/admin/session    验 token 还有没有效（顺带告诉前台要不要强制改密）
@@ -21,8 +25,14 @@
 'use strict'
 
 const crypto = require('node:crypto')
+const fs = require('node:fs')
 const path = require('node:path')
-const { ContentError } = require('./content.cjs')
+const {
+  ContentError,
+  createFontStore,
+  FONT_EXTS,
+  FONT_MAX_BYTES,
+} = require('./content.cjs')
 const { createAuthStore, PasswordPolicyError } = require('./auth.cjs')
 
 const TOKEN_TTL_MS = 12 * 60 * 60 * 1000 // 登录一次管 12 小时
@@ -30,6 +40,14 @@ const REMEMBER_TTL_MS = 30 * 24 * 60 * 60 * 1000 // 「保持登录」管 30 天
 const BODY_LIMIT = 512 * 1024
 const LOGIN_MAX_FAILS = 5
 const LOGIN_LOCK_MS = 10 * 60 * 1000
+
+/* @font-face 的 src 需要正确的格式提示，浏览器才肯加载 */
+const FONT_MIME = {
+  ttf: 'font/ttf',
+  otf: 'font/otf',
+  woff: 'font/woff',
+  woff2: 'font/woff2',
+}
 
 /** HMAC 签名（截断 32 位 hex）：签名内容绑定过期时间，改一个字符都过不了校验 */
 function sign(secret, expiry) {
@@ -101,18 +119,38 @@ function readBody(req) {
   })
 }
 
+/** 收二进制请求体（字体上传用）。超限不立刻断流：把请求体读完再回 400，
+    中途 destroy 会让客户端连接被掐、收不到错误响应。 */
+function readRawBody(req, limit) {
+  return new Promise((resolve, reject) => {
+    const chunks = []
+    let size = 0
+    req.on('data', (chunk) => {
+      size += chunk.length
+      if (size <= limit) chunks.push(chunk) // 超限后的字节直接丢弃，不再白占内存
+    })
+    req.on('end', () => {
+      if (size > limit) return reject(new ContentError('字体文件太大'))
+      resolve(Buffer.concat(chunks))
+    })
+    req.on('error', reject)
+  })
+}
+
 /**
  * 生成 API 处理器。
  *   store     内容仓库（content.cjs），口令文件默认放在它旁边
  *   password  初始口令（ADMIN_PASSWORD）；不传就用仓库内置默认口令
  *   authFile  口令文件位置覆盖（测试用；默认 content/admin-auth.json）
+ *   fontDir   字体目录覆盖（测试用；默认 content/fonts）
  * 返回 (req, res) => boolean：true 表示这个请求归 API 管（已经应答完）。
  */
-function createApiHandler({ store, password, authFile } = {}) {
+function createApiHandler({ store, password, authFile, fontDir } = {}) {
   const auth = createAuthStore({
     file: authFile || path.join(path.dirname(store.file), 'admin-auth.json'),
     envPassword: password,
   })
+  const fonts = createFontStore({ dir: fontDir })
   const loginFails = new Map() // ip -> { count, until }
 
   /* 启动时打一行「口令从哪来」——排查「为什么登不上」先看这一行。
@@ -193,6 +231,100 @@ function createApiHandler({ store, password, authFile } = {}) {
         console.error('[api] write content failed:', error)
         return sendJson(res, 500, { error: '写入失败，请查看服务器日志' })
       }
+    }
+
+    /* ---- 字体清单：公开（前台注入 @font-face 也要拉） ---- */
+    if (pathname === '/api/fonts' && (method === 'GET' || method === 'HEAD')) {
+      return sendJson(res, 200, { fonts: fonts.list() })
+    }
+
+    /* ---- 上传字体：要 token；默认口令期间一律拒绝（和写内容同一道闸） ----
+       零依赖不解析 multipart：前端直接 POST 原始字节，文件名放 query 里，
+       服务端只取它的扩展名（白名单）和去掉扩展名的显示名。 */
+    if (pathname === '/api/fonts' && method === 'POST') {
+      if (!verifyToken(auth.secret(), bearerOf(req))) {
+        return sendJson(res, 401, { error: '登录已过期，请重新登录' })
+      }
+      if (auth.mustChange()) {
+        return sendJson(res, 403, {
+          error: '还在用默认口令，先设置新口令再上传字体',
+          code: 'PASSWORD_CHANGE_REQUIRED',
+        })
+      }
+      let name = ''
+      try {
+        name = new URL(req.url, 'http://127.0.0.1').searchParams.get('name') || ''
+      } catch {
+        name = ''
+      }
+      const dot = name.lastIndexOf('.')
+      const ext = dot > 0 ? name.slice(dot).toLowerCase() : ''
+      if (!FONT_EXTS.includes(ext)) {
+        return sendJson(res, 400, { error: '只支持 .ttf / .otf / .woff / .woff2 字体文件' })
+      }
+      let body
+      try {
+        body = await readRawBody(req, FONT_MAX_BYTES)
+      } catch (error) {
+        return sendJson(res, 400, { error: error.message })
+      }
+      try {
+        const entry = fonts.save(body, name)
+        console.log(`[api] font uploaded: ${entry.name} (${entry.ext}, ${entry.size}B)`)
+        return sendJson(res, 200, { font: entry })
+      } catch (error) {
+        if (error instanceof ContentError)
+          return sendJson(res, 400, { error: error.message })
+        console.error('[api] font upload failed:', error)
+        return sendJson(res, 500, { error: '保存字体失败，请查看服务器日志' })
+      }
+    }
+
+    /* ---- 字体文件本体：公开静态服务（@font-face 的 src）----
+       文件名带随机 id、内容永不变化 → 放心发 immutable 缓存。 */
+    const fontFileMatch = pathname.match(/^\/api\/fonts\/file\/([^/]+)$/)
+    if (fontFileMatch && (method === 'GET' || method === 'HEAD')) {
+      let file = ''
+      try {
+        file = decodeURIComponent(fontFileMatch[1])
+      } catch {
+        return sendJson(res, 400, { error: '文件名不合法' })
+      }
+      const abs = fonts.pathOf(file)
+      if (!abs) return sendJson(res, 400, { error: '文件名不合法' })
+      let stat
+      try {
+        stat = require('node:fs').statSync(abs)
+      } catch {
+        return sendJson(res, 404, { error: '没有这个字体文件' })
+      }
+      const ext = file.slice(file.lastIndexOf('.') + 1).toLowerCase()
+      const raw = fs.readFileSync(abs)
+      res.writeHead(200, {
+        'content-type': FONT_MIME[ext] || 'application/octet-stream',
+        'content-length': raw.length,
+        'cache-control': 'public, max-age=31536000, immutable',
+        'x-content-type-options': 'nosniff',
+      })
+      return void (method === 'HEAD' ? res.end() : res.end(raw))
+    }
+
+    /* ---- 删除字体：要 token；清单和文件一起删 ---- */
+    const fontIdMatch = pathname.match(/^\/api\/fonts\/([^/]+)$/)
+    if (fontIdMatch && method === 'DELETE') {
+      if (!verifyToken(auth.secret(), bearerOf(req))) {
+        return sendJson(res, 401, { error: '登录已过期，请重新登录' })
+      }
+      let id = ''
+      try {
+        id = decodeURIComponent(fontIdMatch[1])
+      } catch {
+        return sendJson(res, 400, { error: '字体 id 不合法' })
+      }
+      const removed = fonts.remove(id)
+      if (!removed) return sendJson(res, 404, { error: '没有这个字体' })
+      console.log(`[api] font deleted: ${id}`)
+      return sendJson(res, 200, { ok: true })
     }
 
     /* ---- 登录：口令换 token ---- */

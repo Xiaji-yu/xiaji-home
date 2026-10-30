@@ -1590,6 +1590,167 @@
 }
 
 /* ==========================================================================
+   字体库（「字体」分区顶部的上传 / 列表 / 删除）
+   ========================================================================== */
+.adm-fonts__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.adm-fonts__empty {
+  padding: 18px;
+  border: 1px dashed var(--line-soft);
+  color: var(--muted);
+  font-size: 11px;
+  text-align: center;
+}
+
+.adm-font {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid var(--line-soft);
+  background: var(--white);
+  padding: 10px 12px;
+  transition: border-color 0.2s var(--ease);
+}
+.adm-font:hover {
+  border-color: var(--ink-soft);
+}
+
+/* 样字区：用这份字体本身渲染（@font-face 由 FontManager 注入），
+   固定宽度避免不同字体把行高撑得七扭八歪 */
+.adm-font__preview {
+  flex: 0 0 128px;
+  font-size: 21px;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  color: var(--ink);
+}
+
+.adm-font__meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.adm-font__name {
+  font-size: 13.5px;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adm-font__sub {
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+/* 内置字体（font/ 目录）只读：右侧是徽标而不是删除按钮 */
+.adm-font--local {
+  background: var(--paper);
+}
+.adm-font__badge {
+  margin-left: auto;
+  flex: 0 0 auto;
+  padding: 3px 7px;
+  border: 1px solid var(--line-soft);
+  background: var(--paper-2);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.adm-font__del {
+  margin-left: auto;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    border-color 0.15s var(--ease),
+    background-color 0.15s var(--ease),
+    color 0.15s var(--ease);
+}
+.adm-font__del:hover:not(:disabled) {
+  border-color: var(--line);
+  background: var(--white);
+  color: var(--ink);
+}
+.adm-font__del:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.adm-fonts__ops {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 上传按钮就是 <label>：内部透明 file input 铺满整块，
+   点击直接命中 input 本身（兼容不支持 JS 打开文件框的内置浏览器） */
+.adm-fonts__upload {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+.adm-fonts__upload.is-busy {
+  opacity: 0.55;
+  pointer-events: none;
+}
+.adm-fonts__file {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+  font-size: 0;
+}
+
+.adm-fonts__hint {
+  margin-top: 12px;
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+/* 字体下拉：复用 .adm-input 的描边，加一个原生 select 的箭头留白 */
+.adm-select {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--ink) 50%),
+    linear-gradient(135deg, var(--ink) 50%, transparent 50%);
+  background-position:
+    calc(100% - 16px) calc(50% - 2px),
+    calc(100% - 11px) calc(50% - 2px);
+  background-size:
+    5px 5px,
+    5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 32px;
+  cursor: pointer;
+}
+
+/* ==========================================================================
    窄屏（手机 / 窄平板）
    --------------------------------------------------------------------------
    导航从左侧竖栏改成顶部横向滚动条；顶栏折成两行，操作按钮一条横滚带；
@@ -1747,5 +1908,18 @@
     width: 100%;
     justify-content: center;
     padding: 11px 14px;
+  }
+
+  .adm-font {
+    flex-wrap: wrap;
+  }
+  .adm-font__preview {
+    flex: 1 1 100%;
+  }
+  .adm-font__del {
+    width: 34px;
+    height: 34px;
+    border-color: var(--line-soft);
+    background: var(--white);
   }
 }

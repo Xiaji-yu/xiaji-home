@@ -1,7 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import FieldEditor from './FieldEditor.jsx'
+import FontManager from './FontManager.jsx'
 import { SECTIONS, labelFor } from './sections.js'
-import { defaultSite, defaultTabs, defaultNav } from '../data/SiteContext.jsx'
+import { localFonts } from '../data/fonts.js'
+import {
+  defaultSite,
+  defaultTabs,
+  defaultNav,
+  deepMerge,
+  normalizeFontList,
+} from '../data/SiteContext.jsx'
 import './Admin.css'
 
 /* ==========================================================================
@@ -67,13 +75,14 @@ function getIn(obj, path) {
   return path.split('.').reduce((acc, key) => (acc == null ? acc : acc[key]), obj)
 }
 
-/** 导入的 JSON 兼容两种形状：完整 {site, sectionTabs, navLinks} 或裸 site 对象 */
+/** 导入的 JSON 兼容两种形状：完整 {site, sectionTabs, navLinks} 或裸 site 对象。
+    site 和构建默认值深合并：老版本内容缺的新字段（如 typography）补上默认值 */
 function normalizeImport(json) {
   if (!isObj(json)) throw new Error('根节点必须是一个 JSON 对象')
   const content = isObj(json.site) ? json : { site: json }
   if (!isObj(content.site)) throw new Error('缺少 site 字段（或它不是对象）')
   return {
-    site: content.site,
+    site: deepMerge(defaultSite, content.site),
     sectionTabs: Array.isArray(content.sectionTabs) ? content.sectionTabs : defaultTabs,
     navLinks: Array.isArray(content.navLinks) ? content.navLinks : defaultNav,
   }
@@ -151,6 +160,8 @@ export default function AdminApp() {
   /* 会话信息面板的两条真实数据 */
   const [lastLogin, setLastLogin] = useState(() => localStorage.getItem(LAST_LOGIN_KEY))
   const [contentUpdatedAt, setContentUpdatedAt] = useState(null)
+  /* 字体库清单（公开接口，不登录也能拉；上传 / 删除才要 token） */
+  const [fonts, setFonts] = useState([])
   const fileRef = useRef(null)
   const headerRef = useRef(null)
 
@@ -160,6 +171,26 @@ export default function AdminApp() {
     const t = window.setTimeout(() => setToast(null), 3500)
     return () => window.clearTimeout(t)
   }, [toast])
+
+  /* 拉字体库清单；上传 / 删除后调一次刷新 */
+  async function refreshFonts() {
+    try {
+      const res = await fetch(`${BASE}api/fonts`, {
+        headers: { accept: 'application/json' },
+      })
+      if (!res.ok) return
+      const data = await res.json().catch(() => null)
+      if (data) setFonts(normalizeFontList(data.fonts))
+    } catch {
+      /* 静态托管没有这个接口 —— 字体分区会显示空库 */
+    }
+  }
+
+  /* 全部可用字体 = font/ 目录内置 + 后台上传（下拉里分组展示） */
+  const allFonts = [
+    ...localFonts,
+    ...fonts.filter((f) => !localFonts.some((l) => l.id === f.id)),
+  ]
 
   /* ---- 启动：验会话 + 拉当前内容（线上没有就用构建默认值） ---- */
   useEffect(() => {
@@ -192,10 +223,13 @@ export default function AdminApp() {
         if (res.ok) {
           const data = await res.json()
           const c = data?.content
-          if (data?.updatedAt && !aborted) setContentUpdatedAt(data.updatedAt)
+          const hasData = data?.updatedAt && !aborted
+          if (hasData) setContentUpdatedAt(data.updatedAt)
           if (isObj(c?.site)) {
+            /* 与构建默认值深合并：老内容文件缺的新字段（typography 等）补默认值，
+               编辑器里始终能编辑全量字段 —— 和前台 SiteContext 同一套合并规则 */
             content = {
-              site: c.site,
+              site: deepMerge(defaultSite, c.site),
               sectionTabs: Array.isArray(c.sectionTabs) ? c.sectionTabs : defaultTabs,
               navLinks: Array.isArray(c.navLinks) ? c.navLinks : defaultNav,
             }
@@ -208,6 +242,7 @@ export default function AdminApp() {
       setDraft(clone(content))
       setBaseline(clone(content))
       setMustChange(needsChange)
+      refreshFonts()
       if (authed && needsChange) {
         setChangeForced(true)
         setCurPass('')
@@ -778,6 +813,16 @@ export default function AdminApp() {
             <h2>{current.label}</h2>
             <p>{current.desc}</p>
           </div>
+          {current.id === 'typography' && (
+            <FontManager
+              fonts={fonts}
+              localFonts={localFonts}
+              typography={draft.site?.typography}
+              token={token}
+              onChange={refreshFonts}
+              say={say}
+            />
+          )}
           {current.fields.map((path) => (
             <section className="adm-group" key={path}>
               <h3 className="adm-group__label mono">
@@ -786,6 +831,7 @@ export default function AdminApp() {
               <FieldEditor
                 path={path.replace(/^site\./, '')}
                 value={getIn(draft, path)}
+                fonts={allFonts}
                 onChange={(next) => setDraft((d) => setIn(d, path.split('.'), next))}
               />
             </section>

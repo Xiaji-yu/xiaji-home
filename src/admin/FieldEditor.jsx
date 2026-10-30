@@ -38,6 +38,49 @@ function isLongText(pathKey, value) {
   return /(desc|text|lead|sub|placeholder|paragraphs)\b|heroSub/.test(pathKey)
 }
 
+/* ---- 字体选择：typography 的三个角色在全部可用字体里挑一个 ----
+   fonts 是合并后的清单：font/ 目录内置（kind: local）+ 后台上传；
+   ''（默认）永远在第一个。 */
+const TYPO_ROLES = /^typography\.(body|heading|mono)$/
+
+function FontSelect({ path, value, onChange, fonts }) {
+  const role = path.split('.')[1]
+  const list = Array.isArray(fonts) ? fonts : []
+  const locals = list.filter((f) => f.kind === 'local')
+  const uploaded = list.filter((f) => f.kind !== 'local')
+  return (
+    <select
+      className="adm-input adm-select"
+      value={String(value ?? '')}
+      onChange={(e) => onChange(e.target.value)}
+    >
+      <option value="">
+        {role === 'heading' ? '默认（跟随正文字体）' : '默认（Inter / 系统字体栈）'}
+      </option>
+      {locals.length > 0 && (
+        <optgroup label="font/ 目录 · 内置">
+          {locals.map((f) => (
+            <option key={f.id} value={f.id}>
+              {f.name}
+              {f.id !== f.name ? `（${f.id}）` : ''}
+            </option>
+          ))}
+        </optgroup>
+      )}
+      {uploaded.length > 0 && (
+        <optgroup label="后台上传">
+          {uploaded.map((f) => (
+            <option key={f.id} value={f.id}>
+              {f.name}
+              {f.ext ? `（${String(f.ext).toUpperCase()}）` : ''}
+            </option>
+          ))}
+        </optgroup>
+      )}
+    </select>
+  )
+}
+
 /* ---- 单个字符串 / 数字 / 布尔控件 ---- */
 function ScalarInput({ path, value, onChange }) {
   const pathKey = path.replace(/\.\d+(?=[.[\]]|$)/g, '[]')
@@ -88,7 +131,7 @@ function ScalarInput({ path, value, onChange }) {
 }
 
 /* ---- 数组：增删 + 上移下移，每项递归 ---- */
-function ArrayEditor({ path, value, onChange }) {
+function ArrayEditor({ path, value, onChange, fonts }) {
   const items = Array.isArray(value) ? value : []
   const pathKey = path.replace(/\.\d+(?=[.[\]]|$)/g, '[]')
 
@@ -142,6 +185,7 @@ function ArrayEditor({ path, value, onChange }) {
           <FieldEditor
             path={`${path}.${i}`}
             value={item}
+            fonts={fonts}
             onChange={(next) => update(items.map((v, k) => (k === i ? next : v)))}
           />
         </div>
@@ -154,7 +198,7 @@ function ArrayEditor({ path, value, onChange }) {
 }
 
 /* ---- 对象：逐字段递归 ---- */
-function ObjectEditor({ path, value, onChange }) {
+function ObjectEditor({ path, value, onChange, fonts }) {
   const keys = Object.keys(value)
   return (
     <div className="adm-object">
@@ -166,6 +210,7 @@ function ObjectEditor({ path, value, onChange }) {
           <FieldEditor
             path={path ? `${path}.${key}` : key}
             value={value[key]}
+            fonts={fonts}
             onChange={(next) => onChange({ ...value, [key]: next })}
           />
         </div>
@@ -174,12 +219,16 @@ function ObjectEditor({ path, value, onChange }) {
   )
 }
 
-export default function FieldEditor({ path, value, onChange }) {
+export default function FieldEditor({ path, value, onChange, fonts }) {
+  /* 字体角色不进通用表单：值是字体 id，得渲染成「挑字体」下拉 */
+  if (TYPO_ROLES.test(path)) {
+    return <FontSelect path={path} value={value} onChange={onChange} fonts={fonts} />
+  }
   if (Array.isArray(value)) {
-    return <ArrayEditor path={path} value={value} onChange={onChange} />
+    return <ArrayEditor path={path} value={value} onChange={onChange} fonts={fonts} />
   }
   if (value !== null && typeof value === 'object') {
-    return <ObjectEditor path={path} value={value} onChange={onChange} />
+    return <ObjectEditor path={path} value={value} onChange={onChange} fonts={fonts} />
   }
   return <ScalarInput path={path} value={value} onChange={onChange} />
 }

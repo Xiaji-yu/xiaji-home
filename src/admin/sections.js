@@ -15,6 +15,12 @@ export const SECTIONS = [
     fields: ['site.name', 'site.nameEn', 'site.email', 'site.github', 'site.meta'],
   },
   {
+    id: 'typography',
+    label: '字体',
+    desc: '上传字体文件（.ttf / .otf / .woff / .woff2），或用 font/ 目录里的内置字体，为正文、标题和等宽小字各挑一个',
+    fields: ['site.typography'],
+  },
+  {
     id: 'hero',
     label: '首屏',
     desc: '打开页面第一屏：大标题、副标题、按钮和底部状态栏',
@@ -76,6 +82,11 @@ export const LABELS = {
   email: '邮箱',
   github: 'GitHub 主页',
   meta: '分享卡片 / SEO',
+
+  typography: '字体设置',
+  'typography.body': '正文字体（整站默认）',
+  'typography.heading': '标题字体',
+  'typography.mono': '等宽字体（小字标签）',
 
   'meta.title': '分享标题',
   'meta.description': '分享描述',

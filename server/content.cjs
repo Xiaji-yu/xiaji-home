@@ -17,9 +17,18 @@ const fs = require('node:fs')
 const path = require('node:path')
 
 const DEFAULT_FILE = path.resolve(__dirname, '..', 'content', 'site.json')
+const DEFAULT_FONT_DIR = path.resolve(__dirname, '..', 'content', 'fonts')
 const MAX_BACKUPS = 10
 /* 内容上限：全站文案撑死几十 KB，512KB 足够宽裕又能挡住误传整个 dist */
 const MAX_BYTES = 512 * 1024
+
+/* ---- 字体库：后台上传的字体文件（ttf / otf / woff / woff2）----
+   字体是二进制，进不了 site.json —— 单独存 content/fonts/，
+   清单（fonts.json）只记元信息；前台拿清单注入 @font-face。 */
+const FONT_EXTS = ['.ttf', '.otf', '.woff', '.woff2']
+/* 中文字体动辄 5~20MB，25MB 能装下绝大多数整包中文字体 */
+const FONT_MAX_BYTES = 25 * 1024 * 1024
+const FONT_MAX_COUNT = 20
 
 /** 创建一个内容仓库。options.file 覆盖存储位置（测试用）。 */
 function createContentStore(options = {}) {
@@ -134,4 +143,129 @@ function validateContent(value, depth = 0) {
   throw new ContentError(`不支持的字段类型：${t}（只允许文本、数字、开关、对象和数组）`)
 }
 
-module.exports = { createContentStore, validateContent, ContentError, MAX_BYTES }
+/* ==========================================================================
+   字体仓库：content/fonts/ 目录 + 同目录 fonts.json 清单
+   --------------------------------------------------------------------------
+   · 文件名 = <短随机 id><原始扩展名>，扩展名只认白名单 —— 路径穿越没有入口
+   · 清单坏了自己重置为 []（字体是附属数据，不值得为它挡住整站）
+   · 存储文件名带 id：内容永远不变，静态服务可以放心发 immutable 缓存
+   ========================================================================== */
+
+/** 存储文件名的构成规则：清单里的 file 字段长这样才算可信 */
+const FONT_FILE_RE = /^[a-z0-9]{6,12}(?:\.(?:ttf|otf|woff|woff2))$/i
+
+function extOf(name) {
+  const dot = String(name || '').lastIndexOf('.')
+  return dot < 0 ? '' : String(name).slice(dot).toLowerCase()
+}
+
+function createFontStore(options = {}) {
+  const dir = path.resolve(options.dir || process.env.FONT_DIR || DEFAULT_FONT_DIR)
+  const listFile = path.join(dir, 'fonts.json')
+
+  function readList() {
+    try {
+      const list = JSON.parse(fs.readFileSync(listFile, 'utf8'))
+      if (!Array.isArray(list)) return []
+      /* 只保留形状完整、文件名可信的条目 —— 清单是手工可编辑的文件，宽容一点 */
+      return list.filter(
+        (f) =>
+          isPlainObject(f) &&
+          typeof f.id === 'string' &&
+          typeof f.file === 'string' &&
+          FONT_FILE_RE.test(f.file) &&
+          typeof f.name === 'string',
+      )
+    } catch {
+      return [] // 没有清单 / 坏了 → 空库，字体文件还在但不展示
+    }
+  }
+
+  function writeList(list) {
+    fs.mkdirSync(dir, { recursive: true })
+    const tmp = path.join(dir, `.fonts-${process.pid}-${Date.now()}.tmp`)
+    fs.writeFileSync(tmp, JSON.stringify(list, null, 2) + '\n', 'utf8')
+    fs.renameSync(tmp, listFile)
+  }
+
+  function list() {
+    return readList()
+  }
+
+  /** 字体文件在磁盘上的绝对路径；名字不可信时返回 null（拒绝服务） */
+  function pathOf(file) {
+    if (typeof file !== 'string' || !FONT_FILE_RE.test(file)) return null
+    return path.join(dir, file)
+  }
+
+  /**
+   * 保存一份字体。返回新条目：{ id, name, file, ext, size, uploadedAt }。
+   * originalName 只取扩展名，显示名去掉扩展名（超长截断）。
+   */
+  function save(buffer, originalName) {
+    if (!Buffer.isBuffer(buffer) || buffer.length === 0) {
+      throw new ContentError('字体文件是空的')
+    }
+    if (buffer.length > FONT_MAX_BYTES) {
+      throw new ContentError(`字体超过 ${Math.round(FONT_MAX_BYTES / 1024 / 1024)}MB 上限`)
+    }
+    const ext = extOf(originalName)
+    if (!FONT_EXTS.includes(ext)) {
+      throw new ContentError('只支持 .ttf / .otf / .woff / .woff2 字体文件')
+    }
+    const current = readList()
+    if (current.length >= FONT_MAX_COUNT) {
+      throw new ContentError(`字体最多 ${FONT_MAX_COUNT} 个，先删掉几个再传`)
+    }
+    /* 显示名 = 原名去掉扩展名（剥扩展名大小写都要认，path.basename 只认精确后缀），
+       再顺手清掉控制字符、截到 60 字 */
+    const base = path
+      .basename(String(originalName || ''))
+      .slice(0, String(originalName || '').length - ext.length)
+      .replace(/[\u0000-\u001f]/g, '')
+      .trim()
+    const id = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
+    const entry = {
+      id,
+      name: (base || 'font').slice(0, 60),
+      file: `${id}${ext}`,
+      ext: ext.slice(1),
+      size: buffer.length,
+      uploadedAt: Date.now(),
+    }
+    fs.mkdirSync(dir, { recursive: true })
+    fs.writeFileSync(path.join(dir, entry.file), buffer)
+    writeList([...current, entry])
+    return entry
+  }
+
+  /** 删除：文件没了也要把清单条目摘掉（半删状态不留着碍事） */
+  function remove(id) {
+    const current = readList()
+    const entry = current.find((f) => f.id === id)
+    if (!entry) return false
+    const abs = pathOf(entry.file)
+    if (abs) {
+      try {
+        fs.unlinkSync(abs)
+      } catch {
+        /* 文件本来就不在：清单照常更新 */
+      }
+    }
+    writeList(current.filter((f) => f.id !== id))
+    return true
+  }
+
+  return { list, save, remove, pathOf, dir }
+}
+
+module.exports = {
+  createContentStore,
+  createFontStore,
+  validateContent,
+  ContentError,
+  MAX_BYTES,
+  FONT_EXTS,
+  FONT_MAX_BYTES,
+  FONT_MAX_COUNT,
+}
