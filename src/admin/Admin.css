@@ -1299,12 +1299,29 @@
 
 .adm-main {
   min-width: 0;
-  padding: 28px var(--pad) 72px;
+  padding: 24px var(--pad) 72px;
   /* 在导航右侧那一格里居中：grid 项用 auto 外边距居中会被缩成
      fit-content（实测只剩 390px 宽），必须显式给宽度 + justify-self */
   width: 100%;
-  max-width: 860px;
+  max-width: 1140px;
   justify-self: center;
+  /* ---- 主栏也网格化：相邻的「单字段组」并排成两列 ----
+     组标题和分隔线的语义不变，只是不再一列到底；含长内容的组
+     （多行文本 / 数组 / 嵌套对象 / 字体管理）跨满整行。 */
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  gap: 0 26px;
+  align-items: start; /* 两列高度不一时各自顶对齐，不互相拉伸 */
+}
+.adm-main > * {
+  min-width: 0;
+}
+.adm-main > .adm-main__head,
+.adm-main > .adm-fonts,
+.adm-main > .adm-group:has(.adm-textarea),
+.adm-main > .adm-group:has(> .adm-array),
+.adm-main > .adm-group:has(> .adm-object) {
+  grid-column: 1 / -1; /* 重内容跨满整行，不跟单字段组挤一列 */
 }
 
 /* 切换分区时轻轻推入一下（key={current.id} 触发重放） */
@@ -1354,14 +1371,14 @@
   letter-spacing: 0.01em;
 }
 .adm-main__head p {
-  margin: 0 0 24px;
+  margin: 0 0 18px;
   font-size: 13px;
   color: var(--muted);
 }
 
 /* ---- 字段组：一根细线开始，标签是等宽小号 ---- */
 .adm-group {
-  padding: 20px 0 22px;
+  padding: 18px 0 20px;
   border-top: 1px solid var(--line-soft);
 }
 .adm-group__label {
@@ -1384,10 +1401,30 @@
 }
 
 .adm-field {
-  margin-bottom: 16px;
+  /* 间距交给 .adm-object 的 grid gap 管；不在网格里时兜底 */
+  margin-bottom: 14px;
 }
 .adm-field:last-child {
   margin-bottom: 0;
+}
+
+/* ---- 字段排布：对象字段双列网格浓缩 ----
+   标签在上、控件在下不变；短字段（文本 / 数字 / 下拉 / 开关）并排，
+   长文案（textarea）、数组、嵌套对象组跨满两列。窄屏 auto-fill 自动回单列。 */
+.adm-object {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr));
+  gap: 12px 26px;
+}
+.adm-object > .adm-field {
+  margin-bottom: 0;
+  min-width: 0;
+}
+/* 长字段不跟邻居挤一列：多行文本、数组卡片、嵌套的字段组跨满 */
+.adm-object > .adm-field:has(.adm-textarea),
+.adm-object > .adm-field:has(> .adm-array),
+.adm-object > .adm-field:has(> .adm-object) {
+  grid-column: 1 / -1;
 }
 .adm-field__label {
   margin-bottom: 6px;
@@ -1650,6 +1687,25 @@
   font-size: 10.5px;
   letter-spacing: 0.08em;
   color: var(--muted);
+}
+
+/* 简体覆盖探测徽标：ok 淡出、缺字亮出来（黑白语言里用实线框加重） */
+.adm-font__cov {
+  align-self: flex-start;
+  padding: 2px 6px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+.adm-font__cov.is-pending {
+  color: var(--muted);
+}
+.adm-font__cov.is-ok {
+  color: var(--muted);
+}
+.adm-font__cov.is-missing {
+  border: 1px solid var(--line);
+  background: var(--paper-2);
+  color: var(--ink);
 }
 
 /* 内置字体（font/ 目录）只读：右侧是徽标而不是删除按钮 */

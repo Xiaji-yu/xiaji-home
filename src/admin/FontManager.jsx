@@ -13,10 +13,36 @@ import { useEffect, useState } from 'react'
 
 const BASE = import.meta.env.BASE_URL
 
+/* 简体覆盖探测字：挑日文字体最容易缺的简体特有字形（脑/爱/绩/欢…），
+   缺任何一个，整段中文就会「宋黑混排」—— 在列表里直接亮出来 */
+const PROBE_CHARS = '脑爱绩欢这摆渐审码东远设计认习实现环标键盘温余状况网银银饭'
+
 function fmtSize(bytes) {
   if (!Number.isFinite(bytes)) return '—'
   if (bytes >= 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`
   return `${Math.max(1, Math.round(bytes / 1024))} KB`
+}
+
+/* 覆盖检测结果徽标：缺简体字是这个站最容易踩的坑（日文字体缺「脑/爱/绩」
+   这类简体字形 → 页面宋黑混排），直接在列表里亮出来 */
+function CoverageBadge({ coverage, id }) {
+  const cov = coverage[id]
+  if (!cov?.done)
+    return (
+      <span className="adm-font__cov mono is-pending" aria-live="polite">
+        探测中…
+      </span>
+    )
+  if (cov.missing.length === 0)
+    return <span className="adm-font__cov mono is-ok">简体覆盖 ✓</span>
+  return (
+    <span
+      className="adm-font__cov mono is-missing"
+      title={`这些常用简体字没有字形，页面会回退系统字体造成混排：${cov.missing.join('')}`}
+    >
+      简体缺字 {cov.missing.length}：{cov.missing.slice(0, 6).join('')}…
+    </span>
+  )
 }
 
 export default function FontManager({
@@ -28,6 +54,10 @@ export default function FontManager({
   say,
 }) {
   const [busy, setBusy] = useState(false)
+  /* 字符覆盖检测结果：id -> { missing: string[], done: boolean }。
+     document.fonts.check 对「还没加载的字体」恒返回 true（假阳性），
+     所以先 load 探测字强制下载，再逐字 check。 */
+  const [coverage, setCoverage] = useState({})
 
   /* 预览用 @font-face：内置 + 上传都注入（本地字体 url 是 Vite 打包地址），
      清单一变就重写，离开后台时摘掉 */
@@ -42,6 +72,55 @@ export default function FontManager({
       .join('\n')
     document.head.appendChild(el)
     return () => el.remove()
+  }, [localFonts, fonts])
+
+  /* 覆盖检测：预览样字本来就要下载字体，顺路逐字探测。
+     document.fonts.check 只认 @font-face 的声明范围、不查字体内部
+     cmap（缺字也返回 true），所以用 canvas 像素比对：把字分别用
+     「探测字体 + serif」和「serif」画出来——字体有这个字形时两幅
+     是不同的字形；缺字时两幅都是 serif 的回退渲染，像素完全相同。 */
+  useEffect(() => {
+    let alive = true
+    const all = [...localFonts, ...fonts]
+    setCoverage({})
+    ;(async () => {
+      const cv = document.createElement('canvas')
+      cv.width = 32
+      cv.height = 32
+      const ctx = cv.getContext('2d', { willReadFrequently: true })
+      /* 画一个字并返回像素；font 栈末尾的 serif 是对照组 */
+      const draw = (font, ch) => {
+        ctx.clearRect(0, 0, 32, 32)
+        ctx.font = `32px ${font}`
+        ctx.textBaseline = 'alphabetic'
+        ctx.fillStyle = '#000'
+        ctx.fillText(ch, 2, 26)
+        return ctx.getImageData(0, 0, 32, 32).data
+      }
+      /* 字体没渲染自己的字形（缺字回退）→ 与纯 serif 画出来逐字节相同 */
+      const isMissing = (family, ch) => {
+        const a = draw(`"${family}", serif`, ch)
+        const b = draw('serif', ch)
+        for (let i = 0; i < a.length; i += 1) if (a[i] !== b[i]) return false
+        return true
+      }
+      for (const f of all) {
+        const family = `cf-${f.id}`
+        let missing = []
+        try {
+          /* 先确保字体真的加载了，否则画的全是回退、全员误报缺字 */
+          await document.fonts.load(`32px "${family}"`, `战绩${PROBE_CHARS}`)
+          missing = [...PROBE_CHARS].filter((ch) => isMissing(family, ch))
+        } catch {
+          missing = [] // 探测失败就当全有，别误报
+        }
+        if (!alive) return
+        setCoverage((c) => ({ ...c, [f.id]: { missing, done: true } }))
+      }
+    })()
+    return () => {
+      alive = false
+    }
   }, [localFonts, fonts])
 
   async function upload(e) {
@@ -128,6 +207,7 @@ export default function FontManager({
                     {f.id !== f.name ? ` · ${f.id}` : ''}
                     {typography && Object.values(typography).includes(f.id) && ' · 使用中'}
                   </span>
+                  <CoverageBadge coverage={coverage} id={f.id} />
                 </span>
                 <span
                   className="adm-font__badge mono"
@@ -161,6 +241,7 @@ export default function FontManager({
                 {String(f.ext || '').toUpperCase()} · {fmtSize(f.size)}
                 {typography && Object.values(typography).includes(f.id) && ' · 使用中'}
               </span>
+              <CoverageBadge coverage={coverage} id={f.id} />
             </span>
             <button
               type="button"
@@ -192,9 +273,9 @@ export default function FontManager({
       </div>
 
       <p className="adm-fonts__hint mono">
-        内置字体来自项目 font/ 目录（单文件、或带 LICENSE 的字体文件夹都认，
-        增删后要重新构建）；这里上传的字体存在服务器上，保存后立即生效。 支持 .ttf / .otf /
-        .woff / .woff2，上传单个最大 25MB、最多 20 个。
+        「font/ 目录」的内置字体随项目走，删除 = 在项目里删掉对应文件 / 文件夹；
+        「后台上传」的字体点行尾「×」删除。支持 .ttf / .otf / .woff / .woff2，上传单个最大
+        25MB、最多 20 个。
       </p>
     </section>
   )

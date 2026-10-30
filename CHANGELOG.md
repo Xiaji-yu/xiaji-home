@@ -7,11 +7,17 @@
 
 ## [Unreleased]
 
+### 优化
+
+- **后台编辑器浓缩排版（双列网格）**：之前一列到底，宽屏右侧大片空白。现在 `.adm-main` 与字段对象层都改成响应式双列网格 —— 相邻的「单字段组」（站点名 / 英文名、邮箱 / GITHUB…）并排，对象内的短字段（分享卡片四格、编号 / 英文名…）并排；多行文本、数组卡片、嵌套对象组、字体管理区自动跨满整行不挤半栏；主栏上限 860 → 1140px，分组间距收紧。窄屏 auto-fill 自动回单列，黑白线条语言不变。编辑长表单（页脚、项目）时一屏能看的内容明显变多。
+
+- **字体库加「简体覆盖检测」徽标**：`document.fonts.check` 只认 `@font-face` 声明、不查字体内部 cmap（缺字也报支持），改用 canvas 像素比对（分别用「探测字体 + serif」与纯 serif 画同一批常用简体字，缺字时两幅都是回退渲染、像素完全相同）——缺字的字体在列表里直接亮出「简体缺字 N：脑爱绩欢这摆…」，悬停看完整缺字表；覆盖全显示「简体覆盖 ✓」。上传 / 删除字体的说明文案同步写清（内置字体删文件、上传字体点行尾 ×）。
+
 ### 新增
 
 - **`font/` 目录：随仓库走的字体，项目自动遍历**：项目根目录新增 `font/` 文件夹 —— 单文件（`font/X.ttf`）和「一个字体一个文件夹」（`font/X/xxx.ttf` + `LICENSE.txt`，下载的字体包直接整个放进去）都支持，`src/data/fonts.js` 用 `import.meta.glob('/font/**/*.{ttf,otf,woff,woff2,…}')` 递归收集（非字体文件天然忽略，扩展名大小写都认），id = 相对 `font/` 的路径去扩展名。构建时由 Vite 打包进 `dist/assets/`，**GitHub Pages 这类没有后端的静态部署也能换字体**。后台「字体」分区分「font/ 目录 · 内置」（只读，带样字预览）和「后台上传」两块，三个角色下拉用 optgroup 分组列出全部字体；与后台上传的字体 id 相同时以内置为准。新增 `toLocalFont` 纯函数单测（id / name / 扩展名推导、`../` 与 `/font/` 两种 glob key 形态）。
 
-- **后台「字体」分区：上传字体、全站换字体**：左侧导航新增「字体」分区 —— 顶部是字体库（上传 `.ttf / .otf / .woff / .woff2`，单个 ≤25MB、最多 20 个，每行用字体本身渲染「永 Aa Gg 09」样字，可删除），下方三个下拉把字体分配给「正文 / 标题 / 等宽小字」三个角色，保存写进 `site.typography`，前台刷新即生效。上传按钮用 `<label>` + 透明 file input 铺满的写法（不用 JS `input.click()` 代理）：微信 / QQ 内置浏览器会拦「程序化打开文件选择框」，原生 label 转发全环境都能弹。实现零依赖：`server/content.cjs` 新增 `createFontStore`（字体落盘 `content/fonts/<随机id>.<ext>`、文件名白名单 + 大小 / 数量上限、清单 `fonts.json` 原子写、坏清单自愈成空库），`server/api.cjs` 新增 `GET /api/fonts`（公开清单）、`POST /api/fonts?name=`（要 token，原始字节上传，超限读完整 body 再回 400 避免掐断客户端连接，默认口令期间一律 403）、`GET /api/fonts/file/<名>`（公开静态服务，immutable 缓存 + 字体 MIME）、`DELETE /api/fonts/<id>`（要 token）。前台 `SiteProvider` 拉字体清单后注入 `@font-face` 并覆盖 `--sans / --heading / --mono`（自定义字体排在默认栈最前，缺字形自动回退；标题走新变量 `--heading`，默认同 `--sans`，选了标题字体只动 `h1~h4`）；删掉的字体引用自动悬空回退。后台不挂 `SiteProvider`，字体预览的 `@font-face` 由 `FontManager` 自己注入、卸载时摘除。新增 `server/fonts.test.mjs`（fontStore 单元 + API 集成共 10 测），文档见 `docs/ADMIN.md` 的「字体」章节。
+- **后台「字体」分区：上传字体、全站换字体**：左侧导航新增「字体」分区 —— 顶部是字体库（上传 `.ttf / .otf / .woff / .woff2`，单个 ≤25MB、最多 20 个，每行用字体本身渲染样字，可删除），下方三个下拉把字体分配给「正文 / 标题 / 等宽小字」三个角色，保存写进 `site.typography`，前台刷新即生效。上传按钮用 `<label>` + 透明 file input 铺满的写法（不用 JS `input.click()` 代理）：微信 / QQ 内置浏览器会拦「程序化打开文件选择框」，原生 label 转发全环境都能弹。实现零依赖：`server/content.cjs` 新增 `createFontStore`（字体落盘 `content/fonts/<随机id>.<ext>`、文件名白名单 + 大小 / 数量上限、清单 `fonts.json` 原子写、坏清单自愈成空库），`server/api.cjs` 新增 `GET /api/fonts`（公开清单）、`POST /api/fonts?name=`（要 token，原始字节上传，超限读完整 body 再回 400 避免掐断客户端连接，默认口令期间一律 403）、`GET /api/fonts/file/<名>`（公开静态服务，immutable 缓存 + 字体 MIME）、`DELETE /api/fonts/<id>`（要 token）。前台 `SiteProvider` 拉字体清单后注入 `@font-face` 并覆盖 `--sans / --heading / --mono`（自定义字体排在默认栈最前，缺字形自动回退；标题走新变量 `--heading`，默认同 `--sans`，选了标题字体只动 `h1~h4`）；删掉的字体引用自动悬空回退。后台不挂 `SiteProvider`，字体预览的 `@font-face` 由 `FontManager` 自己注入、卸载时摘除。新增 `server/fonts.test.mjs`（fontStore 单元 + API 集成共 10 测），文档见 `docs/ADMIN.md` 的「字体」章节。
 
 - **章节区加上「制图标记 + 贯穿全屏的线条」**：把后台登录页那套图纸语言搬到前台六个章节（关于我 / 技能栈 / 项目 / 经历 / 联系方式 / 便签）——
   - 四角十字准星（让开吸顶页眉）和两侧刻度尺，板块区在视野里才出现，滚到首屏或页脚时淡出；
