@@ -7,8 +7,9 @@ import { useEffect, useState } from 'react'
    上传/删除只是改字体库；把哪个字体用在哪（正文 / 标题 / 等宽）在下面的
    选择器里选，点右上角「保存」后才真正生效。
 
-   后台不挂在 SiteProvider 里，这里的字体预览自己注入一份 @font-face
-   （<style id="adm-font-faces">），卸载时顺手摘掉，不污染前台逻辑。
+   后台的界面字体由 main.jsx 包裹的 SiteProvider 统一注入（和前台同一套）；
+   这里额外注入一份样字预览专用的 @font-face（<style id="adm-font-faces">），
+   让每个字体行用自己的字形渲染「战绩 Aa 09」，卸载时摘掉。
    ========================================================================== */
 
 const BASE = import.meta.env.BASE_URL

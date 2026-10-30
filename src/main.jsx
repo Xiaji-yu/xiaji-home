@@ -20,7 +20,12 @@ const isAdmin =
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     {isAdmin ? (
-      <AdminApp />
+      /* 后台也包 SiteProvider：共享同一套字体注入（@font-face + --sans /
+         --heading / --mono 覆盖）—— 后台界面和登录页跟随站点字体设置，
+         不用再实现一遍。content / fonts 拉取对后台是公开接口，无害。 */
+      <SiteProvider>
+        <AdminApp />
+      </SiteProvider>
     ) : (
       <SiteProvider>
         <App />

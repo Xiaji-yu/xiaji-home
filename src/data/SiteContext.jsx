@@ -207,13 +207,19 @@ export function SiteProvider({ children }) {
       .join('\n')
 
     /* 选中的 id 必须真的在字体库里（被删过就静默回退默认栈）。
-       标题栈把标题字体放最前、正文字体其次：`"标题字体", "正文字体", 默认栈` */
+       标题栈把标题字体放最前、正文字体其次：`"标题字体", "正文字体", 默认栈`；
+       标题和正文同一个字体时不重复拼接（栈里出现两遍同一个 family 没意义）。 */
     const stackFor = (id, fallback) => {
       const family = id ? byId.get(id) : null
       return family ? `"${family}", ${fallback}` : fallback
     }
     const sansStack = stackFor(typo.body, DEFAULT_SANS)
-    const headingStack = stackFor(typo.heading, sansStack)
+    const bodyFamily = typo.body ? byId.get(typo.body) : null
+    const headingFamily = typo.heading ? byId.get(typo.heading) : null
+    const headingStack =
+      headingFamily && headingFamily !== bodyFamily
+        ? `"${headingFamily}", ${sansStack}`
+        : sansStack
     const monoStack = stackFor(typo.mono, DEFAULT_MONO)
 
     const vars =
