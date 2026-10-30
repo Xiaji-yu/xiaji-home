@@ -45,7 +45,7 @@ function fmtTime(value) {
 }
 
 const DEFAULT_CONTENT = {
-  site: defaultSite,
+  site: { ...defaultSite, typography: { body: '', heading: '', mono: '' } },
   sectionTabs: defaultTabs,
   navLinks: defaultNav,
 }
@@ -82,9 +82,22 @@ function normalizeImport(json) {
   const content = isObj(json.site) ? json : { site: json }
   if (!isObj(content.site)) throw new Error('缺少 site 字段（或它不是对象）')
   return {
-    site: deepMerge(defaultSite, content.site),
+    site: withTypography(deepMerge(defaultSite, content.site)),
     sectionTabs: Array.isArray(content.sectionTabs) ? content.sectionTabs : defaultTabs,
     navLinks: Array.isArray(content.navLinks) ? content.navLinks : defaultNav,
+  }
+}
+
+/** typography 兜底成 { body, heading, mono } 三下拉的结构。
+    旧版 site.js / 旧内容文件里它可能缺失，甚至被存成字符串（早期渲染成
+    文本框时填的）——字符串按字体名迁到 body，其余留空，让表单恢复下拉。 */
+function withTypography(site) {
+  if (!isObj(site)) return site
+  if (isObj(site.typography)) return site
+  const legacy = typeof site.typography === 'string' ? site.typography.trim() : ''
+  return {
+    ...site,
+    typography: { body: legacy, heading: '', mono: '' },
   }
 }
 
@@ -227,9 +240,11 @@ export default function AdminApp() {
           if (hasData) setContentUpdatedAt(data.updatedAt)
           if (isObj(c?.site)) {
             /* 与构建默认值深合并：老内容文件缺的新字段（typography 等）补默认值，
-               编辑器里始终能编辑全量字段 —— 和前台 SiteContext 同一套合并规则 */
+               编辑器里始终能编辑全量字段 —— 和前台 SiteContext 同一套合并规则。
+               typography 单独兜底：旧 site.js 里没这个字段时也得是三个下拉，
+               不能退化成文本框（存成字符串后前台不认，白改一场）。 */
             content = {
-              site: deepMerge(defaultSite, c.site),
+              site: withTypography(deepMerge(defaultSite, c.site)),
               sectionTabs: Array.isArray(c.sectionTabs) ? c.sectionTabs : defaultTabs,
               navLinks: Array.isArray(c.navLinks) ? c.navLinks : defaultNav,
             }
