@@ -26,6 +26,21 @@ const RISE_MS = 900
 /** 遮罩上滑用多久（同样要和 CSS 一致），滑完再把它从页面上摘掉 */
 const CURTAIN_OUT_MS = 900
 
+/** 后退 / 前进回来时，把离开前停的位置放回去（见 public/scroll-restoration.js）。
+    浏览器自己也会恢复一次，但那是 body 还锁着的时候 —— 会被夹成 0，
+    所以等这里解锁的同一刻再放。 */
+function restoreScroll() {
+  const y = window.__restoreScrollY
+  if (typeof y !== 'number' || !Number.isFinite(y)) return
+  window.__restoreScrollY = undefined
+  try {
+    // html 上有 scroll-behavior: smooth，恢复位置不该再演成一段动画
+    window.scrollTo({ top: y, left: 0, behavior: 'instant' })
+  } catch {
+    window.scrollTo(0, y)
+  }
+}
+
 export default function Header() {
   const site = useSite()
   const navLinks = useNavLinks()
@@ -46,7 +61,11 @@ export default function Header() {
   }, [])
 
   useEffect(() => {
-    if (reduced) return
+    if (reduced) {
+      // 没开场：没有锁，位置直接放回去就行
+      restoreScroll()
+      return
+    }
 
     document.body.classList.add('is-locked')
     const start = performance.now()
@@ -64,6 +83,9 @@ export default function Header() {
 
       // 进度满了：解锁滚动、页眉开始上移、遮罩开始上滑
       document.body.classList.remove('is-locked')
+      /* 解锁的同一刻把后退/前进前的位置放回去：遮罩正好开始上滑，
+         等它滑开时露出来的就是人离开时看的那一屏 */
+      restoreScroll()
       setPhase('rising')
       timers.push(setTimeout(() => setPhase('extended'), RISE_MS))
       timers.push(setTimeout(() => setCurtain(false), CURTAIN_OUT_MS + 200))

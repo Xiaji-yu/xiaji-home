@@ -40,6 +40,15 @@ function hashId(tabs) {
   return tabs.some((t) => t.id === id) ? id : ''
 }
 
+/** 这次文档是怎么来的：navigate / reload / back_forward（取不到就按新打开算） */
+function navigationType() {
+  try {
+    return performance.getEntriesByType?.('navigation')?.[0]?.type || ''
+  } catch {
+    return ''
+  }
+}
+
 export default function Sections() {
   /* 选项卡跟内容一样支持后台编辑：没有对应面板的 id 直接滤掉 */
   const allTabs = useSectionTabs()
@@ -103,9 +112,15 @@ export default function Sections() {
   /* 直接带 #锚点 打开页面（分享出去的链接）：开场 2.9s 里 body 被 is-locked
      锁住（overflow:hidden），浏览器的原生锚点跳转在那之前就放弃了，解锁后
      不会再重试 —— 实测停在首屏不动。所以挂载时自己对齐：解锁那一刻的下一轮
-     尝试正好落位；用户先滚了就立刻收手，绝不跟人抢滚动条。 */
+     尝试正好落位；用户先滚了就立刻收手，绝不跟人抢滚动条。
+
+     后退 / 前进回来的这一趟不参与：浏览器会把这个历史条目自己的滚动位置
+     放回去（比如人停在页脚），这时再按地址栏里的 #章节 对齐一次，就会把
+     刚恢复的位置拽回章节区 —— 无缓存、页面真的重载时最明显。面板该显示
+     哪一章在 useState 那一步已经按 hash 读过了，这里不滚动就行。 */
   useEffect(() => {
     if (!hashId(allTabs)) return undefined
+    if (navigationType() === 'back_forward') return undefined
     let landed = false
     let timer = 0
     const abort = () => {
