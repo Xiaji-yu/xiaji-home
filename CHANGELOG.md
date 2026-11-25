@@ -9,6 +9,12 @@
 
 ### 优化
 
+- **首屏字体不再等 React**：以前 `@font-face` 要等 `/api/content`、`/api/fonts` 两次请求回来才由 `SiteProvider` 注入，没缓存时先看到系统字体、几秒后才切过去。现在构建时（`scripts/font-html-plugin.mjs`）读 `dist/.vite/manifest.json` 拿到带 hash 的字体地址，把「后台选中的字体」的 `@font-face`、`:root` 变量覆盖和 `<link rel="preload" as="font" crossorigin>` 直接写进 `index.html`（位置在 Vite 的样式表之后，才压得住 `tokens.css` 的默认栈），字体下载和 JS 并行，首帧就用自定义字体。运行时的注入保留不变（顺序与 family 名逐位一致，两边共用 `buildTypographyCss`）。服务端响应 `index.html` 时会比对线上 `site.typography`：构建后换过字体就删掉这个块、退回运行时注入，不会白下载旧字体。字体清单与 CSS 拼接抽到 `src/data/fontUtils.js`（同 id 多格式去重、不依赖 `localeCompare` 的稳定排序），新增 11 条单测。
+
+- **字体子集化 `npm run font:optimize`**：新脚本用 WASM 版 harfbuzz（`subset-font`，devDependency，不需要 Python / fontforge）把 `font/` 里的 `.ttf / .otf` 裁成同名 `.woff2`。默认保留「GB2312 一级常用字 3755 + 拉丁 + 标点 + 本站实际用到的字」，当前屏显臻宋 3.20MB → 756KB（-77%，gzip 2.25MB → woff2 756KB）；`--site` 只留本站用字（~90KB，新增字会回退），`--all` 只转格式不裁字。`fonts.js` 同 id 优先 woff2，构建插件把被取代的原始 ttf 从产物里删掉（3.35MB 不再进 `dist/`）。`font/README.md` 与 `docs/ADMIN.md` 补了用法与「子集化属于修改字体、先看 LICENSE」的提醒。
+
+- **服务器不再对 woff2 / 图片做 gzip、brotli**：woff2 本身已是压缩格式，之前每次缓存失效都会同步跑一遍 `brotliCompressSync`（q11）压 775KB，首次请求反而被 CPU 卡住；现在 `makeEntry` 对这些 MIME 直接留空，响应时也不再声明 `content-encoding`。
+
 - **后台编辑器浓缩排版（双列网格）**：之前一列到底，宽屏右侧大片空白。现在 `.adm-main` 与字段对象层都改成响应式双列网格 —— 相邻的「单字段组」（站点名 / 英文名、邮箱 / GITHUB…）并排，对象内的短字段（分享卡片四格、编号 / 英文名…）并排；多行文本、数组卡片、嵌套对象组、字体管理区自动跨满整行不挤半栏；主栏上限 860 → 1140px，分组间距收紧。窄屏 auto-fill 自动回单列，黑白线条语言不变。编辑长表单（页脚、项目）时一屏能看的内容明显变多。
 
 - **字体库加「简体覆盖检测」徽标**：`document.fonts.check` 只认 `@font-face` 声明、不查字体内部 cmap（缺字也报支持），改用 canvas 像素比对（分别用「探测字体 + serif」与纯 serif 画同一批常用简体字，缺字时两幅都是回退渲染、像素完全相同）——缺字的字体在列表里直接亮出「简体缺字 N：脑爱绩欢这摆…」，悬停看完整缺字表；覆盖全显示「简体覆盖 ✓」。上传 / 删除字体的说明文案同步写清（内置字体删文件、上传字体点行尾 ×）。

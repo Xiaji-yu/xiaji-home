@@ -62,12 +62,17 @@ function compress(abs, ext, stat) {
   return makeEntry(fs.readFileSync(abs), MIME[ext] || 'application/octet-stream')
 }
 
-/** 把一份原始字节做成 { raw, gz, br, type } 三件套 */
+/* woff2 / woff 本身就是压缩格式，再 gzip / brotli（q11）只是白烧 CPU：
+   一份 775KB 的 woff2 压一遍能卡住事件循环，首次请求反而更慢。 */
+const PRE_COMPRESSED = /^(?:font\/woff2?|image\/(?:png|jpeg|gif|webp|avif))$/
+
+/** 把一份原始字节做成 { raw, gz, br, type }；已是压缩格式的两份留空 */
 function makeEntry(raw, type) {
+  const encodable = !PRE_COMPRESSED.test(type)
   return {
     raw,
-    gz: zlib.gzipSync(raw, { level: zlib.constants.Z_BEST_COMPRESSION }),
-    br: zlib.brotliCompressSync(raw),
+    gz: encodable ? zlib.gzipSync(raw, { level: zlib.constants.Z_BEST_COMPRESSION }) : null,
+    br: encodable ? zlib.brotliCompressSync(raw) : null,
     type,
   }
 }
@@ -117,6 +122,31 @@ function applyLiveMeta(html, content) {
   return html
 }
 
+/* 构建期写进 index.html 的首屏字体块（scripts/font-html-plugin.mjs）：
+   后台如果在构建之后换过字体，块里的 @font-face 和 preload 就指向旧字体。
+   比对不上就整块删掉，交给 SiteProvider 运行时注入 —— 行为和没这个优化时
+   一样（慢一点），但不会白下载一个已经换掉的字体。 */
+const FONT_BLOCK_RE =
+  /[ \t]*<!-- font-preload:start[^>]*-->[\s\S]*?<!-- font-preload:end -->\n?/g
+
+function applyLiveFonts(html, content) {
+  const baked = html.match(/<!-- font-preload:start data-typography="([^"]*)"/)
+  if (!baked) return html
+  const typography = content?.site?.typography || {}
+  const live = JSON.stringify({
+    body: typography.body ?? '',
+    heading: typography.heading ?? '',
+    mono: typography.mono ?? '',
+  })
+  let expected
+  try {
+    expected = decodeURIComponent(baked[1])
+  } catch {
+    return html.replace(FONT_BLOCK_RE, '') // 属性坏了就当它过期
+  }
+  return expected === live ? html : html.replace(FONT_BLOCK_RE, '')
+}
+
 function htmlEntryFor(abs) {
   let stat
   try {
@@ -131,6 +161,7 @@ function htmlEntryFor(abs) {
   try {
     const { content } = contentStore.read()
     html = applyLiveMeta(html, content)
+    html = applyLiveFonts(html, content)
   } catch (error) {
     console.error('[my-homepage] live meta skipped:', error.message) // 内容坏了就出构建版
   }
@@ -241,10 +272,10 @@ function handle(req, res) {
     // 压缩结果首次访问时算好并驻留内存（整站 ~1 MB，之后零 CPU）
     let body = entry.raw
     const accept = String(req.headers['accept-encoding'] || '')
-    if (accept.includes('br')) {
+    if (accept.includes('br') && entry.br) {
       body = entry.br
       headers['content-encoding'] = 'br'
-    } else if (accept.includes('gzip')) {
+    } else if (accept.includes('gzip') && entry.gz) {
       body = entry.gz
       headers['content-encoding'] = 'gzip'
     }

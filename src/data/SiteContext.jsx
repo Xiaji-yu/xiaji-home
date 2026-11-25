@@ -5,6 +5,7 @@ import {
   navLinks as defaultNav,
 } from './site.js'
 import { localFonts } from './fonts.js'
+import { buildTypographyCss } from './fontUtils.js'
 
 /* ==========================================================================
    运行时站点内容
@@ -37,18 +38,8 @@ export function deepMerge(base, patch) {
 
 const SiteContext = createContext(null)
 
-/* 默认字体栈：和 styles/tokens.css 里的 --sans / --mono 保持一致。
-   后台选了自定义字体时，注入的样式把它放在栈的最前面 —— 自定义字体
-   缺字形（比如英文-only 字体遇到中文）时回退到这套默认栈，不糊不崩。 */
-const DEFAULT_SANS =
-  "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', sans-serif"
-const DEFAULT_MONO =
-  "'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace"
-
-/** @font-face 的 format 提示按扩展名给，浏览器才认 */
-function formatHint(ext) {
-  return { woff2: 'woff2', woff: 'woff', ttf: 'truetype', otf: 'opentype' }[ext] || 'woff2'
-}
+/* 默认字体栈与 @font-face 的拼装都在 fontUtils.js：构建插件（index.html
+   里的首屏字体 / preload）和运行时注入共用同一份，cf-N 序号才对得上。 */
 
 /** 字体清单条目的最小可信过滤：缺 id / file 的条目不进注入（后台共用） */
 export function normalizeFontList(list) {
@@ -184,48 +175,20 @@ export function SiteProvider({ children }) {
   /* ---- 字体注入：@font-face + 覆盖 --sans / --heading / --mono ----
      一个 <style id="live-typography"> 承载全部：没有自定义字体时整块
      留空不注入，tokens.css 里的默认栈原样生效。
-     family 名统一按序号生成（cf-0 / cf-1…）：字体的 id 可能带中文和
-     斜杠（font/ 目录的相对路径），序号永远合法且不会重名。 */
+     构建时 vite.config.js 的 font-preload 插件会把「选中的字体」同样写进
+     index.html（外加 <link rel=preload>），首屏不用等这个 effect 跑完；
+     两边调的是同一个 buildTypographyCss，family 名（cf-0 / cf-1…）一致。 */
   useEffect(() => {
     const { site, fonts: list } = value
     const typo = isPlainObject(site.typography) ? site.typography : {}
-    const entries = list.map((font, i) => ({
-      font,
-      family: `cf-${i}`,
-      src:
+    const { css, vars } = buildTypographyCss({
+      typo,
+      fonts: list,
+      urlOf: (font) =>
         font.kind === 'local'
           ? /* font/ 目录：Vite 打包后的最终地址（已含 BASE_URL） */ font.url
           : `${import.meta.env.BASE_URL}api/fonts/file/${encodeURIComponent(font.file)}`,
-    }))
-    const byId = new Map(entries.map((e) => [e.font.id, e.family]))
-
-    const css = entries
-      .map(
-        ({ family, src, font }) =>
-          `@font-face{font-family:"${family}";src:url("${src}") format("${formatHint(font.ext)}");font-display:swap;}`,
-      )
-      .join('\n')
-
-    /* 选中的 id 必须真的在字体库里（被删过就静默回退默认栈）。
-       标题栈把标题字体放最前、正文字体其次：`"标题字体", "正文字体", 默认栈`；
-       标题和正文同一个字体时不重复拼接（栈里出现两遍同一个 family 没意义）。 */
-    const stackFor = (id, fallback) => {
-      const family = id ? byId.get(id) : null
-      return family ? `"${family}", ${fallback}` : fallback
-    }
-    const sansStack = stackFor(typo.body, DEFAULT_SANS)
-    const bodyFamily = typo.body ? byId.get(typo.body) : null
-    const headingFamily = typo.heading ? byId.get(typo.heading) : null
-    const headingStack =
-      headingFamily && headingFamily !== bodyFamily
-        ? `"${headingFamily}", ${sansStack}`
-        : sansStack
-    const monoStack = stackFor(typo.mono, DEFAULT_MONO)
-
-    const vars =
-      typo.body || typo.heading || typo.mono
-        ? `:root{--sans:${sansStack};--heading:${headingStack};--mono:${monoStack};}`
-        : ''
+    })
 
     let el = document.getElementById('live-typography')
     if (!css && !vars) {

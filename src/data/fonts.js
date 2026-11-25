@@ -8,32 +8,22 @@
      所以 GitHub Pages 这类没有后端的静态部署也能用内置字体
    · id = 相对 font/ 的路径去扩展名（如 `SmileySans/SmileySans-Regular`），
      前台 site.typography 的 body / heading / mono 存的就是它
+   · 同一份字体同时有 .ttf 和 .woff2 时只保留 woff2（npm run font:optimize
+     生成的子集），体积小、加载快
    ========================================================================== */
 
-const EXT_RE = /\.(ttf|otf|woff|woff2)$/i
+import { dedupeFonts, sortFonts, toLocalFont } from './fontUtils.js'
 
-/** glob 的 key（'/font/X/xxx.ttf' 或 '../font/X/xxx.ttf'）→ 字体条目。纯函数，方便单测。 */
-export function toLocalFont(file, url) {
-  /* 去掉开头的 ../（可能多层）和 font/ 前缀，得到相对 font/ 的路径 */
-  const rel = String(file)
-    .replace(/^(?:\.\.\/)+/, '')
-    .replace(/^\/?font\//, '')
-  const id = rel.replace(EXT_RE, '')
-  return {
-    id,
-    name: id.split('/').pop() || id,
-    ext: (rel.match(EXT_RE)?.[1] || '').toLowerCase(),
-    url,
-    kind: 'local', // 与后台上传的字体（kind: 'uploaded'）区分
-  }
-}
+export { toLocalFont }
 
-export const localFonts = Object.entries(
-  import.meta.glob('/font/**/*.{ttf,otf,woff,woff2,TTF,OTF,WOFF,WOFF2}', {
-    eager: true,
-    query: '?url',
-    import: 'default',
-  }),
+export const localFonts = sortFonts(
+  dedupeFonts(
+    Object.entries(
+      import.meta.glob('/font/**/*.{ttf,otf,woff,woff2,TTF,OTF,WOFF,WOFF2}', {
+        eager: true,
+        query: '?url',
+        import: 'default',
+      }),
+    ).map(([file, url]) => toLocalFont(file, url)),
+  ),
 )
-  .map(([file, url]) => toLocalFont(file, url))
-  .sort((a, b) => a.id.localeCompare(b.id))

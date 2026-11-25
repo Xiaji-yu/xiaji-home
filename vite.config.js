@@ -5,6 +5,7 @@ import { createRequire } from 'node:module'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { site } from './src/data/site.js'
+import { fontHtmlPlugin } from './scripts/font-html-plugin.mjs'
 
 const require = createRequire(import.meta.url)
 /* 后台内容 API 与生产（server/index.cjs）共用同一套实现：
@@ -119,7 +120,7 @@ function adminApiPlugin() {
 
 export default defineConfig({
   base,
-  plugins: [react(), siteMetaPlugin(), adminApiPlugin()],
+  plugins: [react(), siteMetaPlugin(), adminApiPlugin(), fontHtmlPlugin({ site })],
   server: {
     host: '127.0.0.1',
     port: 5173,
@@ -129,5 +130,8 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
+    /* 给 scripts/font-html-plugin.mjs 用：构建完从 manifest 里查带 hash
+       的字体文件名，往 index.html 里写 preload + @font-face，然后删掉 .vite */
+    manifest: true,
   },
 })
